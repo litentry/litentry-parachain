@@ -322,7 +322,7 @@ pub mod pallet {
 }
 
 /// Some sort of check on the origin is from guardian.
-impl<T: Config> GuardianQuery<T::AccountId> for Pallet<T> {
+impl<T: Config> GuardianQuery<T::AccountId, T::MaxProposalPerGuardian> for Pallet<T> {
 	fn is_guardian(account: T::AccountId) -> bool {
 		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&account) {
 			if let Some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {

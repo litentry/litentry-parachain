@@ -17,10 +17,7 @@ use crate::{Config, Error};
 use bitflags::bitflags;
 use frame_support::{ensure, pallet_prelude::*};
 use pallet_collab_ai_common::PoolProposalIndex;
-use sp_runtime::{
-	traits::{Bounded, CheckedAdd, StaticLookup},
-	ArithmeticError, BoundedVec,
-};
+use sp_runtime::{traits::CheckedAdd, ArithmeticError, BoundedVec};
 use sp_std::cmp::Ordering;
 
 bitflags! {
@@ -84,7 +81,7 @@ pub struct PoolProposalInfo<InfoHash, Balance, BlockNumber, AccountId> {
 	pub proposal_status_flags: ProposalStatusFlags,
 }
 
-#[derive(Clone, Encode, Debug, Decode, TypeInfo)]
+#[derive(Clone, Encode, Debug, Decode, MaxEncodedLen, TypeInfo)]
 pub struct Bond<Identity, BalanceType> {
 	pub owner: Identity,
 	pub amount: BalanceType,
@@ -303,9 +300,8 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 		}
-		self::total_queued_amount = self::total_queued_amount
-			.checked_add(&amount)
-			.ok_or(ArithmeticError::Overflow)?;
+		self.total_queued_amount =
+			self.total_queued_amount.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 		Ok(())
 	}
 

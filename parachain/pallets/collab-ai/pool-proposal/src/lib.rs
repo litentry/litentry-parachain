@@ -29,7 +29,10 @@ pub mod types;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency},
+	traits::{
+		tokens::Preservation, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency,
+		ReservableCurrency,
+	},
 	transactional,
 	weights::Weight,
 	PalletId,
@@ -37,12 +40,16 @@ use frame_support::{
 use frame_system::{
 	ensure_signed,
 	pallet_prelude::{BlockNumberFor, OriginFor},
+	RawOrigin,
 };
 use orml_utilities::OrderedSet;
 pub use pallet::*;
 use pallet_collab_ai_common::*;
 use parity_scale_codec::Encode;
-use sp_runtime::{traits::CheckedAdd, ArithmeticError};
+use sp_runtime::{
+	traits::{Bounded, CheckedAdd, StaticLookup},
+	ArithmeticError,
+};
 use sp_std::collections::vec_deque::VecDeque;
 
 pub use types::*;
@@ -70,7 +77,6 @@ pub(crate) type AssetIdOf<T> =
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::OptionQuery};
-	use orml_utilities::ordered_set;
 
 	use super::*;
 
@@ -120,7 +126,7 @@ pub mod pallet {
 		type PublicVotingOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Guardian vote resource
-		type GuardianVoteResource: GuardianQuery<Self::AccountId>;
+		type GuardianVoteResource: GuardianQuery<Self::AccountId, Get<u32>>;
 
 		/// The maximum amount of guardian allowed for a proposal
 		#[pallet::constant]
@@ -142,7 +148,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::AccountId,
-		OrderedSet<Bond<PoolProposalIndex, BalanceOf<T>>, T::MaxDeposits>,
+		OrderedSet<Bond<PoolProposalIndex, BalanceOf<T>>, T::MaximumPoolProposed>,
 		OptionQuery,
 	>;
 
@@ -190,7 +196,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		PoolProposalIndex,
-		OrderedSet<T::AccountId, MaxGuardianPerProposal>,
+		OrderedSet<T::AccountId, T::MaxGuardianPerProposal>,
 		OptionQuery,
 	>;
 
@@ -474,6 +480,8 @@ pub mod pallet {
 			let mut pool_proposal_pre_investing = <PoolPreInvestings<T>>::take(pool_proposal_index)
 				.unwrap_or(PoolProposalPreInvesting::new());
 
+			let mut pool_proposal =
+				PoolProposal::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 			// Either investing pool has not locked yet,
 			// Or queued amount is enough to replace the withdrawal
 			ensure!(
@@ -487,14 +495,12 @@ pub mod pallet {
 			let _ = pool_proposal_pre_investing.withdraw::<T>(who, amount)?;
 			Self::deposit_event(Event::PoolWithdrawed { user: who, pool_proposal_index, amount });
 
-			let mut pool_proposal =
-				PoolProposal::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 			// Make queued amount fill the missing Investing amount if pool Investing flag ever reached
-			if ((pool_proposal_pre_investing.total_pre_investing_amount
+			if (pool_proposal_pre_investing.total_pre_investing_amount
 				< pool_proposal.max_pool_size)
 				&& (pool_proposal
 					.proposal_status_flags
-					.contains(ProposalStatusFlags::STAKE_AMOUNT_PASSED)))
+					.contains(ProposalStatusFlags::STAKE_AMOUNT_PASSED))
 			{
 				let moved_bonds = pool_proposal_pre_investing
 					.move_queued_to_pre_investing_until::<T>(pool_proposal.max_pool_size)?;
@@ -598,7 +604,7 @@ pub mod pallet {
 		fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 			let sync_account_id = MODULE_ID.into_account_truncating();
 			o.into().and_then(|o| match o {
-				system::RawOrigin::Signed(who) if who == sync_account_id => Ok(sync_account_id),
+				RawOrigin::Signed(who) if who == sync_account_id => Ok(sync_account_id),
 				r => Err(T::RuntimeOrigin::from(r)),
 			})
 		}
@@ -606,7 +612,7 @@ pub mod pallet {
 		#[cfg(feature = "runtime-benchmarks")]
 		fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 			let sync_account_id = MODULE_ID.into_account_truncating();
-			Ok(T::RuntimeOrigin::from(system::RawOrigin::Signed(sync_account_id)))
+			Ok(T::RuntimeOrigin::from(RawOrigin::Signed(sync_account_id)))
 		}
 	}
 }
