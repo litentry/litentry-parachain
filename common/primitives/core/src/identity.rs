@@ -802,6 +802,6 @@ mod tests {
         let identity = Identity::Substrate([0; 32].into());
         let did_str = "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000";
         let hash = identity.hash().unwrap();
-        assert_eq!(hash, H256::from(blake2_256(did_str.encode())));
+        assert_eq!(hash, H256::from(blake2_256(&did_str.encode())));
     }
 }
