@@ -30,7 +30,6 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
 	transactional,
-	weights::Weight,
 };
 use frame_system::{
 	ensure_signed,
@@ -147,7 +146,7 @@ pub mod pallet {
 			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
 			CuratorIndexToInfo::<T>::insert(
 				&next_curator_index,
-				(info_hash, current_block, who, CandidateStatus::Unverified),
+				(info_hash, current_block, wh.clone(), CandidateStatus::Unverified),
 			);
 			PublicCuratorCount::<T>::put(
 				next_curator_index.checked_add(1u32.into()).ok_or(ArithmeticError::Overflow)?,
@@ -169,7 +168,7 @@ pub mod pallet {
 
 			// Ensure existing
 			let curator_index =
-				PublicCuratorToIndex::<T>::get(curator).ok_or(Error::<T>::CuratorNotRegistered)?;
+				PublicCuratorToIndex::<T>::get(&who).ok_or(Error::<T>::CuratorNotRegistered)?;
 
 			// Update curator
 			// But if banned, then require extra reserve
@@ -187,7 +186,7 @@ pub mod pallet {
 					// Update block number
 					info.1 = frame_system::Pallet::<T>::block_number();
 					Self::deposit_event(Event::CuratorUpdated {
-						curator,
+						curator: who,
 						curator_index,
 						info_hash,
 					});
@@ -216,7 +215,7 @@ pub mod pallet {
 					let info = maybe_info.ok_or(Error::<T>::CuratorIndexNotExist)?;
 
 					if info.3 != CandidateStatus::Banned {
-						T::Currency::unreserve(&who, T::MinimumCuratorDeposit::get())?;
+						let _ = T::Currency::unreserve(&who, T::MinimumCuratorDeposit::get());
 					}
 
 					// Delete item
@@ -255,6 +254,7 @@ pub mod pallet {
 					Ok(())
 				},
 			)?;
+			Ok(())
 		}
 	}
 }
