@@ -18,7 +18,6 @@
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::{Get, RuntimeDebug, H256};
-use sp_runtime::BoundedVec;
 use sp_std::marker::PhantomData;
 
 use frame_support::pallet_prelude::EnsureOrigin;
@@ -55,19 +54,7 @@ pub struct PoolMetadata<BoundedString> {
 	pub description: BoundedString,
 }
 
-#[derive(
-	PartialEq,
-	Eq,
-	Clone,
-	Copy,
-	Default,
-	Encode,
-	Decode,
-	Debug,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-)]
+#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, MaxEncodedLen, TypeInfo)]
 pub enum CandidateStatus {
 	/// Initial status of legal file
 	#[default]
