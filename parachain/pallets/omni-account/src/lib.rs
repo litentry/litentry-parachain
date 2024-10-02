@@ -144,7 +144,9 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
 
-			let new_id_graph_hash = H256::from(blake2_256(&id_graph_links.encode()));
+			let id_graph_links_hashes: Vec<H256> =
+				id_graph_links.iter().map(|member| member.hash).collect();
+			let new_id_graph_hash = H256::from(blake2_256(&id_graph_links_hashes.encode()));
 			IDGraphHashes::<T>::insert(who.clone(), new_id_graph_hash);
 
 			IDGraphs::<T>::insert(who.clone(), id_graph_links);

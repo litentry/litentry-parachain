@@ -22,7 +22,13 @@ fn link_identity_works() {
 			MemberAccount { id: MemberIdentity::from(who.clone()), hash: who_identity_hash },
 			MemberAccount { id: bob_private_identity.clone(), hash: bob_private_identity_hash },
 		]);
-		let expected_id_graph_hash = H256::from(blake2_256(&expected_id_graph_links.encode()));
+		let expected_id_graph_hash = H256::from(blake2_256(
+			&expected_id_graph_links
+				.iter()
+				.map(|member| member.hash)
+				.collect::<Vec<H256>>()
+				.encode(),
+		));
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -59,10 +65,16 @@ fn link_identity_works() {
 				hash: charlie_public_identity_hash,
 			},
 		]);
-		let expectec_id_graph_hash = H256::from(blake2_256(&expected_id_graph_links.encode()));
+		let expecte_id_graph_hash = H256::from(blake2_256(
+			&expected_id_graph_links
+				.iter()
+				.map(|member| member.hash)
+				.collect::<Vec<H256>>()
+				.encode(),
+		));
 
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
-		assert_eq!(IDGraphHashes::<TestRuntime>::get(&who).unwrap(), expectec_id_graph_hash);
+		assert_eq!(IDGraphHashes::<TestRuntime>::get(&who).unwrap(), expecte_id_graph_hash);
 
 		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(bob_private_identity_hash));
 		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(charlie_public_identity_hash));
