@@ -112,6 +112,7 @@ def generate_config_local_json(parachain_dir):
         "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
         "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
         "bridge_path": "/tmp/parachain_dev/chainbridge",
+        "parachain_fast_runtime": "true",
     }
     config_file = "./parachain/ts-tests/config.local.json"
 

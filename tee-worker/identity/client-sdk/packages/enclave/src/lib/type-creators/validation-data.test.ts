@@ -8,7 +8,6 @@ import {
 import { identity, trusted_operations } from '@litentry/parachain-api';
 
 import { createLitentryValidationDataType } from './validation-data';
-import { createLitentryIdentityType } from './litentry-identity';
 
 const types = {
   ...identity.types, // LitentryIdentity is defined here
