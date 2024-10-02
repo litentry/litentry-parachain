@@ -1,5 +1,4 @@
 use crate::{self as pallet_omni_account};
-use core_primitives::Identity;
 use frame_support::{
 	assert_ok,
 	pallet_prelude::EnsureOrigin,

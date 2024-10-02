@@ -43,7 +43,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
 	}
-	pub type IDGraphLinks<T> = BoundedVec<MemberAccount, <T as Config>::MaxIDGraphLength>;
+	pub type IDGraphMembers<T> = BoundedVec<MemberAccount, <T as Config>::MaxIDGraphLength>;
 
 	#[pallet::storage]
 	pub type LinkedIdentityHashes<T: Config> =
@@ -52,7 +52,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = IDGraphLinks<T>>;
+		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = IDGraphMembers<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graph_hashes)]
@@ -108,8 +108,8 @@ pub mod pallet {
 				!LinkedIdentityHashes::<T>::contains_key(identity_hash),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let mut id_graph_links = match IDGraphs::<T>::get(&who) {
-				Some(id_graph_links) => {
+			let mut id_graph_members = match IDGraphs::<T>::get(&who) {
+				Some(id_graph_members) => {
 					let current_id_graph_hash =
 						IDGraphHashes::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 					if let Some(id_graph_hash) = maybe_id_graph_hash {
@@ -120,36 +120,36 @@ pub mod pallet {
 					} else {
 						return Err(Error::<T>::IDGraphHashMissing.into());
 					}
-					id_graph_links
+					id_graph_members
 				},
 				None => {
 					let who_hash = who.hash().map_err(|_| Error::<T>::PrimeIdentityInvalid)?;
 					if LinkedIdentityHashes::<T>::contains_key(who_hash) {
 						return Err(Error::<T>::IdentityAlreadyLinked.into());
 					}
-					let mut id_graph_links: IDGraphLinks<T> = BoundedVec::new();
-					id_graph_links
+					let mut id_graph_members: IDGraphMembers<T> = BoundedVec::new();
+					id_graph_members
 						.try_push(MemberAccount {
 							id: MemberIdentity::from(who.clone()),
 							hash: who_hash,
 						})
 						.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 					LinkedIdentityHashes::<T>::insert(who_hash, ());
-					IDGraphs::<T>::insert(who.clone(), id_graph_links.clone());
-					id_graph_links
+					IDGraphs::<T>::insert(who.clone(), id_graph_members.clone());
+					id_graph_members
 				},
 			};
-			id_graph_links
+			id_graph_members
 				.try_push(MemberAccount { id: identity, hash: identity_hash })
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
 
-			let id_graph_links_hashes: Vec<H256> =
-				id_graph_links.iter().map(|member| member.hash).collect();
-			let new_id_graph_hash = H256::from(blake2_256(&id_graph_links_hashes.encode()));
+			let id_graph_members_hashes: Vec<H256> =
+				id_graph_members.iter().map(|member| member.hash).collect();
+			let new_id_graph_hash = H256::from(blake2_256(&id_graph_members_hashes.encode()));
 			IDGraphHashes::<T>::insert(who.clone(), new_id_graph_hash);
 
-			IDGraphs::<T>::insert(who.clone(), id_graph_links);
+			IDGraphs::<T>::insert(who.clone(), id_graph_members);
 
 			Self::deposit_event(Event::IdentityLinked { who, identity: identity_hash });
 
@@ -166,10 +166,10 @@ pub mod pallet {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(!identity_hashes.is_empty(), Error::<T>::IdentitiesEmpty);
 
-			let mut id_graph_links =
+			let mut id_graph_members =
 				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 
-			id_graph_links.retain(|member| {
+			id_graph_members.retain(|member| {
 				if identity_hashes.contains(&member.hash) {
 					LinkedIdentityHashes::<T>::remove(member.hash);
 					false
@@ -178,10 +178,10 @@ pub mod pallet {
 				}
 			});
 
-			if id_graph_links.is_empty() {
+			if id_graph_members.is_empty() {
 				IDGraphs::<T>::remove(&who);
 			} else {
-				IDGraphs::<T>::insert(who.clone(), id_graph_links);
+				IDGraphs::<T>::insert(who.clone(), id_graph_members);
 			}
 
 			Self::deposit_event(Event::IdentityRemoved { who, identity_hashes });
@@ -200,15 +200,15 @@ pub mod pallet {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(public_identity.is_public(), Error::<T>::IdentityIsPrivate);
 
-			let mut id_graph_links =
+			let mut id_graph_members =
 				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
-			let id_graph_link = id_graph_links
+			let id_graph_link = id_graph_members
 				.iter_mut()
 				.find(|member| member.hash == identity_hash)
 				.ok_or(Error::<T>::IdentityNotFound)?;
 			id_graph_link.id = public_identity;
 
-			IDGraphs::<T>::insert(who.clone(), id_graph_links);
+			IDGraphs::<T>::insert(who.clone(), id_graph_members);
 
 			Self::deposit_event(Event::IdentityMadePublic { who, identity_hash });
 

@@ -18,12 +18,13 @@ fn link_identity_works() {
 		let charlie_public_identity = MemberIdentity::Public(Identity::from(charlie()));
 		let charlie_public_identity_hash = Identity::from(charlie()).hash().unwrap();
 
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount { id: MemberIdentity::from(who.clone()), hash: who_identity_hash },
-			MemberAccount { id: bob_private_identity.clone(), hash: bob_private_identity_hash },
-		]);
+		let expected_id_graph_members: IDGraphMembers<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount { id: MemberIdentity::from(who.clone()), hash: who_identity_hash },
+				MemberAccount { id: bob_private_identity.clone(), hash: bob_private_identity_hash },
+			]);
 		let expected_id_graph_hash = H256::from(blake2_256(
-			&expected_id_graph_links
+			&expected_id_graph_members
 				.iter()
 				.map(|member| member.hash)
 				.collect::<Vec<H256>>()
@@ -42,7 +43,7 @@ fn link_identity_works() {
 		);
 
 		assert!(IDGraphs::<TestRuntime>::contains_key(&who));
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_members);
 		assert_eq!(IDGraphHashes::<TestRuntime>::get(&who).unwrap(), expected_id_graph_hash);
 
 		assert_ok!(OmniAccount::link_identity(
@@ -57,23 +58,24 @@ fn link_identity_works() {
 				.into(),
 		);
 
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount { id: MemberIdentity::from(who.clone()), hash: who_identity_hash },
-			MemberAccount { id: bob_private_identity.clone(), hash: bob_private_identity_hash },
-			MemberAccount {
-				id: charlie_public_identity.clone(),
-				hash: charlie_public_identity_hash,
-			},
-		]);
+		let expected_id_graph_members: IDGraphMembers<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount { id: MemberIdentity::from(who.clone()), hash: who_identity_hash },
+				MemberAccount { id: bob_private_identity.clone(), hash: bob_private_identity_hash },
+				MemberAccount {
+					id: charlie_public_identity.clone(),
+					hash: charlie_public_identity_hash,
+				},
+			]);
 		let expecte_id_graph_hash = H256::from(blake2_256(
-			&expected_id_graph_links
+			&expected_id_graph_members
 				.iter()
 				.map(|member| member.hash)
 				.collect::<Vec<H256>>()
 				.encode(),
 		));
 
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_members);
 		assert_eq!(IDGraphHashes::<TestRuntime>::get(&who).unwrap(), expecte_id_graph_hash);
 
 		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(bob_private_identity_hash));
@@ -195,14 +197,14 @@ fn link_identity_ig_graph_len_limit_reached_works() {
 		let member_identity_3 = MemberIdentity::Private(vec![4, 5, 6]);
 		let identity_hash_3 = H256::from(blake2_256(&member_identity_3.encode()));
 
-		let id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
+		let id_graph_members: IDGraphMembers<TestRuntime> = BoundedVec::truncate_from(vec![
 			MemberAccount { id: MemberIdentity::from(who.clone()), hash: who_identity_hash },
 			MemberAccount { id: member_identity_2.clone(), hash: identity_hash_2 },
 			MemberAccount { id: member_identity_3.clone(), hash: identity_hash_3 },
 		]);
-		let id_graph_hash = H256::from(blake2_256(&id_graph_links.encode()));
+		let id_graph_hash = H256::from(blake2_256(&id_graph_members.encode()));
 
-		IDGraphs::<TestRuntime>::insert(who.clone(), id_graph_links.clone());
+		IDGraphs::<TestRuntime>::insert(who.clone(), id_graph_members.clone());
 		IDGraphHashes::<TestRuntime>::insert(who.clone(), id_graph_hash);
 
 		assert_noop!(
@@ -248,13 +250,13 @@ fn remove_identity_works() {
 				.into(),
 		);
 
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> =
+		let expected_id_graph_members: IDGraphMembers<TestRuntime> =
 			BoundedVec::truncate_from(vec![MemberAccount {
 				id: MemberIdentity::Public(who.clone()),
 				hash: who_identity_hash,
 			}]);
 
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_members);
 		assert!(!LinkedIdentityHashes::<TestRuntime>::contains_key(identity_hash));
 
 		assert_ok!(OmniAccount::remove_identities(
@@ -326,11 +328,15 @@ fn make_identity_public_works() {
 			None
 		));
 
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount { id: MemberIdentity::Public(who.clone()), hash: who.hash().unwrap() },
-			MemberAccount { id: private_identity.clone(), hash: identity_hash },
-		]);
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		let expected_id_graph_members: IDGraphMembers<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount {
+					id: MemberIdentity::Public(who.clone()),
+					hash: who.hash().unwrap(),
+				},
+				MemberAccount { id: private_identity.clone(), hash: identity_hash },
+			]);
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_members);
 
 		assert_ok!(OmniAccount::make_identity_public(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -342,11 +348,15 @@ fn make_identity_public_works() {
 			Event::IdentityMadePublic { who: who.clone(), identity_hash }.into(),
 		);
 
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount { id: MemberIdentity::Public(who.clone()), hash: who.hash().unwrap() },
-			MemberAccount { id: public_identity.clone(), hash: identity_hash },
-		]);
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		let expected_id_graph_members: IDGraphMembers<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount {
+					id: MemberIdentity::Public(who.clone()),
+					hash: who.hash().unwrap(),
+				},
+				MemberAccount { id: public_identity.clone(), hash: identity_hash },
+			]);
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_members);
 	});
 }
 
