@@ -15,8 +15,10 @@ use sp_core::H256;
 use sp_core_hashing::blake2_256;
 use sp_std::vec::Vec;
 
-pub trait AccountIdConverter<T: Config> {
-	fn convert(account_id: T::AccountId) -> Identity;
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+pub struct MemberAccount {
+	pub id: MemberIdentity,
+	pub hash: H256,
 }
 
 #[frame_support::pallet]
@@ -40,10 +42,8 @@ pub mod pallet {
 		/// The maximum number of identities an id graph can have.
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
-		/// AccountId converter
-		type AccountIdConverter: AccountIdConverter<Self>;
 	}
-	pub type IDGraphLinks<T> = BoundedVec<(H256, MemberIdentity), <T as Config>::MaxIDGraphLength>;
+	pub type IDGraphLinks<T> = BoundedVec<MemberAccount, <T as Config>::MaxIDGraphLength>;
 
 	#[pallet::storage]
 	pub type LinkedIdentityHashes<T: Config> =
@@ -52,22 +52,22 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = IDGraphLinks<T>>;
+		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = IDGraphLinks<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graph_hashes)]
 	pub type IDGraphHashes<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
+		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = H256>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Identity linked
-		IdentityLinked { who: T::AccountId, identity: H256 },
+		IdentityLinked { who: Identity, identity: H256 },
 		/// Identity remove
-		IdentityRemoved { who: T::AccountId, identity_hashes: Vec<H256> },
+		IdentityRemoved { who: Identity, identity_hashes: Vec<H256> },
 		/// Identity made public
-		IdentityMadePublic { who: T::AccountId, identity_hash: H256 },
+		IdentityMadePublic { who: Identity, identity_hash: H256 },
 	}
 
 	#[pallet::error]
@@ -98,7 +98,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn link_identity(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity_hash: H256,
 			identity: MemberIdentity,
 			maybe_id_graph_hash: Option<H256>,
@@ -123,24 +123,24 @@ pub mod pallet {
 					id_graph_links
 				},
 				None => {
-					let prime_identity = T::AccountIdConverter::convert(who.clone());
-					let prime_did =
-						prime_identity.to_did().map_err(|_| Error::<T>::PrimeIdentityInvalid)?;
-					let prime_identity_hash = H256::from(blake2_256(&prime_did.encode()));
-					if LinkedIdentityHashes::<T>::contains_key(prime_identity_hash) {
+					let who_hash = who.hash().map_err(|_| Error::<T>::PrimeIdentityInvalid)?;
+					if LinkedIdentityHashes::<T>::contains_key(who_hash) {
 						return Err(Error::<T>::IdentityAlreadyLinked.into());
 					}
 					let mut id_graph_links: IDGraphLinks<T> = BoundedVec::new();
 					id_graph_links
-						.try_push((prime_identity_hash, MemberIdentity::from(prime_identity)))
+						.try_push(MemberAccount {
+							id: MemberIdentity::from(who.clone()),
+							hash: who_hash,
+						})
 						.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
-					LinkedIdentityHashes::<T>::insert(prime_identity_hash, ());
+					LinkedIdentityHashes::<T>::insert(who_hash, ());
 					IDGraphs::<T>::insert(who.clone(), id_graph_links.clone());
 					id_graph_links
 				},
 			};
 			id_graph_links
-				.try_push((identity_hash, identity))
+				.try_push(MemberAccount { id: identity, hash: identity_hash })
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
 
@@ -158,7 +158,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_identities(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity_hashes: Vec<H256>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
@@ -167,9 +167,9 @@ pub mod pallet {
 			let mut id_graph_links =
 				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 
-			id_graph_links.retain(|(id_hash, _)| {
-				if identity_hashes.contains(id_hash) {
-					LinkedIdentityHashes::<T>::remove(id_hash);
+			id_graph_links.retain(|member| {
+				if identity_hashes.contains(&member.hash) {
+					LinkedIdentityHashes::<T>::remove(member.hash);
 					false
 				} else {
 					true
@@ -191,7 +191,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn make_identity_public(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity_hash: H256,
 			public_identity: MemberIdentity,
 		) -> DispatchResult {
@@ -202,9 +202,9 @@ pub mod pallet {
 				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 			let id_graph_link = id_graph_links
 				.iter_mut()
-				.find(|(id_hash, _)| *id_hash == identity_hash)
+				.find(|member| member.hash == identity_hash)
 				.ok_or(Error::<T>::IdentityNotFound)?;
-			id_graph_link.1 = public_identity;
+			id_graph_link.id = public_identity;
 
 			IDGraphs::<T>::insert(who.clone(), id_graph_links);
 

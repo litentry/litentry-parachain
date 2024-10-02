@@ -1,4 +1,4 @@
-use crate::{self as pallet_omni_account, AccountIdConverter};
+use crate::{self as pallet_omni_account};
 use core_primitives::Identity;
 use frame_support::{
 	assert_ok,
@@ -147,15 +147,6 @@ impl pallet_omni_account::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type MaxIDGraphLength = ConstU32<3>;
-	type AccountIdConverter = AccountIdToIdentityConverter;
-}
-
-pub struct AccountIdToIdentityConverter;
-
-impl AccountIdConverter<TestRuntime> for AccountIdToIdentityConverter {
-	fn convert(account_id: <TestRuntime as frame_system::Config>::AccountId) -> Identity {
-		Identity::from(account_id)
-	}
 }
 
 pub fn get_tee_signer() -> SystemAccountId {
