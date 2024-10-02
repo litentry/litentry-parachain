@@ -31,10 +31,14 @@ use frame_support::{
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
 	weights::Weight,
 };
-use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
+use frame_system::{
+	ensure_signed,
+	pallet_prelude::{BlockNumberFor, OriginFor},
+};
 pub use pallet::*;
 use pallet_collab_ai_common::*;
 use parity_scale_codec::{Decode, Encode};
+use sp_runtime::ArithmeticError;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -124,6 +128,7 @@ pub mod pallet {
 		/// Registing a curator legal info
 		#[pallet::call_index(0)]
 		#[pallet::weight({195_000_000})]
+		#[transactional]
 		pub fn regist_curator(origin: OriginFor<T>, info_hash: InfoHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -144,9 +149,15 @@ pub mod pallet {
 				&next_curator_index,
 				(info_hash, current_block, who, CandidateStatus::Unverified),
 			);
-			PublicCuratorCount::<T>::put(next_curator_index.checked_add(1u32.into())?);
+			PublicCuratorCount::<T>::put(
+				next_curator_index.checked_add(1u32.into()).ok_or(ArithmeticError::Overflow)?,
+			);
 
-			Self::deposit_event(Event::CuratorRegisted { curator: who, curator_index, info_hash });
+			Self::deposit_event(Event::CuratorRegisted {
+				curator: who,
+				curator_index: next_curator_index,
+				info_hash,
+			});
 			Ok(())
 		}
 
@@ -189,16 +200,13 @@ pub mod pallet {
 		/// Clean a curator legal info
 		#[pallet::call_index(2)]
 		#[pallet::weight({195_000_000})]
+		#[transactional]
 		pub fn clean_curator(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Ensure existing
-			ensure!(
-				PublicCuratorToIndex::<T>::contains_key(&who),
-				Error::<T>::CuratorNotRegistered
-			);
-
-			let curator_index = PublicCuratorToIndex::<T>::take(&who);
+			let curator_index =
+				PublicCuratorToIndex::<T>::take(&who).ok_or(Error::<T>::CuratorNotRegistered)?;
 
 			// Update curator
 			// But if banned, then require extra reserve
@@ -212,7 +220,7 @@ pub mod pallet {
 					}
 
 					// Delete item
-					maybe_info = None;
+					*maybe_info = None;
 					Self::deposit_event(Event::CuratorCleaned { curator, curator_index });
 					Ok(())
 				},

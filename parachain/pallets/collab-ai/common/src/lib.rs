@@ -55,7 +55,19 @@ pub struct PoolMetadata<BoundedString> {
 	pub description: BoundedString,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
+#[derive(
+	PartialEq,
+	Eq,
+	Clone,
+	Copy,
+	Default,
+	Encode,
+	Decode,
+	Debug,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
 pub enum CandidateStatus {
 	/// Initial status of legal file
 	#[default]
@@ -70,7 +82,7 @@ pub enum CandidateStatus {
 }
 
 #[derive(PartialEq, Eq, Clone, Default, Encode, Decode, Debug, TypeInfo)]
-pub enum GuardianVote<S: Get<u32>> {
+pub enum GuardianVote {
 	/// Does not care if this guardian get selected
 	/// Please be aware Neutral will increase participate percentage
 	/// which will increase the winning rate of guardian selection
@@ -87,7 +99,7 @@ pub enum GuardianVote<S: Get<u32>> {
 	/// Support this guardian for only specific pool proposal
 	/// And neutral for other pool proposal
 	#[codec(index = 3)]
-	Specific(BoundedVec<PoolProposalIndex, S>),
+	Specific(PoolProposalIndex),
 }
 
 /// Some sort of check on the account is from some group.
@@ -157,5 +169,5 @@ pub trait GuardianQuery<AccountId, S: Get<u32>> {
 	fn is_verified_guardian(account: AccountId) -> bool;
 
 	/// Get vote
-	fn get_vote(voter: AccountId, guardian: AccountId) -> Option<GuardianVote<S>>;
+	fn get_vote(voter: AccountId, guardian: AccountId) -> Option<GuardianVote>;
 }

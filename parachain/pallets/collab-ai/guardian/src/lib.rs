@@ -29,12 +29,15 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
-	weights::Weight,
 };
-use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
+use frame_system::{
+	ensure_signed,
+	pallet_prelude::{BlockNumberFor, OriginFor},
+};
 pub use pallet::*;
 use pallet_collab_ai_common::*;
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::Encode;
+use sp_runtime::ArithmeticError;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -101,7 +104,7 @@ pub mod pallet {
 		T::AccountId,
 		Twox64Concat,
 		GuardianIndex,
-		GuardianVote<T::MaxProposalPerGuardian>,
+		GuardianVote,
 		OptionQuery,
 	>;
 
@@ -131,7 +134,7 @@ pub mod pallet {
 			voter: T::AccountId,
 			guardian_index: GuardianIndex,
 			guardian: T::AccountId,
-			status: Option<GuardianVote<T::MaxProposalPerGuardian>>,
+			status: Option<GuardianVote>,
 		},
 		RemoveAllVote {
 			voter: T::AccountId,
@@ -150,6 +153,7 @@ pub mod pallet {
 		/// Registing a guardian legal info
 		#[pallet::call_index(0)]
 		#[pallet::weight({195_000_000})]
+		#[transactional]
 		pub fn regist_guardian(origin: OriginFor<T>, info_hash: InfoHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -170,11 +174,13 @@ pub mod pallet {
 				&next_guardian_index,
 				(info_hash, current_block, who, CandidateStatus::Unverified),
 			);
-			PublicGuardianCount::<T>::put(next_guardian_index.checked_add(1u32.into())?);
+			PublicGuardianCount::<T>::put(
+				next_guardian_index.checked_add(1u32.into()).ok_or(ArithmeticError::Overflow)?,
+			);
 
 			Self::deposit_event(Event::GuardianRegisted {
 				guardian: who,
-				guardian_index,
+				guardian_index: next_guardian_index,
 				info_hash,
 			});
 			Ok(())
@@ -187,8 +193,8 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			// Ensure existing
-			let guardian_index = PublicGuardianToIndex::<T>::get(guardian)
-				.ok_or(Error::<T>::GuardianNotRegistered)?;
+			let guardian_index =
+				PublicGuardianToIndex::<T>::get(who).ok_or(Error::<T>::GuardianNotRegistered)?;
 
 			// Update guardian
 			// But if banned, then require extra reserve
@@ -206,7 +212,7 @@ pub mod pallet {
 					// Update block number
 					info.1 = frame_system::Pallet::<T>::block_number();
 					Self::deposit_event(Event::GuardianUpdated {
-						guardian,
+						guardian: who,
 						guardian_index,
 						info_hash,
 					});
@@ -219,16 +225,13 @@ pub mod pallet {
 		/// Clean a guardian legal info
 		#[pallet::call_index(2)]
 		#[pallet::weight({195_000_000})]
+		#[transactional]
 		pub fn clean_guardian(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Ensure existing
-			ensure!(
-				PublicGuardianToIndex::<T>::contains_key(&who),
-				Error::<T>::GuardianNotRegistered
-			);
-
-			let guardian_index = PublicGuardianToIndex::<T>::take(&who);
+			let guardian_index =
+				PublicGuardianToIndex::<T>::take(&who).ok_or(Error::<T>::GuardianNotRegistered)?;
 
 			// Update guardian
 			// But if banned, then require extra reserve
@@ -237,13 +240,13 @@ pub mod pallet {
 				|maybe_info| -> Result<(), DispatchError> {
 					let info = maybe_info.ok_or(Error::<T>::GuardianIndexNotExist)?;
 
-					if (info.3 != CandidateStatus::Banned) {
+					if info.3 != CandidateStatus::Banned {
 						T::Currency::unreserve(&who, T::MinimumGuardianDeposit::get())?;
 					}
 
 					// Delete item
-					maybe_info = None;
-					Self::deposit_event(Event::GuardianCleaned { guardian, guardian_index });
+					*maybe_info = None;
+					Self::deposit_event(Event::GuardianCleaned { guardian: who, guardian_index });
 					Ok(())
 				},
 			)?;
@@ -258,12 +261,12 @@ pub mod pallet {
 			status: CandidateStatus,
 		) -> DispatchResult {
 			T::GuardianJudgeOrigin::ensure_origin(origin)?;
-			let guardian_index = PublicGuardianToIndex::<T>::get(guardian)
+			let guardian_index = PublicGuardianToIndex::<T>::get(&guardian)
 				.ok_or(Error::<T>::GuardianNotRegistered)?;
 			GuardianIndexToInfo::<T>::try_mutate_exists(
 				guardian_index,
 				|maybe_info| -> Result<(), DispatchError> {
-					let mut info = maybe_info.as_mut().ok_or(Error::<T>::GuardianIndexNotExist)?;
+					let info = maybe_info.as_mut().ok_or(Error::<T>::GuardianIndexNotExist)?;
 					// Update block number
 					info.1 = frame_system::Pallet::<T>::block_number();
 					// Update status
@@ -347,10 +350,7 @@ impl<T: Config> GuardianQuery<T::AccountId, T::MaxProposalPerGuardian> for Palle
 		false
 	}
 
-	fn get_vote(
-		voter: T::AccountId,
-		guardian: T::AccountId,
-	) -> Option<GuardianVote<T::MaxProposalPerGuardian>> {
+	fn get_vote(voter: T::AccountId, guardian: T::AccountId) -> Option<GuardianVote> {
 		// Ensure existing
 		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&guardian) {
 			return GuardianVotes::<T>::get(&voter, guardian_index);
