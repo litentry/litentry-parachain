@@ -183,8 +183,8 @@ pub mod pallet {
 			if let Some(ratio) = EnabledTokens::<T>::get(&target_asset_id) {
 				let aiusd_id = T::AIUSDAssetId::get();
 				ensure!(
-					InspectFungibles::<T>::asset_exists(aiusd_id)
-						&& InspectFungibles::<T>::asset_exists(target_asset_id),
+					InspectFungibles::<T>::asset_exists(aiusd_id.clone())
+						&& InspectFungibles::<T>::asset_exists(target_asset_id.clone()),
 					Error::<T>::InvalidAssetId
 				);
 				// It will fail if insufficient fund
@@ -206,7 +206,7 @@ pub mod pallet {
 					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
-						target_asset_id,
+						target_asset_id.clone(),
 						&T::ConvertingFeeAccount::get(),
 						&beneficiary,
 						aseet_target_transfer_amount,
