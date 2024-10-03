@@ -17,12 +17,15 @@ use crate::{Config, Error};
 use bitflags::bitflags;
 use frame_support::{ensure, pallet_prelude::*};
 use pallet_collab_ai_common::PoolProposalIndex;
-use sp_runtime::{traits::CheckedAdd, ArithmeticError, BoundedVec};
+use sp_runtime::{
+	traits::{CheckedAdd, CheckedSub},
+	ArithmeticError, BoundedVec,
+};
 use sp_std::cmp::Ordering;
 
 bitflags! {
 	/// Flags used to record the status of pool proposal
-	#[derive(Encode, Decode, MaxEncodedLen)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub struct ProposalStatusFlags: u8 {
 		/// Whether the pool proposal passing the committee/democracy voting.
 		///
@@ -134,8 +137,13 @@ pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>
 	pub queued_pre_investings: BoundedVec<(Bond<AccountId, Balance>, BlockNumber), S>,
 }
 
-impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
-	PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S>
+impl<
+		AccountId: Ord,
+		Balance: Default + CheckedAdd + CheckedSub,
+		PartialOrd,
+		BlockNumber,
+		S: Get<u32>,
+	> PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S>
 {
 	/// Create a new empty default
 	pub fn new() -> Self {
@@ -149,7 +157,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 
 	pub fn get_pre_investing(&self, account: AccountId) -> Result<(usize, Balance), usize> {
 		match self.pre_investings.binary_search(&Bond::from_owner(account)) {
-			Ok(loc) => Ok((loc, self.pre_investings.index(loc))),
+			Ok(loc) => Ok((loc, self.pre_investings[loc])),
 			Err(loc) => Err(loc),
 		}
 	}
@@ -166,13 +174,16 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 					existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 				let _ = self
 					.pre_investings
-					.try_insert(existing.0, Bond { owner: account, amount: new_balance })
+					.try_insert(existing.0, Bond { owner: account.clone(), amount: new_balance })
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 			Err(potential_index) => {
 				let _ = self
 					.pre_investings
-					.try_insert(potential_index, Bond { owner: account, amount })
+					.try_insert(
+						potential_index,
+						Bond { owner: account.clone(), amount: amount.clone() },
+					)
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 		}
@@ -218,7 +229,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 
 				let left_amount = amount - existing_q.1;
 
-				if let Some(existing_p) = self.get_pre_investing(account) {
+				if let Ok(existing_p) = self.get_pre_investing(account) {
 					// Existing pre-investing is larger than left target amount
 					// Finish withdrawing and return early
 					if existing_p.1 > left_amount {
@@ -248,13 +259,13 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 						return Ok(());
 					} else {
 						// Not enough fund to finish operation
-						return Err(Error::<T>::InsufficientPreInvesting);
+						return Err(Error::<T>::InsufficientPreInvesting.into());
 					}
 				}
 			}
 		}
 		// No pre-investing of all kinds
-		return Err(Error::<T>::InsufficientPreInvesting);
+		return Err(Error::<T>::InsufficientPreInvesting.into());
 	}
 
 	pub fn get_queued_investing(
@@ -267,8 +278,8 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		{
 			Ok(loc) => Ok((
 				loc,
-				self.queued_pre_investings.index(loc).0.amount,
-				self.queued_pre_investings.index(loc).1,
+				self.queued_pre_investings[loc].0.amount,
+				self.queued_pre_investings[loc].1,
 			)),
 			Err(loc) => Err(loc),
 		}
@@ -280,7 +291,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		amount: Balance,
 		current_block: BlockNumber,
 	) -> Result<(), DispatchError> {
-		match self.get_queued_investing(account) {
+		match self.get_queued_investing(account.clone()) {
 			Ok(existing) => {
 				self.queued_pre_investings.remove(existing.0);
 				let new_balance =
@@ -289,14 +300,17 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 					.queued_pre_investings
 					.try_insert(
 						existing.0,
-						(Bond { owner: account, amount: new_balance }, current_block),
+						(Bond { owner: account.clone(), amount: new_balance }, current_block),
 					)
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 			Err(potential_index) => {
 				let _ = self
 					.queued_pre_investings
-					.try_insert(potential_index, (Bond { owner: account, amount }, current_block))
+					.try_insert(
+						potential_index,
+						(Bond { owner: account, amount: amount.clone() }, current_block),
+					)
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 		}
@@ -315,7 +329,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		ensure!(
 			self.total_queued_amount
 				>= target_pre_investing_amount
-					.checked_sub(self.total_pre_investing_amount)
+					.checked_sub(&self.total_pre_investing_amount)
 					.ok_or(ArithmeticError::Overflow)?,
 			Error::<T>::InsufficientPreInvesting
 		);
@@ -326,7 +340,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 
 		for i in v.iter() {
 			let transfer_amount = target_pre_investing_amount
-				.checked_sub(self.total_pre_investing_amount)
+				.checked_sub(&self.total_pre_investing_amount)
 				.ok_or(ArithmeticError::Overflow)?;
 			if i.0.amount >= transfer_amount {
 				let _ = self.withdraw(i.0.owner, transfer_amount)?;

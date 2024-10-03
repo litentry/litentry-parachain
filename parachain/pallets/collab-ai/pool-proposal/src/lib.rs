@@ -30,9 +30,8 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{
-		schedule::v3::Named as ScheduleNamed,
-		tokens::{fungibles::Inspect as FsInspect, Preservation},
-		Bounded, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency,
+		tokens::{fungibles::Inspect as FsInspect, Mutate as FsMutate, Preservation},
+		Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency,
 	},
 	transactional,
 	weights::Weight,
@@ -47,7 +46,10 @@ use orml_utilities::OrderedSet;
 pub use pallet::*;
 use pallet_collab_ai_common::*;
 use parity_scale_codec::Encode;
-use sp_runtime::{traits::CheckedAdd, ArithmeticError};
+use sp_runtime::{
+	traits::{AccountIdConversion, CheckedAdd, CheckedSub},
+	ArithmeticError,
+};
 use sp_std::collections::vec_deque::VecDeque;
 
 pub use types::*;
@@ -183,7 +185,7 @@ pub mod pallet {
 
 	// Guardian willingness of proposal
 	#[pallet::storage]
-	#[pallet::getter(fn pool_pre_investings)]
+	#[pallet::getter(fn pool_guardian)]
 	pub type PoolGuardian<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -279,11 +281,12 @@ pub mod pallet {
 				Error::<T>::ProposalPublicTimeTooShort
 			);
 
-			let proposal_end_time =
-				current_block.checked_add(proposal_last_time).ok_or(ArithmeticError::Overflow)?;
+			let proposal_end_time = current_block
+				.checked_add(&proposal_last_time)
+				.ok_or(ArithmeticError::Overflow)?;
 
 			let pool_start_time = proposal_end_time
-				.checked_add(T::OfficialGapPeriod::get())
+				.checked_add(&T::OfficialGapPeriod::get())
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let new_proposal_info = PoolProposalInfo {
@@ -292,7 +295,7 @@ pub mod pallet {
 				max_pool_size,
 				pool_start_time,
 				pool_end_time: pool_start_time
-					.checked_add(pool_last_time)
+					.checked_add(&pool_last_time)
 					.ok_or(ArithmeticError::Overflow)?,
 				estimated_epoch_reward,
 				proposal_status_flags: ProposalStatusFlags::empty(),
@@ -304,7 +307,7 @@ pub mod pallet {
 				&who,
 				|maybe_ordered_set| -> Result<(), DispatchError> {
 					let reserved_amount = T::MinimumPoolDeposit::get();
-					let _ = T::Currency::reserve(&who, reserved_amount)?;
+					let _ = <T as pallet::Config>::Currency::reserve(&who, reserved_amount)?;
 					// We should not care about duplicating since the proposal index is auto-increment
 					match maybe_ordered_set.as_mut() {
 						Some(ordered_set) => {
@@ -364,7 +367,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::transfer(
+			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 				T::AIUSDAssetId::get(),
 				who,
 				T::PreInvestingPool::get(),
@@ -389,8 +392,8 @@ pub mod pallet {
 
 			// Check BoundedVec limit
 			ensure!(
-				!pool_proposal_pre_investing.pre_investings.is_full
-					&& !pool_proposal_pre_investing.queued_pre_investings.is_full,
+				!pool_proposal_pre_investing.pre_investings.is_full()
+					&& !pool_proposal_pre_investing.queued_pre_investings.is_full(),
 				Error::<T>::InvestingPoolOversized
 			);
 
@@ -413,7 +416,7 @@ pub mod pallet {
 				if target_pre_investing_amount == pool_proposal.max_pool_size {
 					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
 						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
-					PoolProposal::put(pool_proposal_index, pool_proposal);
+					<PoolProposal<T>>::put(pool_proposal_index, pool_proposal);
 				}
 			} else {
 				// Partially
@@ -442,7 +445,7 @@ pub mod pallet {
 
 					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
 						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
-					PoolProposal::put(pool_proposal_index, pool_proposal);
+					<PoolProposal<T>>::put(pool_proposal_index, pool_proposal);
 				}
 
 				// Emit events
@@ -473,7 +476,7 @@ pub mod pallet {
 				.unwrap_or(PoolProposalPreInvesting::new());
 
 			let mut pool_proposal =
-				PoolProposal::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
+				<PoolProposal<T>>::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 			// Either investing pool has not locked yet,
 			// Or queued amount is enough to replace the withdrawal
 			ensure!(
@@ -507,7 +510,7 @@ pub mod pallet {
 			}
 
 			// Return funds
-			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::transfer(
+			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 				T::AIUSDAssetId::get(),
 				T::PreInvestingPool::get(),
 				who,
@@ -531,7 +534,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::PublicVotingOrigin::ensure_origin(origin)?;
 			let mut pool_proposal =
-				PoolProposal::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
+				<PoolProposal<T>>::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 
 			if vote {
 				pool_proposal.proposal_status_flags =
@@ -540,7 +543,7 @@ pub mod pallet {
 				pool_proposal.proposal_status_flags =
 					pool_proposal.proposal_status_flags & !ProposalStatusFlags::PUBLIC_VOTE_PASSED;
 			}
-			PoolProposal::put(pool_proposal_index, pool_proposal);
+			<PoolProposal<T>>::put(pool_proposal_index, pool_proposal);
 
 			Self::deposit_event(Event::ProposalPublicVoted {
 				pool_proposal_index,
@@ -560,7 +563,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			// Ensure guardian exists when participate, will double check if verified when mature the proposal)
-			ensure!(T::GuardianVoteResource::is_guardian(who), Error::<T>::GuardianInvalid);
+			ensure!(T::GuardianVoteResource::is_guardian(who.clone()), Error::<T>::GuardianInvalid);
 			PoolGuardian::<T>::try_mutate_exists(
 				&pool_proposal_index,
 				|maybe_ordered_set| -> Result<(), DispatchError> {
