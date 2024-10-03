@@ -99,13 +99,12 @@ pub mod pallet {
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			who: Identity,
-			identity_hash: H256,
-			identity: MemberIdentity,
+			member_account: MemberAccount,
 			maybe_id_graph_hash: Option<H256>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
-				!LinkedIdentityHashes::<T>::contains_key(identity_hash),
+				!LinkedIdentityHashes::<T>::contains_key(member_account.hash),
 				Error::<T>::IdentityAlreadyLinked
 			);
 			let mut id_graph_members = match IDGraphs::<T>::get(&who) {
@@ -139,16 +138,16 @@ pub mod pallet {
 					id_graph_members
 				},
 			};
+			let identity_hash = member_account.hash;
 			id_graph_members
-				.try_push(MemberAccount { id: identity, hash: identity_hash })
+				.try_push(member_account)
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
-			LinkedIdentityHashes::<T>::insert(identity_hash, ());
-
 			let id_graph_members_hashes: Vec<H256> =
 				id_graph_members.iter().map(|member| member.hash).collect();
 			let new_id_graph_hash = H256::from(blake2_256(&id_graph_members_hashes.encode()));
-			IDGraphHashes::<T>::insert(who.clone(), new_id_graph_hash);
 
+			LinkedIdentityHashes::<T>::insert(identity_hash, ());
+			IDGraphHashes::<T>::insert(who.clone(), new_id_graph_hash);
 			IDGraphs::<T>::insert(who.clone(), id_graph_members);
 
 			Self::deposit_event(Event::IdentityLinked { who, identity: identity_hash });
