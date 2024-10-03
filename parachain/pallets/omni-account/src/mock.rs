@@ -1,4 +1,5 @@
 use crate::{self as pallet_omni_account};
+use core_primitives::Identity;
 use frame_support::{
 	assert_ok,
 	pallet_prelude::EnsureOrigin,
@@ -142,10 +143,19 @@ impl pallet_teebag::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
+pub struct IdentityToAccountIdConverter;
+
+impl pallet_omni_account::AccountIdConverter<TestRuntime> for IdentityToAccountIdConverter {
+	fn convert(identity: &Identity) -> Option<AccountId> {
+		identity.to_account_id()
+	}
+}
+
 impl pallet_omni_account::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type MaxIDGraphLength = ConstU32<3>;
+	type AccountIdConverter = IdentityToAccountIdConverter;
 }
 
 pub fn get_tee_signer() -> SystemAccountId {

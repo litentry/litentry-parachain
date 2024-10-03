@@ -21,6 +21,10 @@ pub struct MemberAccount {
 	pub hash: H256,
 }
 
+pub trait AccountIdConverter<T: Config> {
+	fn convert(identity: &Identity) -> Option<T::AccountId>;
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -42,6 +46,8 @@ pub mod pallet {
 		/// The maximum number of identities an id graph can have.
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
+		/// AccountId converter
+		type AccountIdConverter: AccountIdConverter<Self>;
 	}
 	pub type IDGraphMembers<T> = BoundedVec<MemberAccount, <T as Config>::MaxIDGraphLength>;
 
@@ -52,22 +58,22 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = IDGraphMembers<T>>;
+		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = IDGraphMembers<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graph_hashes)]
 	pub type IDGraphHashes<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = H256>;
+		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Identity linked
-		IdentityLinked { who: Identity, identity: H256 },
+		IdentityLinked { who: T::AccountId, identity: H256 },
 		/// Identity remove
-		IdentityRemoved { who: Identity, identity_hashes: Vec<H256> },
+		IdentityRemoved { who: T::AccountId, identity_hashes: Vec<H256> },
 		/// Identity made public
-		IdentityMadePublic { who: Identity, identity_hash: H256 },
+		IdentityMadePublic { who: T::AccountId, identity_hash: H256 },
 	}
 
 	#[pallet::error]
@@ -79,7 +85,7 @@ pub mod pallet {
 		/// Identity not found
 		IdentityNotFound,
 		/// Invalid identity
-		PrimeIdentityInvalid,
+		InvalidIdentity,
 		/// Prime identity not found
 		PrimeIdentityNotFound,
 		/// Identity is private
@@ -107,10 +113,14 @@ pub mod pallet {
 				!LinkedIdentityHashes::<T>::contains_key(member_account.hash),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let mut id_graph_members = match IDGraphs::<T>::get(&who) {
+			let who_account_id = match T::AccountIdConverter::convert(&who) {
+				Some(account_id) => account_id,
+				None => return Err(Error::<T>::InvalidIdentity.into()),
+			};
+			let mut id_graph_members = match IDGraphs::<T>::get(&who_account_id) {
 				Some(id_graph_members) => {
-					let current_id_graph_hash =
-						IDGraphHashes::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
+					let current_id_graph_hash = IDGraphHashes::<T>::get(&who_account_id)
+						.ok_or(Error::<T>::IDGraphHashMissing)?;
 					if let Some(id_graph_hash) = maybe_id_graph_hash {
 						ensure!(
 							current_id_graph_hash == id_graph_hash,
@@ -122,7 +132,7 @@ pub mod pallet {
 					id_graph_members
 				},
 				None => {
-					let who_hash = who.hash().map_err(|_| Error::<T>::PrimeIdentityInvalid)?;
+					let who_hash = who.hash().map_err(|_| Error::<T>::InvalidIdentity)?;
 					if LinkedIdentityHashes::<T>::contains_key(who_hash) {
 						return Err(Error::<T>::IdentityAlreadyLinked.into());
 					}
@@ -134,7 +144,7 @@ pub mod pallet {
 						})
 						.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 					LinkedIdentityHashes::<T>::insert(who_hash, ());
-					IDGraphs::<T>::insert(who.clone(), id_graph_members.clone());
+					IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members.clone());
 					id_graph_members
 				},
 			};
@@ -147,10 +157,13 @@ pub mod pallet {
 			let new_id_graph_hash = H256::from(blake2_256(&id_graph_members_hashes.encode()));
 
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
-			IDGraphHashes::<T>::insert(who.clone(), new_id_graph_hash);
-			IDGraphs::<T>::insert(who.clone(), id_graph_members);
+			IDGraphHashes::<T>::insert(who_account_id.clone(), new_id_graph_hash);
+			IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members);
 
-			Self::deposit_event(Event::IdentityLinked { who, identity: identity_hash });
+			Self::deposit_event(Event::IdentityLinked {
+				who: who_account_id,
+				identity: identity_hash,
+			});
 
 			Ok(())
 		}
@@ -165,8 +178,13 @@ pub mod pallet {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(!identity_hashes.is_empty(), Error::<T>::IdentitiesEmpty);
 
+			let who_account_id = match T::AccountIdConverter::convert(&who) {
+				Some(account_id) => account_id,
+				None => return Err(Error::<T>::InvalidIdentity.into()),
+			};
+
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
+				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 
 			id_graph_members.retain(|member| {
 				if identity_hashes.contains(&member.hash) {
@@ -178,12 +196,12 @@ pub mod pallet {
 			});
 
 			if id_graph_members.is_empty() {
-				IDGraphs::<T>::remove(&who);
+				IDGraphs::<T>::remove(&who_account_id);
 			} else {
-				IDGraphs::<T>::insert(who.clone(), id_graph_members);
+				IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members);
 			}
 
-			Self::deposit_event(Event::IdentityRemoved { who, identity_hashes });
+			Self::deposit_event(Event::IdentityRemoved { who: who_account_id, identity_hashes });
 
 			Ok(())
 		}
@@ -199,17 +217,22 @@ pub mod pallet {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(public_identity.is_public(), Error::<T>::IdentityIsPrivate);
 
+			let who_account_id = match T::AccountIdConverter::convert(&who) {
+				Some(account_id) => account_id,
+				None => return Err(Error::<T>::InvalidIdentity.into()),
+			};
+
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
+				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 			let id_graph_link = id_graph_members
 				.iter_mut()
 				.find(|member| member.hash == identity_hash)
 				.ok_or(Error::<T>::IdentityNotFound)?;
 			id_graph_link.id = public_identity;
 
-			IDGraphs::<T>::insert(who.clone(), id_graph_members);
+			IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members);
 
-			Self::deposit_event(Event::IdentityMadePublic { who, identity_hash });
+			Self::deposit_event(Event::IdentityMadePublic { who: who_account_id, identity_hash });
 
 			Ok(())
 		}
