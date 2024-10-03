@@ -86,8 +86,8 @@ pub mod pallet {
 		IdentityNotFound,
 		/// Invalid identity
 		InvalidIdentity,
-		/// Prime identity not found
-		PrimeIdentityNotFound,
+		/// IDGraph not found
+		UnknownIDGraph,
 		/// Identity is private
 		IdentityIsPrivate,
 		/// Identities empty
@@ -184,7 +184,7 @@ pub mod pallet {
 			};
 
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::PrimeIdentityNotFound)?;
+				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::UnknownIDGraph)?;
 
 			id_graph_members.retain(|member| {
 				if identity_hashes.contains(&member.hash) {
@@ -223,7 +223,7 @@ pub mod pallet {
 			};
 
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::PrimeIdentityNotFound)?;
+				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::UnknownIDGraph)?;
 			let id_graph_link = id_graph_members
 				.iter_mut()
 				.find(|member| member.hash == identity_hash)

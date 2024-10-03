@@ -413,7 +413,7 @@ fn make_identity_public_identity_not_found_works() {
 				identity_hash,
 				public_identity.clone()
 			),
-			Error::<TestRuntime>::PrimeIdentityNotFound
+			Error::<TestRuntime>::UnknownIDGraph
 		);
 
 		assert_ok!(OmniAccount::link_identity(
