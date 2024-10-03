@@ -138,9 +138,8 @@ pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>
 }
 
 impl<
-		AccountId: Ord,
-		Balance: Default + CheckedAdd + CheckedSub,
-		PartialOrd,
+		AccountId: Ord + Clone,
+		Balance: Default + CheckedAdd + CheckedSub + PartialOrd + Copy,
 		BlockNumber,
 		S: Get<u32>,
 	> PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S>
@@ -157,7 +156,7 @@ impl<
 
 	pub fn get_pre_investing(&self, account: AccountId) -> Result<(usize, Balance), usize> {
 		match self.pre_investings.binary_search(&Bond::from_owner(account)) {
-			Ok(loc) => Ok((loc, self.pre_investings[loc])),
+			Ok(loc) => Ok((loc, self.pre_investings[loc].1)),
 			Err(loc) => Err(loc),
 		}
 	}
@@ -274,7 +273,7 @@ impl<
 	) -> Result<(usize, Balance, BlockNumber), usize> {
 		match self
 			.queued_pre_investings
-			.binary_search_by(|p| p.0.cmp(&Bond::from_owner(account)))
+			.binary_search_by(|p| p.0.cmp(&Bond::from_owner(account.clone())))
 		{
 			Ok(loc) => Ok((
 				loc,

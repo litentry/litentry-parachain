@@ -30,7 +30,10 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{
-		tokens::{fungibles::Inspect as FsInspect, Mutate as FsMutate, Preservation},
+		tokens::{
+			fungibles::{Inspect as FsInspect, Mutate as FsMutate},
+			Preservation,
+		},
 		Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency,
 	},
 	transactional,
@@ -247,6 +250,8 @@ pub mod pallet {
 			// Check proposal expire by order
 
 			// Mature the pool by proposal if qualified, refund/transfer all money based on investing pool logic
+
+			Weight::zero()
 		}
 	}
 
@@ -290,7 +295,7 @@ pub mod pallet {
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let new_proposal_info = PoolProposalInfo {
-				proposer: who,
+				proposer: who.clone(),
 				pool_info_hash,
 				max_pool_size,
 				pool_start_time,
@@ -416,12 +421,12 @@ pub mod pallet {
 				if target_pre_investing_amount == pool_proposal.max_pool_size {
 					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
 						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
-					<PoolProposal<T>>::put(pool_proposal_index, pool_proposal);
+					<PoolProposal<T>>::insert(pool_proposal_index, pool_proposal);
 				}
 			} else {
 				// Partially
 				let queued_pre_investing_amount = target_pre_investing_amount
-					.checked_sub(pool_proposal.max_pool_size)
+					.checked_sub(&pool_proposal.max_pool_size)
 					.ok_or(ArithmeticError::Overflow)?;
 				pool_proposal_pre_investing.add_queued_investing::<T>(
 					who,
@@ -445,7 +450,7 @@ pub mod pallet {
 
 					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
 						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
-					<PoolProposal<T>>::put(pool_proposal_index, pool_proposal);
+					<PoolProposal<T>>::insert(pool_proposal_index, pool_proposal);
 				}
 
 				// Emit events
@@ -456,7 +461,7 @@ pub mod pallet {
 				});
 			}
 
-			<PoolPreInvestings<T>>::put(pool_proposal_index, pool_proposal_pre_investing);
+			<PoolPreInvestings<T>>::insert(pool_proposal_index, pool_proposal_pre_investing);
 			Ok(())
 		}
 
@@ -518,7 +523,7 @@ pub mod pallet {
 				Preservation::Expendable,
 			)?;
 
-			<PoolPreInvestings<T>>::put(pool_proposal_index, pool_proposal_pre_investing);
+			<PoolPreInvestings<T>>::insert(pool_proposal_index, pool_proposal_pre_investing);
 
 			Ok(())
 		}
@@ -543,7 +548,7 @@ pub mod pallet {
 				pool_proposal.proposal_status_flags =
 					pool_proposal.proposal_status_flags & !ProposalStatusFlags::PUBLIC_VOTE_PASSED;
 			}
-			<PoolProposal<T>>::put(pool_proposal_index, pool_proposal);
+			<PoolProposal<T>>::insert(pool_proposal_index, pool_proposal);
 
 			Self::deposit_event(Event::ProposalPublicVoted {
 				pool_proposal_index,
