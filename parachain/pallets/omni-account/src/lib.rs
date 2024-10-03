@@ -16,13 +16,24 @@ use sp_core_hashing::blake2_256;
 use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct MemberAccount {
+pub struct IDGraphMember {
 	pub id: MemberIdentity,
 	pub hash: H256,
 }
 
 pub trait AccountIdConverter<T: Config> {
 	fn convert(identity: &Identity) -> Option<T::AccountId>;
+}
+
+pub trait IDGraphHash {
+	fn graph_hash(&self) -> H256;
+}
+
+impl<T> IDGraphHash for BoundedVec<IDGraphMember, T> {
+	fn graph_hash(&self) -> H256 {
+		let id_graph_members_hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
+		H256::from(blake2_256(&id_graph_members_hashes.encode()))
+	}
 }
 
 #[frame_support::pallet]
@@ -49,7 +60,7 @@ pub mod pallet {
 		/// AccountId converter
 		type AccountIdConverter: AccountIdConverter<Self>;
 	}
-	pub type IDGraphMembers<T> = BoundedVec<MemberAccount, <T as Config>::MaxIDGraphLength>;
+	pub type IDGraph<T> = BoundedVec<IDGraphMember, <T as Config>::MaxIDGraphLength>;
 
 	#[pallet::storage]
 	pub type LinkedIdentityHashes<T: Config> =
@@ -58,7 +69,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = IDGraphMembers<T>>;
+		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = IDGraph<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graph_hashes)]
@@ -105,7 +116,7 @@ pub mod pallet {
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			who: Identity,
-			member_account: MemberAccount,
+			member_account: IDGraphMember,
 			maybe_id_graph_hash: Option<H256>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
@@ -117,48 +128,19 @@ pub mod pallet {
 				Some(account_id) => account_id,
 				None => return Err(Error::<T>::InvalidIdentity.into()),
 			};
-			let mut id_graph_members = match IDGraphs::<T>::get(&who_account_id) {
-				Some(id_graph_members) => {
-					let current_id_graph_hash = IDGraphHashes::<T>::get(&who_account_id)
-						.ok_or(Error::<T>::IDGraphHashMissing)?;
-					if let Some(id_graph_hash) = maybe_id_graph_hash {
-						ensure!(
-							current_id_graph_hash == id_graph_hash,
-							Error::<T>::IDGraphHashMismatch
-						);
-					} else {
-						return Err(Error::<T>::IDGraphHashMissing.into());
-					}
-					id_graph_members
-				},
-				None => {
-					let who_hash = who.hash().map_err(|_| Error::<T>::InvalidIdentity)?;
-					if LinkedIdentityHashes::<T>::contains_key(who_hash) {
-						return Err(Error::<T>::IdentityAlreadyLinked.into());
-					}
-					let mut id_graph_members: IDGraphMembers<T> = BoundedVec::new();
-					id_graph_members
-						.try_push(MemberAccount {
-							id: MemberIdentity::from(who.clone()),
-							hash: who_hash,
-						})
-						.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
-					LinkedIdentityHashes::<T>::insert(who_hash, ());
-					IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members.clone());
-					id_graph_members
-				},
-			};
 			let identity_hash = member_account.hash;
-			id_graph_members
+			let mut id_graph = Self::get_or_create_id_graph(
+				who.clone(),
+				who_account_id.clone(),
+				maybe_id_graph_hash,
+			)?;
+			id_graph
 				.try_push(member_account)
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
-			let id_graph_members_hashes: Vec<H256> =
-				id_graph_members.iter().map(|member| member.hash).collect();
-			let new_id_graph_hash = H256::from(blake2_256(&id_graph_members_hashes.encode()));
 
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
-			IDGraphHashes::<T>::insert(who_account_id.clone(), new_id_graph_hash);
-			IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members);
+			IDGraphHashes::<T>::insert(who_account_id.clone(), id_graph.graph_hash());
+			IDGraphs::<T>::insert(who_account_id.clone(), id_graph);
 
 			Self::deposit_event(Event::IdentityLinked {
 				who: who_account_id,
@@ -235,6 +217,63 @@ pub mod pallet {
 			Self::deposit_event(Event::IdentityMadePublic { who: who_account_id, identity_hash });
 
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn get_or_create_id_graph(
+			who: Identity,
+			who_account_id: T::AccountId,
+			maybe_id_graph_hash: Option<H256>,
+		) -> Result<IDGraph<T>, Error<T>> {
+			match IDGraphs::<T>::get(&who_account_id) {
+				Some(id_graph_members) => {
+					Self::verify_id_graph_hash(&who_account_id, maybe_id_graph_hash)?;
+					Ok(id_graph_members)
+				},
+				None => Self::create_id_graph(who, who_account_id),
+			}
+		}
+
+		fn verify_id_graph_hash(
+			who: &T::AccountId,
+			maybe_id_graph_hash: Option<H256>,
+		) -> Result<(), Error<T>> {
+			let current_id_graph_hash =
+				IDGraphHashes::<T>::get(who).ok_or(Error::<T>::IDGraphHashMissing)?;
+			match maybe_id_graph_hash {
+				Some(id_graph_hash) => {
+					ensure!(
+						current_id_graph_hash == id_graph_hash,
+						Error::<T>::IDGraphHashMismatch
+					);
+				},
+				None => return Err(Error::<T>::IDGraphHashMissing),
+			}
+
+			Ok(())
+		}
+
+		fn create_id_graph(
+			owner_identity: Identity,
+			owner_account_id: T::AccountId,
+		) -> Result<IDGraph<T>, Error<T>> {
+			let owner_identity_hash =
+				owner_identity.hash().map_err(|_| Error::<T>::InvalidIdentity)?;
+			if LinkedIdentityHashes::<T>::contains_key(owner_identity_hash) {
+				return Err(Error::<T>::IdentityAlreadyLinked);
+			}
+			let mut id_graph_members: IDGraph<T> = BoundedVec::new();
+			id_graph_members
+				.try_push(IDGraphMember {
+					id: MemberIdentity::from(owner_identity.clone()),
+					hash: owner_identity_hash,
+				})
+				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
+			LinkedIdentityHashes::<T>::insert(owner_identity_hash, ());
+			IDGraphs::<T>::insert(owner_account_id.clone(), id_graph_members.clone());
+
+			Ok(id_graph_members)
 		}
 	}
 }
