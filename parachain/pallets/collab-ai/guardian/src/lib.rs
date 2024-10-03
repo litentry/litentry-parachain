@@ -171,7 +171,7 @@ pub mod pallet {
 
 			PublicGuardianToIndex::<T>::insert(&who, next_guardian_index);
 			GuardianIndexToInfo::<T>::insert(
-				&next_guardian_index,
+				next_guardian_index,
 				(info_hash, current_block, who.clone(), CandidateStatus::Unverified),
 			);
 			PublicGuardianCount::<T>::put(
