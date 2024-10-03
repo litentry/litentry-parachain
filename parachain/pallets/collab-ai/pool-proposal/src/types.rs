@@ -336,18 +336,19 @@ impl<
 		v.sort_by(|a, b| a.1.cmp(&b.1));
 
 		for i in v.iter() {
+			let target_bond_owner = i.0.owner.as_ref();
 			let transfer_amount = target_pre_investing_amount
 				.checked_sub(&self.total_pre_investing_amount)
 				.ok_or(ArithmeticError::Overflow)?;
 			if i.0.amount >= transfer_amount {
-				let _ = self.withdraw::<T>(i.0.owner, transfer_amount)?;
-				self.add_pre_investing::<T>(i.0.owner, transfer_amount)?;
-				result.push(Bond { owner: i.0.owner, amount: transfer_amount });
+				let _ = self.withdraw::<T>(target_bond_owner, transfer_amount)?;
+				self.add_pre_investing::<T>(target_bond_owner, transfer_amount)?;
+				result.push(Bond { owner: target_bond_owner, amount: transfer_amount });
 				break;
 			} else {
-				let _ = self.withdraw::<T>(i.0.owner, i.0.amount)?;
-				self.add_pre_investing::<T>(i.0.owner, i.0.amount)?;
-				result.push(Bond { owner: i.0.owner, amount: i.0.amount });
+				let _ = self.withdraw::<T>(target_bond_owner, i.0.amount)?;
+				self.add_pre_investing::<T>(target_bond_owner, i.0.amount)?;
+				result.push(Bond { owner: target_bond_owner, amount: i.0.amount });
 			}
 		}
 
