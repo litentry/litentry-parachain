@@ -23,7 +23,7 @@
 //!
 //! The Pool Proposal handles the administration of proposed investing pool and pre-investing.
 #![cfg_attr(not(feature = "std"), no_std)]
-
+#![allow(clippy::type_complexity)]
 pub mod types;
 
 use frame_support::{
@@ -55,9 +55,6 @@ use sp_runtime::{
 use sp_std::collections::vec_deque::VecDeque;
 
 pub use types::*;
-
-pub(crate) const POOL_DEMOCRACY_ID: LockIdentifier = *b"spdemocy";
-pub(crate) const POOL_COMMITTEE_ID: LockIdentifier = *b"spcomtte";
 
 pub(crate) type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -308,11 +305,11 @@ pub mod pallet {
 
 			let next_proposal_index = PoolProposalCount::<T>::get();
 			PoolProposal::<T>::insert(next_proposal_index, new_proposal_info);
-			let _ = PoolProposalDepositOf::<T>::try_mutate_exists(
+			PoolProposalDepositOf::<T>::try_mutate_exists(
 				&who,
 				|maybe_ordered_set| -> Result<(), DispatchError> {
 					let reserved_amount = T::MinimumPoolDeposit::get();
-					let _ = <T as pallet::Config>::Currency::reserve(&who, reserved_amount)?;
+					<T as pallet::Config>::Currency::reserve(&who, reserved_amount)?;
 					// We should not care about duplicating since the proposal index is auto-increment
 					match maybe_ordered_set.as_mut() {
 						Some(ordered_set) => {
@@ -419,8 +416,7 @@ pub mod pallet {
 				});
 				// Flag proposal status if pool is just fully Investing
 				if target_pre_investing_amount == pool_proposal.max_pool_size {
-					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
-						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
+					pool_proposal.proposal_status_flags |= ProposalStatusFlags::STAKE_AMOUNT_PASSED;
 					<PoolProposal<T>>::insert(pool_proposal_index, pool_proposal);
 				}
 			} else {
@@ -448,8 +444,7 @@ pub mod pallet {
 						amount: actual_pre_investing_amount,
 					});
 
-					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
-						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
+					pool_proposal.proposal_status_flags |= ProposalStatusFlags::STAKE_AMOUNT_PASSED;
 					<PoolProposal<T>>::insert(pool_proposal_index, pool_proposal);
 				}
 
@@ -492,7 +487,7 @@ pub mod pallet {
 				Error::<T>::ProposalPreInvestingLocked
 			);
 
-			let _ = pool_proposal_pre_investing.withdraw::<T>(who.clone(), amount)?;
+			pool_proposal_pre_investing.withdraw::<T>(who.clone(), amount)?;
 			Self::deposit_event(Event::PoolWithdrawed {
 				user: who.clone(),
 				pool_proposal_index,
@@ -546,11 +541,9 @@ pub mod pallet {
 				<PoolProposal<T>>::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 
 			if vote {
-				pool_proposal.proposal_status_flags =
-					pool_proposal.proposal_status_flags | ProposalStatusFlags::PUBLIC_VOTE_PASSED;
+				pool_proposal.proposal_status_flags |= ProposalStatusFlags::PUBLIC_VOTE_PASSED;
 			} else {
-				pool_proposal.proposal_status_flags =
-					pool_proposal.proposal_status_flags & !ProposalStatusFlags::PUBLIC_VOTE_PASSED;
+				pool_proposal.proposal_status_flags &= !ProposalStatusFlags::PUBLIC_VOTE_PASSED;
 			}
 			<PoolProposal<T>>::insert(pool_proposal_index, pool_proposal);
 
@@ -574,7 +567,7 @@ pub mod pallet {
 			// Ensure guardian exists when participate, will double check if verified when mature the proposal)
 			ensure!(T::GuardianVoteResource::is_guardian(who.clone()), Error::<T>::GuardianInvalid);
 			PoolGuardian::<T>::try_mutate_exists(
-				&pool_proposal_index,
+				pool_proposal_index,
 				|maybe_ordered_set| -> Result<(), DispatchError> {
 					match maybe_ordered_set.as_mut() {
 						Some(ordered_set) => {

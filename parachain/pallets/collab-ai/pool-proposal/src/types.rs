@@ -172,15 +172,13 @@ impl<
 				self.pre_investings.remove(existing.0);
 				let new_balance =
 					existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
-				let _ = self
-					.pre_investings
+				self.pre_investings
 					.try_insert(existing.0, Bond { owner: account.clone(), amount: new_balance })
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 			Err(potential_index) => {
-				let _ = self
-					.pre_investings
-					.try_insert(potential_index, Bond { owner: account, amount: amount.clone() })
+				self.pre_investings
+					.try_insert(potential_index, Bond { owner: account, amount })
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 		}
@@ -262,7 +260,7 @@ impl<
 			}
 		}
 		// No pre-investing of all kinds
-		return Err(Error::<T>::InsufficientPreInvesting.into());
+		Err(Error::<T>::InsufficientPreInvesting.into())
 	}
 
 	pub fn get_queued_investing(
@@ -293,8 +291,7 @@ impl<
 				self.queued_pre_investings.remove(existing.0);
 				let new_balance =
 					existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
-				let _ = self
-					.queued_pre_investings
+				self.queued_pre_investings
 					.try_insert(
 						existing.0,
 						(Bond { owner: account.clone(), amount: new_balance }, current_block),
@@ -302,12 +299,8 @@ impl<
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 			Err(potential_index) => {
-				let _ = self
-					.queued_pre_investings
-					.try_insert(
-						potential_index,
-						(Bond { owner: account, amount: amount.clone() }, current_block),
-					)
+				self.queued_pre_investings
+					.try_insert(potential_index, (Bond { owner: account, amount }, current_block))
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 		}
@@ -341,17 +334,29 @@ impl<
 				.checked_sub(&self.total_pre_investing_amount)
 				.ok_or(ArithmeticError::Overflow)?;
 			if i.0.amount >= transfer_amount {
-				let _ = self.withdraw::<T>(target_bond_owner.clone(), transfer_amount)?;
+				self.withdraw::<T>(target_bond_owner.clone(), transfer_amount)?;
 				self.add_pre_investing::<T>(target_bond_owner.clone(), transfer_amount)?;
 				result.push(Bond { owner: target_bond_owner.clone(), amount: transfer_amount });
 				break;
 			} else {
-				let _ = self.withdraw::<T>(target_bond_owner.clone(), i.0.amount)?;
+				self.withdraw::<T>(target_bond_owner.clone(), i.0.amount)?;
 				self.add_pre_investing::<T>(target_bond_owner.clone(), i.0.amount)?;
 				result.push(Bond { owner: target_bond_owner, amount: i.0.amount });
 			}
 		}
 
 		Ok(result)
+	}
+}
+
+impl<
+		AccountId: Ord + Clone,
+		Balance: Default + CheckedAdd + CheckedSub + PartialOrd + Copy,
+		BlockNumber: Ord + Clone,
+		S: Get<u32>,
+	> Default for PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S>
+{
+	fn default() -> Self {
+		Self::new()
 	}
 }
