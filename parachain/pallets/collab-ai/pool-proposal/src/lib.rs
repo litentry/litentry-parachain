@@ -308,7 +308,7 @@ pub mod pallet {
 
 			let next_proposal_index = PoolProposalCount::<T>::get();
 			PoolProposal::<T>::insert(next_proposal_index, new_proposal_info);
-			PoolProposalDepositOf::<T>::try_mutate_exists(
+			let _ = PoolProposalDepositOf::<T>::try_mutate_exists(
 				&who,
 				|maybe_ordered_set| -> Result<(), DispatchError> {
 					let reserved_amount = T::MinimumPoolDeposit::get();
@@ -340,7 +340,7 @@ pub mod pallet {
 						},
 					}
 				},
-			);
+			)?;
 			<PendingPoolProposalStatus<T>>::mutate(|pending_porposals| {
 				let new_proposal_status = PoolProposalStatus {
 					pool_proposal_index: next_proposal_index,
@@ -596,8 +596,7 @@ pub mod pallet {
 						},
 					}
 				},
-			);
-			Ok(())
+			)
 		}
 	}
 
