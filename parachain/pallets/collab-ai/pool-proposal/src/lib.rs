@@ -48,7 +48,7 @@ use frame_system::{
 use orml_utilities::OrderedSet;
 pub use pallet::*;
 use pallet_collab_ai_common::*;
-use parity_scale_codec::Encode;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use sp_runtime::{
 	traits::{AccountIdConversion, CheckedAdd, CheckedSub},
 	ArithmeticError,
@@ -84,6 +84,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
@@ -385,7 +386,7 @@ pub mod pallet {
 
 			// Check pool maximum size limit and make pool size limit flag change accordingly
 			let mut pool_proposal =
-				PoolProposal::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
+				<PoolProposal<T>>::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 			// Proposal not expired
 			ensure!(
 				!pool_proposal
@@ -480,7 +481,7 @@ pub mod pallet {
 			let mut pool_proposal_pre_investing = <PoolPreInvestings<T>>::take(pool_proposal_index)
 				.unwrap_or(PoolProposalPreInvesting::new());
 
-			let mut pool_proposal =
+			let pool_proposal =
 				<PoolProposal<T>>::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
 			// Either investing pool has not locked yet,
 			// Or queued amount is enough to replace the withdrawal
@@ -492,8 +493,12 @@ pub mod pallet {
 				Error::<T>::ProposalPreInvestingLocked
 			);
 
-			let _ = pool_proposal_pre_investing.withdraw::<T>(who, amount)?;
-			Self::deposit_event(Event::PoolWithdrawed { user: who, pool_proposal_index, amount });
+			let _ = pool_proposal_pre_investing.withdraw::<T>(who.clone(), amount)?;
+			Self::deposit_event(Event::PoolWithdrawed {
+				user: who.clone(),
+				pool_proposal_index,
+				amount,
+			});
 
 			// Make queued amount fill the missing Investing amount if pool Investing flag ever reached
 			if (pool_proposal_pre_investing.total_pre_investing_amount
@@ -507,7 +512,7 @@ pub mod pallet {
 				for i in moved_bonds.iter() {
 					// Emit events
 					Self::deposit_event(Event::PoolQueuedInvested {
-						user: i.owner,
+						user: i.owner.clone(),
 						pool_proposal_index,
 						amount: i.amount,
 					});
