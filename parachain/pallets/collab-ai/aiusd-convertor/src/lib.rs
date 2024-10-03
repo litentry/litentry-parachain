@@ -132,7 +132,7 @@ pub mod pallet {
 				let aiusd_id = T::AIUSDAssetId::get();
 				ensure!(
 					InspectFungibles::<T>::asset_exists(aiusd_id.clone())
-						&& InspectFungibles::<T>::asset_exists(target_asset_id),
+						&& InspectFungibles::<T>::asset_exists(target_asset_id.clone()),
 					Error::<T>::InvalidAssetId
 				);
 				// It will fail if insufficient fund
