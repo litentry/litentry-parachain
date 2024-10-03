@@ -321,7 +321,7 @@ impl<
 		&mut self,
 		target_pre_investing_amount: Balance,
 	) -> Result<Vec<Bond<AccountId, Balance>>, DispatchError> {
-		let result: Vec<Bond<AccountId, Balance>> = Vec::new();
+		let mut result: Vec<Bond<AccountId, Balance>> = Vec::new();
 		// Make sure target transfer is possible
 		ensure!(
 			self.total_queued_amount
@@ -340,13 +340,13 @@ impl<
 				.checked_sub(&self.total_pre_investing_amount)
 				.ok_or(ArithmeticError::Overflow)?;
 			if i.0.amount >= transfer_amount {
-				let _ = self.withdraw(i.0.owner, transfer_amount)?;
-				self.add_pre_investing(i.0.owner, transfer_amount)?;
+				let _ = self.withdraw::<T>(i.0.owner, transfer_amount)?;
+				self.add_pre_investing::<T>(i.0.owner, transfer_amount)?;
 				result.push(Bond { owner: i.0.owner, amount: transfer_amount });
 				break;
 			} else {
-				let _ = self.withdraw(i.0.owner, i.0.amount)?;
-				self.add_pre_investing(i.0.owner, i.0.amount)?;
+				let _ = self.withdraw::<T>(i.0.owner, i.0.amount)?;
+				self.add_pre_investing::<T>(i.0.owner, i.0.amount)?;
 				result.push(Bond { owner: i.0.owner, amount: i.0.amount });
 			}
 		}
