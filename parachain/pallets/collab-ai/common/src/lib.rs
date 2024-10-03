@@ -68,7 +68,7 @@ pub enum CandidateStatus {
 	Banned,
 }
 
-#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, Debug, MaxEncodedLen, TypeInfo)]
+#[derive(PartialEq, Eq, Copy, Clone, Default, Encode, Decode, Debug, MaxEncodedLen, TypeInfo)]
 pub enum GuardianVote {
 	/// Does not care if this guardian get selected
 	/// Please be aware Neutral will increase participate percentage

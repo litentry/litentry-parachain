@@ -374,8 +374,8 @@ pub mod pallet {
 
 			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 				T::AIUSDAssetId::get(),
-				who,
-				T::PreInvestingPool::get(),
+				&who,
+				&T::PreInvestingPool::get(),
 				amount,
 				Preservation::Expendable,
 			)?;
@@ -404,7 +404,7 @@ pub mod pallet {
 
 			let target_pre_investing_amount = pool_proposal_pre_investing
 				.total_pre_investing_amount
-				.checked_add(asset_actual_transfer_amount)
+				.checked_add(&asset_actual_transfer_amount)
 				.ok_or(ArithmeticError::Overflow)?;
 			if target_pre_investing_amount <= pool_proposal.max_pool_size {
 				// take all pre-investing into valid pre-investing line
@@ -437,7 +437,7 @@ pub mod pallet {
 				// If pool not already full, flag proposal status
 				if asset_actual_transfer_amount > queued_pre_investing_amount {
 					let actual_pre_investing_amount = asset_actual_transfer_amount
-						.checked_sub(queued_pre_investing_amount)
+						.checked_sub(&queued_pre_investing_amount)
 						.ok_or(ArithmeticError::Overflow)?;
 					pool_proposal_pre_investing
 						.add_pre_investing::<T>(who, actual_pre_investing_amount)?;
@@ -517,8 +517,8 @@ pub mod pallet {
 			// Return funds
 			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 				T::AIUSDAssetId::get(),
-				T::PreInvestingPool::get(),
-				who,
+				&T::PreInvestingPool::get(),
+				&who,
 				amount,
 				Preservation::Expendable,
 			)?;

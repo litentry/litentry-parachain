@@ -59,13 +59,13 @@ bitflags! {
 	}
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, MaxEncodedLen, TypeInfo)]
 pub struct PoolProposalStatus<BlockNumber> {
 	pub pool_proposal_index: PoolProposalIndex,
 	pub proposal_expire_time: BlockNumber,
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, MaxEncodedLen, TypeInfo)]
 pub struct PoolProposalInfo<InfoHash, Balance, BlockNumber, AccountId> {
 	// Proposer/Curator
 	pub proposer: AccountId,
@@ -126,7 +126,7 @@ impl<Identity: Ord, Balance> PartialEq for Bond<Identity, Balance> {
 	}
 }
 
-#[derive(Clone, Encode, Debug, Decode, TypeInfo)]
+#[derive(Clone, Encode, Debug, Decode, MaxEncodedLen, TypeInfo)]
 pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>> {
 	// Exluding queued part
 	pub total_pre_investing_amount: Balance,
@@ -156,7 +156,7 @@ impl<
 
 	pub fn get_pre_investing(&self, account: AccountId) -> Result<(usize, Balance), usize> {
 		match self.pre_investings.binary_search(&Bond::from_owner(account)) {
-			Ok(loc) => Ok((loc, self.pre_investings[loc].1)),
+			Ok(loc) => Ok((loc, self.pre_investings[loc].amount)),
 			Err(loc) => Err(loc),
 		}
 	}
@@ -166,7 +166,7 @@ impl<
 		account: AccountId,
 		amount: Balance,
 	) -> Result<(), DispatchError> {
-		match self.get_pre_investing(account) {
+		match self.get_pre_investing(account.clone()) {
 			Ok(existing) => {
 				self.pre_investings.remove(existing.0);
 				let new_balance =
@@ -179,10 +179,7 @@ impl<
 			Err(potential_index) => {
 				let _ = self
 					.pre_investings
-					.try_insert(
-						potential_index,
-						Bond { owner: account.clone(), amount: amount.clone() },
-					)
+					.try_insert(potential_index, Bond { owner: account, amount: amount.clone() })
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 			},
 		}
@@ -199,7 +196,7 @@ impl<
 		amount: Balance,
 	) -> Result<(), DispatchError> {
 		// Withdraw Queued one if any
-		if let Ok(existing_q) = self.get_queued_investing(account) {
+		if let Ok(existing_q) = self.get_queued_investing(account.clone()) {
 			if existing_q.1 > amount {
 				// Existing queue is larger than target amount
 				// Finish withdrawing and return early
@@ -228,7 +225,7 @@ impl<
 
 				let left_amount = amount - existing_q.1;
 
-				if let Ok(existing_p) = self.get_pre_investing(account) {
+				if let Ok(existing_p) = self.get_pre_investing(account.clone()) {
 					// Existing pre-investing is larger than left target amount
 					// Finish withdrawing and return early
 					if existing_p.1 > left_amount {
@@ -278,7 +275,7 @@ impl<
 			Ok(loc) => Ok((
 				loc,
 				self.queued_pre_investings[loc].0.amount,
-				self.queued_pre_investings[loc].1,
+				self.queued_pre_investings[loc].1.clone(),
 			)),
 			Err(loc) => Err(loc),
 		}
@@ -333,7 +330,7 @@ impl<
 			Error::<T>::InsufficientPreInvesting
 		);
 
-		let mut v = self.queued_pre_investings.into_inner().clone();
+		let mut v = self.queued_pre_investings.clone().into_inner();
 		// temp sorted by blocknumber
 		v.sort_by(|p| p.2);
 

@@ -146,7 +146,7 @@ pub mod pallet {
 			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
 			CuratorIndexToInfo::<T>::insert(
 				&next_curator_index,
-				(info_hash, current_block, wh.clone(), CandidateStatus::Unverified),
+				(info_hash, current_block, who.clone(), CandidateStatus::Unverified),
 			);
 			PublicCuratorCount::<T>::put(
 				next_curator_index.checked_add(1u32.into()).ok_or(ArithmeticError::Overflow)?,
@@ -175,7 +175,7 @@ pub mod pallet {
 			CuratorIndexToInfo::<T>::try_mutate_exists(
 				curator_index,
 				|maybe_info| -> Result<(), DispatchError> {
-					let mut info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
+					let info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
 
 					if info.3 == CandidateStatus::Banned {
 						T::Currency::reserve(&who, T::MinimumCuratorDeposit::get())?;
@@ -220,7 +220,7 @@ pub mod pallet {
 
 					// Delete item
 					*maybe_info = None;
-					Self::deposit_event(Event::CuratorCleaned { curator, curator_index });
+					Self::deposit_event(Event::CuratorCleaned { curator: who, curator_index });
 					Ok(())
 				},
 			)?;
@@ -235,12 +235,12 @@ pub mod pallet {
 			status: CandidateStatus,
 		) -> DispatchResult {
 			T::CuratorJudgeOrigin::ensure_origin(origin)?;
-			let curator_index =
-				PublicCuratorToIndex::<T>::get(curator).ok_or(Error::<T>::CuratorNotRegistered)?;
+			let curator_index = PublicCuratorToIndex::<T>::get(curator.clone())
+				.ok_or(Error::<T>::CuratorNotRegistered)?;
 			CuratorIndexToInfo::<T>::try_mutate_exists(
 				curator_index,
 				|maybe_info| -> Result<(), DispatchError> {
-					let mut info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
+					let info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
 					// Update block number
 					info.1 = frame_system::Pallet::<T>::block_number();
 					// Update status

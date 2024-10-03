@@ -238,7 +238,7 @@ pub mod pallet {
 			GuardianIndexToInfo::<T>::try_mutate_exists(
 				guardian_index,
 				|maybe_info| -> Result<(), DispatchError> {
-					let info = maybe_info.ok_or(Error::<T>::GuardianIndexNotExist)?;
+					let info = maybe_info.as_ref().ok_or(Error::<T>::GuardianIndexNotExist)?;
 
 					if info.3 != CandidateStatus::Banned {
 						let _ = T::Currency::unreserve(&who, T::MinimumGuardianDeposit::get());
