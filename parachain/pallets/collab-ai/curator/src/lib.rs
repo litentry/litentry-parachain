@@ -212,7 +212,7 @@ pub mod pallet {
 			CuratorIndexToInfo::<T>::try_mutate_exists(
 				curator_index,
 				|maybe_info| -> Result<(), DispatchError> {
-					let info = maybe_info.ok_or(Error::<T>::CuratorIndexNotExist)?;
+					let info = maybe_info.as_ref().ok_or(Error::<T>::CuratorIndexNotExist)?;
 
 					if info.3 != CandidateStatus::Banned {
 						let _ = T::Currency::unreserve(&who, T::MinimumCuratorDeposit::get());
