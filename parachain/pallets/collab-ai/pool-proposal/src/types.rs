@@ -139,7 +139,7 @@ pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>
 }
 
 impl<
-		AccountId: Ord + Clone,
+		AccountId: Ord + Clone + AsRef,
 		Balance: Default + CheckedAdd + CheckedSub + PartialOrd + Copy,
 		BlockNumber: Ord + Clone,
 		S: Get<u32>,

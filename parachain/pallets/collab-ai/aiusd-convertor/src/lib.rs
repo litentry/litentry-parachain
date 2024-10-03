@@ -140,7 +140,8 @@ pub mod pallet {
 					<InspectFungibles<T>>::mint_into(aiusd_id, &beneficiary, aiusd_amount)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
-				let aiusd_deciaml_unit_expression: T::Balance = 10u128.pow(18).try_into()?;
+				let aiusd_deciaml_unit_expression: T::Balance =
+					10u128.pow(18).try_into().or(Error::<T>::Overflow)?;
 				let aseet_target_transfer_amount = aiusd_minted_amount
 					.checked_mul(&ratio)
 					.ok_or(Error::<T>::Overflow)?
@@ -199,7 +200,7 @@ pub mod pallet {
 				let aseet_target_transfer_amount = aiusd_destroyed_amount
 					.checked_mul(&ratio)
 					.ok_or(Error::<T>::Overflow)?
-					.checked_div(10u128.pow(18))
+					.checked_div(10u128.pow(18).try_into().or(Error::<T>::Overflow)?)
 					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
