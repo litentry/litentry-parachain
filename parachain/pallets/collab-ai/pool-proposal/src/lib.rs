@@ -410,11 +410,11 @@ pub mod pallet {
 			if target_pre_investing_amount <= pool_proposal.max_pool_size {
 				// take all pre-investing into valid pre-investing line
 				pool_proposal_pre_investing
-					.add_pre_investing::<T>(who, asset_actual_transfer_amount)?;
+					.add_pre_investing::<T>(who.clone(), asset_actual_transfer_amount)?;
 
 				// Emit event only
 				Self::deposit_event(Event::PoolPreInvested {
-					user: who,
+					user: who.clone(),
 					pool_proposal_index,
 					amount: asset_actual_transfer_amount,
 				});
@@ -430,7 +430,7 @@ pub mod pallet {
 					.checked_sub(&pool_proposal.max_pool_size)
 					.ok_or(ArithmeticError::Overflow)?;
 				pool_proposal_pre_investing.add_queued_investing::<T>(
-					who,
+					who.clone(),
 					queued_pre_investing_amount,
 					frame_system::Pallet::<T>::block_number(),
 				)?;
@@ -441,10 +441,10 @@ pub mod pallet {
 						.checked_sub(&queued_pre_investing_amount)
 						.ok_or(ArithmeticError::Overflow)?;
 					pool_proposal_pre_investing
-						.add_pre_investing::<T>(who, actual_pre_investing_amount)?;
+						.add_pre_investing::<T>(who.clone(), actual_pre_investing_amount)?;
 
 					Self::deposit_event(Event::PoolPreInvested {
-						user: who,
+						user: who.clone(),
 						pool_proposal_index,
 						amount: actual_pre_investing_amount,
 					});

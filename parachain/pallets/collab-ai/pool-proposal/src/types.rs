@@ -127,6 +127,7 @@ impl<Identity: Ord, Balance> PartialEq for Bond<Identity, Balance> {
 }
 
 #[derive(Clone, Encode, Debug, Decode, MaxEncodedLen, TypeInfo)]
+#[scale_info(skip_type_params(S))]
 pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>> {
 	// Exluding queued part
 	pub total_pre_investing_amount: Balance,
