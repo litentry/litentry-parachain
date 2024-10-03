@@ -332,8 +332,8 @@ impl<
 		);
 
 		let mut v = self.queued_pre_investings.clone().into_inner();
-		// temp sorted by blocknumber
-		v.sort_by(|p| p.2);
+		// temp sorted by blocknumber from smallest to largest
+		v.sort_by(|a, b| a.2.cmp(b.2));
 
 		for i in v.iter() {
 			let transfer_amount = target_pre_investing_amount

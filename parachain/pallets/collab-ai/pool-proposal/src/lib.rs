@@ -48,7 +48,6 @@ use frame_system::{
 use orml_utilities::OrderedSet;
 pub use pallet::*;
 use pallet_collab_ai_common::*;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use sp_runtime::{
 	traits::{AccountIdConversion, CheckedAdd, CheckedSub},
 	ArithmeticError,
@@ -247,7 +246,7 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			// Check proposal expire by order
 
 			// Mature the pool by proposal if qualified, refund/transfer all money based on investing pool logic
@@ -520,7 +519,7 @@ pub mod pallet {
 			}
 
 			// Return funds
-			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
+			let _asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 				T::AIUSDAssetId::get(),
 				&T::PreInvestingPool::get(),
 				&who,
