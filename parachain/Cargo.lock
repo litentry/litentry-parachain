@@ -5661,6 +5661,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
@@ -7806,6 +7807,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-omni-account"
+version = "0.1.0"
+dependencies = [
+ "core-primitives",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-teebag",
+ "pallet-timestamp",
+ "pallet-utility",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-core-hashing",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
 dependencies = [
@@ -8531,6 +8553,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
@@ -10830,6 +10853,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
