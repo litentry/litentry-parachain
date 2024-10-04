@@ -35,7 +35,7 @@ use sp_core::{
 use sp_io::hashing::blake2_256;
 use sp_runtime::{
     traits::{BlakeTwo256, ConstU32},
-    BoundedVec, RuntimeDebug,
+    BoundedVec,
 };
 use strum_macros::EnumIter;
 
@@ -526,24 +526,6 @@ impl From<[u8; 20]> for Identity {
 impl From<[u8; 33]> for Identity {
     fn from(value: [u8; 33]) -> Self {
         Identity::Bitcoin(value.into())
-    }
-}
-
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub enum MemberIdentity {
-    Public(Identity),
-    Private(Vec<u8>),
-}
-
-impl MemberIdentity {
-    pub fn is_public(&self) -> bool {
-        matches!(self, Self::Public(..))
-    }
-}
-
-impl From<Identity> for MemberIdentity {
-    fn from(identity: Identity) -> Self {
-        Self::Public(identity)
     }
 }
 
