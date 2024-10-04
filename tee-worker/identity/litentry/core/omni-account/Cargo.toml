@@ -11,11 +11,11 @@ itp-ocall-api = { workspace = true }
 itp-storage = { workspace = true }
 itp-types = { workspace = true }
 
-sp-core = { workspace = true, features = ["full_crypto"] }
 codec = { package = "parity-scale-codec", workspace = true }
 frame-support = { workspace = true }
 lazy_static = { workspace = true }
 log = { workspace = true }
+sp-core = { workspace = true, features = ["full_crypto"] }
 
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
