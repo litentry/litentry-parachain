@@ -5,35 +5,17 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{Identity, MemberIdentity};
+pub use core_primitives::{IDGraphHash, IDGraphMember, Identity, MemberIdentity};
 pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 use sp_core::H256;
-use sp_core_hashing::blake2_256;
 use sp_std::vec::Vec;
-
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct IDGraphMember {
-	pub id: MemberIdentity,
-	pub hash: H256,
-}
 
 pub trait AccountIdConverter<T: Config> {
 	fn convert(identity: &Identity) -> Option<T::AccountId>;
-}
-
-pub trait IDGraphHash {
-	fn graph_hash(&self) -> H256;
-}
-
-impl<T> IDGraphHash for BoundedVec<IDGraphMember, T> {
-	fn graph_hash(&self) -> H256 {
-		let id_graph_members_hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
-		H256::from(blake2_256(&id_graph_members_hashes.encode()))
-	}
 }
 
 #[frame_support::pallet]
@@ -139,7 +121,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
-			IDGraphHashes::<T>::insert(who_account_id.clone(), id_graph.graph_hash());
+			IDGraphHashes::<T>::insert(who_account_id.clone(), id_graph.hash());
 			IDGraphs::<T>::insert(who_account_id.clone(), id_graph);
 
 			Self::deposit_event(Event::IdentityLinked {

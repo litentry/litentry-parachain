@@ -1,6 +1,7 @@
 use crate::{mock::*, IDGraphs, LinkedIdentityHashes, *};
 use core_primitives::Identity;
 use frame_support::{assert_noop, assert_ok};
+use sp_core::blake2_256;
 use sp_runtime::traits::BadOrigin;
 use sp_std::vec;
 
