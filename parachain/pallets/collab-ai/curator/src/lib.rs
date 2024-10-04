@@ -145,7 +145,7 @@ pub mod pallet {
 
 			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
 			CuratorIndexToInfo::<T>::insert(
-				&next_curator_index,
+				next_curator_index,
 				(info_hash, current_block, who.clone(), CandidateStatus::Unverified),
 			);
 			PublicCuratorCount::<T>::put(
