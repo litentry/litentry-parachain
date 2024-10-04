@@ -24,6 +24,8 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+mod id_graphs_repository;
+pub use id_graphs_repository::*;
 
 mod id_graphs_store;
 pub use id_graphs_store::IDGraphsStore;
