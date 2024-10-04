@@ -34,7 +34,7 @@ use frame_support::{
 			fungibles::{Inspect as FsInspect, Mutate as FsMutate},
 			Preservation,
 		},
-		Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency,
+		Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency,
 	},
 	transactional,
 	weights::Weight,
@@ -377,8 +377,8 @@ pub mod pallet {
 				Preservation::Expendable,
 			)?;
 
-			let mut pool_proposal_pre_investing = <PoolPreInvestings<T>>::take(pool_proposal_index)
-				.unwrap_or(PoolProposalPreInvesting::new());
+			let mut pool_proposal_pre_investing =
+				<PoolPreInvestings<T>>::take(pool_proposal_index).unwrap_or_default();
 
 			// Check pool maximum size limit and make pool size limit flag change accordingly
 			let mut pool_proposal =
@@ -472,8 +472,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			let mut pool_proposal_pre_investing = <PoolPreInvestings<T>>::take(pool_proposal_index)
-				.unwrap_or(PoolProposalPreInvesting::new());
+			let mut pool_proposal_pre_investing =
+				<PoolPreInvestings<T>>::take(pool_proposal_index).unwrap_or_default();
 
 			let pool_proposal =
 				<PoolProposal<T>>::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
