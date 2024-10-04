@@ -15,7 +15,6 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 
 [ -f .env ] || echo "NODE_ENV=ci" > .env
 pnpm install
-echo "--- Run ts test ---"
 pnpm run test-filter 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 
 $ROOTDIR/parachain/scripts/launch-bridge.sh
