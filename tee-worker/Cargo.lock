@@ -5257,6 +5257,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-omni-account"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "itp-ocall-api",
+ "itp-storage",
+ "itp-types",
+ "lazy_static",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-core",
+]
+
+[[package]]
 name = "lc-parachain-extrinsic-task-receiver"
 version = "0.1.0"
 dependencies = [
