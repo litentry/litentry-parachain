@@ -29,6 +29,9 @@ pub use assertion::Assertion;
 pub mod identity;
 pub use identity::*;
 
+pub mod omni_account;
+pub use omni_account::*;
+
 extern crate alloc;
 extern crate core;
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
