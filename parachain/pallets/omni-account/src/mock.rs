@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{self as pallet_omni_account};
+use crate::{self as pallet_omni_account, EnsureOmniAccount};
 use core_primitives::Identity;
 use frame_support::{
 	assert_ok,
@@ -174,6 +174,7 @@ impl pallet_omni_account::Config for TestRuntime {
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type MaxIDGraphLength = ConstU32<3>;
 	type AccountIdConverter = IdentityToAccountIdConverter;
+	type OmniAccountOrigin = EnsureOmniAccount<Self::AccountId>;
 }
 
 pub fn get_tee_signer() -> SystemAccountId {

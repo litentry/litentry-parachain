@@ -76,7 +76,7 @@ pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance,
-	DeveloperCommitteeMembershipInstance, EnsureRootOrAllCouncil,
+	DeveloperCommitteeMembershipInstance, EnsureOmniAccount, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
@@ -1002,10 +1002,13 @@ impl pallet_omni_account::AccountIdConverter<Runtime> for IdentityToAccountIdCon
 }
 
 impl pallet_omni_account::Config for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type MaxIDGraphLength = ConstU32<64>;
 	type AccountIdConverter = IdentityToAccountIdConverter;
+	type OmniAccountOrigin = EnsureOmniAccount;
 }
 
 impl pallet_bitacross::Config for Runtime {

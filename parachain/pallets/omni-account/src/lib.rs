@@ -86,10 +86,11 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// The runtime origin type.
-		type RuntimeOrigin: From<RawOrigin<Self::AccountId>>;
+		/// The runtime origin type
+		type RuntimeOrigin: From<RawOrigin<Self::AccountId>>
+			+ From<frame_system::RawOrigin<Self::AccountId>>;
 
-		/// The overarching call type.
+		/// The overarching call type
 		type RuntimeCall: Parameter
 			+ Dispatchable<
 				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
@@ -100,16 +101,22 @@ pub mod pallet {
 			+ IsSubType<Call<Self>>
 			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
 
-		/// The event type of this pallet.
+		/// The event type of this pallet
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		/// The origin which can manage the pallet.
+		/// The origin that represents the off-chain worker
 		type TEECallOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 		/// The maximum number of identities an id graph can have.
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
 		/// AccountId converter
 		type AccountIdConverter: AccountIdConverter<Self>;
+		/// The origin that represents the customised OmniAccount type
+		type OmniAccountOrigin: EnsureOrigin<
+			<Self as frame_system::Config>::RuntimeOrigin,
+			Success = Self::AccountId,
+		>;
 	}
+
 	pub type IDGraph<T> = BoundedVec<IDGraphMember, <T as Config>::MaxIDGraphLength>;
 
 	#[pallet::origin]
@@ -117,7 +124,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type LinkedIdentityHashes<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = ()>;
+		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = T::AccountId>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
@@ -138,6 +145,10 @@ pub mod pallet {
 		IdentityRemoved { who: T::AccountId, identity_hashes: Vec<H256> },
 		/// Identity made public
 		IdentityMadePublic { who: T::AccountId, identity_hash: H256 },
+		/// Some call is dispatched as omni-account origin
+		DispatchedAsOmniAccount { who: T::AccountId, result: DispatchResult },
+		/// Some call is dispatched as signed origin
+		DispatchedAsSigned { who: T::AccountId, result: DispatchResult },
 	}
 
 	#[pallet::error]
@@ -164,18 +175,47 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// dispatch the `call` as RawOrigin::OmniAccount
 		#[pallet::call_index(0)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn dispatch_as_omni_account(
 			origin: OriginFor<T>,
-			who_hash: H256,
+			account_hash: H256,
 			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			let omni_account =
+				LinkedIdentityHashes::<T>::get(account_hash).ok_or(Error::<T>::IdentityNotFound)?;
+			let result = call.dispatch(RawOrigin::OmniAccount(omni_account.clone()).into());
+			Self::deposit_event(Event::DispatchedAsOmniAccount {
+				who: omni_account,
+				result: result.map(|_| ()).map_err(|e| e.error),
+			});
 			Ok(())
 		}
 
+		// dispatch the `call` as the standard (frame_system) signed origin
+		// TODO: what about other customised origin like collective?
 		#[pallet::call_index(1)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn dispatch_as_signed(
+			origin: OriginFor<T>,
+			account_hash: H256,
+			call: Box<<T as Config>::RuntimeCall>,
+		) -> DispatchResult {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			let omni_account =
+				LinkedIdentityHashes::<T>::get(account_hash).ok_or(Error::<T>::IdentityNotFound)?;
+			let result =
+				call.dispatch(frame_system::RawOrigin::Signed(omni_account.clone()).into());
+			Self::deposit_event(Event::DispatchedAsSigned {
+				who: omni_account,
+				result: result.map(|_| ()).map_err(|e| e.error),
+			});
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn link_identity(
 			origin: OriginFor<T>,
@@ -183,6 +223,8 @@ pub mod pallet {
 			member_account: IDGraphMember,
 			maybe_id_graph_hash: Option<H256>,
 		) -> DispatchResult {
+			// We can't use `T::OmniAccountOrigin` here as the ownership of member account needs to
+			// be firstly validated by the TEE-worker before dispatching the extrinsic
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
 				!LinkedIdentityHashes::<T>::contains_key(member_account.hash),
@@ -202,7 +244,7 @@ pub mod pallet {
 				.try_push(member_account)
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 
-			LinkedIdentityHashes::<T>::insert(identity_hash, ());
+			LinkedIdentityHashes::<T>::insert(identity_hash, who_account_id.clone());
 			IDGraphHashes::<T>::insert(who_account_id.clone(), id_graph.graph_hash());
 			IDGraphs::<T>::insert(who_account_id.clone(), id_graph);
 
@@ -214,23 +256,17 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(2)]
+		#[pallet::call_index(3)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_identities(
 			origin: OriginFor<T>,
-			who: Identity,
 			identity_hashes: Vec<H256>,
 		) -> DispatchResult {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
 			ensure!(!identity_hashes.is_empty(), Error::<T>::IdentitiesEmpty);
 
-			let who_account_id = match T::AccountIdConverter::convert(&who) {
-				Some(account_id) => account_id,
-				None => return Err(Error::<T>::InvalidIdentity.into()),
-			};
-
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::UnknownIDGraph)?;
+				IDGraphs::<T>::get(&who).ok_or(Error::<T>::UnknownIDGraph)?;
 
 			id_graph_members.retain(|member| {
 				if identity_hashes.contains(&member.hash) {
@@ -242,43 +278,37 @@ pub mod pallet {
 			});
 
 			if id_graph_members.is_empty() {
-				IDGraphs::<T>::remove(&who_account_id);
+				IDGraphs::<T>::remove(&who);
 			} else {
-				IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members);
+				IDGraphs::<T>::insert(who.clone(), id_graph_members);
 			}
 
-			Self::deposit_event(Event::IdentityRemoved { who: who_account_id, identity_hashes });
+			Self::deposit_event(Event::IdentityRemoved { who, identity_hashes });
 
 			Ok(())
 		}
 
-		#[pallet::call_index(3)]
+		#[pallet::call_index(4)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn make_identity_public(
 			origin: OriginFor<T>,
-			who: Identity,
 			identity_hash: H256,
 			public_identity: MemberIdentity,
 		) -> DispatchResult {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
 			ensure!(public_identity.is_public(), Error::<T>::IdentityIsPrivate);
 
-			let who_account_id = match T::AccountIdConverter::convert(&who) {
-				Some(account_id) => account_id,
-				None => return Err(Error::<T>::InvalidIdentity.into()),
-			};
-
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who_account_id).ok_or(Error::<T>::UnknownIDGraph)?;
+				IDGraphs::<T>::get(&who).ok_or(Error::<T>::UnknownIDGraph)?;
 			let id_graph_link = id_graph_members
 				.iter_mut()
 				.find(|member| member.hash == identity_hash)
 				.ok_or(Error::<T>::IdentityNotFound)?;
 			id_graph_link.id = public_identity;
 
-			IDGraphs::<T>::insert(who_account_id.clone(), id_graph_members);
+			IDGraphs::<T>::insert(who.clone(), id_graph_members);
 
-			Self::deposit_event(Event::IdentityMadePublic { who: who_account_id, identity_hash });
+			Self::deposit_event(Event::IdentityMadePublic { who, identity_hash });
 
 			Ok(())
 		}
@@ -334,7 +364,7 @@ pub mod pallet {
 					hash: owner_identity_hash,
 				})
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
-			LinkedIdentityHashes::<T>::insert(owner_identity_hash, ());
+			LinkedIdentityHashes::<T>::insert(owner_identity_hash, owner_account_id.clone());
 			IDGraphs::<T>::insert(owner_account_id.clone(), id_graph_members.clone());
 
 			Ok(id_graph_members)
