@@ -1,5 +1,4 @@
-use crate::{Error, Identity, OmniAccountIDGraph};
-use alloc::collections::btree_map::BTreeMap;
+use crate::{AccountId, BTreeMap, Error, IDGraphs, OmniAccountIDGraph};
 use lazy_static::lazy_static;
 
 #[cfg(feature = "std")]
@@ -8,14 +7,13 @@ use std::sync::RwLock;
 use std::sync::SgxRwLock as RwLock;
 
 lazy_static! {
-	static ref ID_GRAPHS: RwLock<BTreeMap<Identity, OmniAccountIDGraph>> =
-		RwLock::new(BTreeMap::new());
+	static ref ID_GRAPHS: RwLock<IDGraphs> = RwLock::new(BTreeMap::new());
 }
 
 pub struct IDGraphsStore;
 
 impl IDGraphsStore {
-	pub fn get(&self, owner: Identity) -> Result<OmniAccountIDGraph, Error> {
+	pub fn get(&self, owner: AccountId) -> Result<OmniAccountIDGraph, Error> {
 		let id_graph = ID_GRAPHS
 			.read()
 			.map_err(|_| {
@@ -28,7 +26,7 @@ impl IDGraphsStore {
 		id_graph.ok_or(Error::NotFound)
 	}
 
-	pub fn insert(&self, owner: Identity, id_graph: OmniAccountIDGraph) -> Result<(), Error> {
+	pub fn insert(&self, owner: AccountId, id_graph: OmniAccountIDGraph) -> Result<(), Error> {
 		ID_GRAPHS
 			.write()
 			.map_err(|_| {
@@ -40,7 +38,7 @@ impl IDGraphsStore {
 		Ok(())
 	}
 
-	pub fn remove(&self, owner: Identity) -> Result<(), Error> {
+	pub fn remove(&self, owner: AccountId) -> Result<(), Error> {
 		ID_GRAPHS
 			.write()
 			.map_err(|_| {
@@ -52,7 +50,7 @@ impl IDGraphsStore {
 		Ok(())
 	}
 
-	pub fn load(&self, id_graphs: BTreeMap<Identity, OmniAccountIDGraph>) -> Result<(), Error> {
+	pub fn load(&self, id_graphs: IDGraphs) -> Result<(), Error> {
 		*ID_GRAPHS.write().map_err(|_| {
 			log::error!("[IDGraphsInMemoryRepository] Lock poisoning");
 			Error::LockPoisoning

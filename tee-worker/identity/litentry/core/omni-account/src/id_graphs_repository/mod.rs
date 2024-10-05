@@ -1,8 +1,8 @@
 use crate::{
-	AccountId, Error, Hash, Header, IDGraph, IDGraphMember, Identity, OmniAccountIDGraph,
+	AccountId, Error, Hash, Header, IDGraph, IDGraphMember, IDGraphs, Identity, OmniAccountIDGraph,
 	ParentchainId,
 };
-use alloc::{collections::btree_map::BTreeMap, vec::Vec};
+use alloc::vec::Vec;
 use codec::Encode;
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
@@ -10,8 +10,6 @@ use itp_storage::{
 	decode_storage_key, extract_blake2_128concat_key, storage_map_key, StorageHasher,
 };
 use sp_core::blake2_256;
-
-type IDGraphs = BTreeMap<AccountId, OmniAccountIDGraph>;
 
 // TODO: get this from core_primitives after the release-v0.9.19 branch has been updated
 pub trait IDGraphHash {
@@ -25,8 +23,12 @@ impl IDGraphHash for Vec<IDGraphMember> {
 }
 
 pub trait GetIDGraphsRepository {
-	fn get(&self, block_header: Header, owner: Identity) -> Result<OmniAccountIDGraph, Error>;
-	fn get_all(&self, block_header: Header) -> Result<IDGraphs, Error>;
+	fn get_by_owner(
+		&self,
+		block_header: Header,
+		owner: Identity,
+	) -> Result<OmniAccountIDGraph, Error>;
+	fn get(&self, block_header: Header) -> Result<IDGraphs, Error>;
 }
 
 pub struct IDGraphsRepository<OCallApi: EnclaveOnChainOCallApi> {
@@ -40,7 +42,11 @@ impl<OCallApi: EnclaveOnChainOCallApi> IDGraphsRepository<OCallApi> {
 }
 
 impl<OCallApi: EnclaveOnChainOCallApi> GetIDGraphsRepository for IDGraphsRepository<OCallApi> {
-	fn get(&self, block_header: Header, owner: Identity) -> Result<OmniAccountIDGraph, Error> {
+	fn get_by_owner(
+		&self,
+		block_header: Header,
+		owner: Identity,
+	) -> Result<OmniAccountIDGraph, Error> {
 		let storage_key =
 			storage_map_key("OmniAccount", "IDGraphs", &owner, &StorageHasher::Blake2_128Concat);
 		let storage_entry = self
@@ -54,7 +60,7 @@ impl<OCallApi: EnclaveOnChainOCallApi> GetIDGraphsRepository for IDGraphsReposit
 		Ok(OmniAccountIDGraph { graph: id_graph, hash: id_graph_hash })
 	}
 
-	fn get_all(&self, block_header: Header) -> Result<IDGraphs, Error> {
+	fn get(&self, block_header: Header) -> Result<IDGraphs, Error> {
 		let id_graphs_key_prefix = storage_prefix(b"OmniAccount", b"IDGraphs");
 		let id_graphs_storage_keys_response = self
 			.ocall_api

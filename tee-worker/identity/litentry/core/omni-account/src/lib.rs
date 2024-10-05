@@ -30,10 +30,12 @@ pub use id_graphs_repository::*;
 mod id_graphs_store;
 pub use id_graphs_store::IDGraphsStore;
 
-use alloc::vec::Vec;
+use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use codec::Decode;
 use itp_types::parentchain::{AccountId, Hash, Header, ParentchainId};
 use litentry_primitives::Identity;
+
+pub type IDGraphs = BTreeMap<AccountId, OmniAccountIDGraph>;
 
 pub type IDGraph = Vec<IDGraphMember>;
 
