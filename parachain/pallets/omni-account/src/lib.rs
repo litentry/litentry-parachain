@@ -1,3 +1,19 @@
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -10,9 +26,14 @@ pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
+use frame_support::{
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
+	traits::{IsSubType, UnfilteredDispatchable},
+};
 use frame_system::pallet_prelude::*;
 use sp_core::H256;
 use sp_core_hashing::blake2_256;
+use sp_runtime::traits::Dispatchable;
 use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
@@ -36,6 +57,21 @@ impl<T> IDGraphHash for BoundedVec<IDGraphMember, T> {
 	}
 }
 
+pub type MemberCount = u32;
+
+// Customized origin for this pallet, to:
+// 1. to decouple `TEECallOrigin` and extrinsic that should be sent from `OmniAccount` origin only
+// 2. allow other pallets to specify ensure_origin using this origin
+// 3. leave room for more delicate control over OmniAccount in the future (e.g. multisig-like control)
+#[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[codec(mel_bound(AccountId: MaxEncodedLen))]
+pub enum RawOrigin<AccountId> {
+	// dispatched from OmniAccount T::AccountId
+	OmniAccount(AccountId),
+	// dispatched by a given number of members of the OmniAccount IDGraph from a given total
+	OmniAccountMembers(AccountId, MemberCount, MemberCount),
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -50,10 +86,24 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The runtime origin type.
+		type RuntimeOrigin: From<RawOrigin<Self::AccountId>>;
+
+		/// The overarching call type.
+		type RuntimeCall: Parameter
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
+			+ From<frame_system::Call<Self>>
+			+ UnfilteredDispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin>
+			+ IsSubType<Call<Self>>
+			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
+
 		/// The event type of this pallet.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The origin which can manage the pallet.
-		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type TEECallOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 		/// The maximum number of identities an id graph can have.
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
@@ -61,6 +111,9 @@ pub mod pallet {
 		type AccountIdConverter: AccountIdConverter<Self>;
 	}
 	pub type IDGraph<T> = BoundedVec<IDGraphMember, <T as Config>::MaxIDGraphLength>;
+
+	#[pallet::origin]
+	pub type Origin<T> = RawOrigin<<T as frame_system::Config>::AccountId>;
 
 	#[pallet::storage]
 	pub type LinkedIdentityHashes<T: Config> =
@@ -113,6 +166,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn dispatch_as_omni_account(
+			origin: OriginFor<T>,
+			who_hash: H256,
+			call: Box<<T as Config>::RuntimeCall>,
+		) -> DispatchResult {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			who: Identity,
@@ -150,7 +214,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_identities(
 			origin: OriginFor<T>,
@@ -188,7 +252,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(3)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn make_identity_public(
 			origin: OriginFor<T>,
@@ -275,5 +339,26 @@ pub mod pallet {
 
 			Ok(id_graph_members)
 		}
+	}
+}
+
+pub struct EnsureOmniAccount<AccountId>(PhantomData<AccountId>);
+impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, AccountId: Decode>
+	EnsureOrigin<O> for EnsureOmniAccount<AccountId>
+{
+	type Success = AccountId;
+	fn try_origin(o: O) -> Result<Self::Success, O> {
+		o.into().and_then(|o| match o {
+			RawOrigin::OmniAccount(id) => Ok(id),
+			r => Err(O::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<O, ()> {
+		let zero_account_id =
+			AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes())
+				.expect("infinite length input; no invalid inputs for type; qed");
+		Ok(O::from(RawOrigin::OmniAccount(zero_account_id)))
 	}
 }
