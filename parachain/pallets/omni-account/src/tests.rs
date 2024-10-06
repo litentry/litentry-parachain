@@ -33,6 +33,11 @@ fn make_identity_public_call(hash: H256, id: MemberIdentity) -> Box<RuntimeCall>
 	Box::new(call)
 }
 
+fn make_balance_transfer_call(dest: AccountId, value: Balance) -> Box<RuntimeCall> {
+	let call = RuntimeCall::Balances(pallet_balances::Call::transfer { dest, value });
+	Box::new(call)
+}
+
 #[test]
 fn link_identity_works() {
 	new_test_ext().execute_with(|| {
@@ -597,5 +602,37 @@ fn make_identity_public_identity_is_private_check_works() {
 			}
 			.into(),
 		);
+	});
+}
+
+#[test]
+fn dispatch_as_signed_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash().unwrap();
+
+		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let identity_hash = Identity::from(bob()).hash().unwrap();
+
+		assert_ok!(OmniAccount::link_identity(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity,
+			IDGraphMember { id: private_identity.clone(), hash: identity_hash },
+			None
+		));
+
+		let call = make_balance_transfer_call(bob(), 5);
+		assert_ok!(OmniAccount::dispatch_as_signed(
+			RuntimeOrigin::signed(tee_signer),
+			who_identity_hash,
+			call
+		));
+		System::assert_has_event(
+			Event::DispatchedAsSigned { who, result: DispatchResult::Ok(()) }.into(),
+		);
+
+		assert_eq!(Balances::free_balance(bob()), 5);
 	});
 }

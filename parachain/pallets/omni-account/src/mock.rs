@@ -182,11 +182,12 @@ pub fn get_tee_signer() -> SystemAccountId {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let system = frame_system::GenesisConfig::<TestRuntime>::default();
-	let mut ext: sp_io::TestExternalities = RuntimeGenesisConfig { system, ..Default::default() }
-		.build_storage()
-		.unwrap()
-		.into();
+	let mut t = frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
+	pallet_balances::GenesisConfig::<TestRuntime> { balances: vec![(alice(), 10)] }
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
 		let signer = get_tee_signer();
