@@ -581,7 +581,7 @@ jobs:
           - litentry
           - rococo
           - paseo
-    name: ${{ matrix.chain }}
+    name: ${{ matrix.chain || github.job }}
     steps:
       - uses: actions/checkout@v4
 
@@ -718,7 +718,7 @@ jobs:
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
-    name: ${{ matrix.test_name }}
+    name: ${{ matrix.test_name || github.job }}
     steps:
       - uses: actions/checkout@v4
 
@@ -791,7 +791,7 @@ jobs:
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
-    name: ${{ matrix.test_name || 'identity-multi-worker-test' }}
+    name: ${{ matrix.test_name || github.job }}
     steps:
       - uses: actions/checkout@v4
 
@@ -857,7 +857,7 @@ jobs:
       matrix:
         include:
           - test_name: lit-sign-bitcoin
-    name: ${{ matrix.test_name }}
+    name: ${{ matrix.test_name || github.job }}
     steps:
       - uses: actions/checkout@v4
 
