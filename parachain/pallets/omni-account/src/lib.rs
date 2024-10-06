@@ -34,6 +34,7 @@ use frame_system::pallet_prelude::*;
 use sp_core::H256;
 use sp_core_hashing::blake2_256;
 use sp_runtime::traits::Dispatchable;
+use sp_std::boxed::Box;
 use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]

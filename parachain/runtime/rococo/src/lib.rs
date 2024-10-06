@@ -1379,7 +1379,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::AssetsHandler(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::EvmAssertions(_) |
-			RuntimeCall::ScoreStaking(_)
+			RuntimeCall::ScoreStaking(_) |
+			RuntimeCall::OmniAccount(_)
 		)
 	}
 }
