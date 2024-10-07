@@ -61,10 +61,10 @@ pub(crate) type BalanceOf<T> =
 
 pub(crate) type InspectFungibles<T> = pallet_assets::Pallet<T>;
 /// Balance type alias for balances of assets that implement the `fungibles` trait.
-pub(crate) type AssetBalanceOf<T> =
+pub type AssetBalanceOf<T> =
 	<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 /// Type alias for Asset IDs.
-pub(crate) type AssetIdOf<T> =
+pub type AssetIdOf<T> =
 	<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
 
 #[frame_support::pallet]
@@ -257,7 +257,6 @@ pub mod pallet {
 		/// Curator propose a investing pool
 		///
 		/// max_pool_size: At most this amount of raised money curator/investing pool willing to take
-		/// min_pool_size: At least this amount of raised money require for curator willing to fulfill contract
 		/// proposal_last_time: How does the proposal lasts for voting/preinvesting.
 		///                     All ProposalStatusFlags must be satisfied after this period passed, which is also
 		/// 					the approximate date when pool begins.

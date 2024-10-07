@@ -29,6 +29,7 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
+pub use pallet::*;
 use sp_runtime::traits::{CheckedDiv, CheckedMul};
 
 #[frame_support::pallet]
@@ -36,10 +37,10 @@ pub mod pallet {
 	use super::*;
 	pub(crate) type InspectFungibles<T> = pallet_assets::Pallet<T>;
 	/// Balance type alias for balances of assets that implement the `fungibles` trait.
-	pub(crate) type AssetBalanceOf<T> =
+	pub type AssetBalanceOf<T> =
 		<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 	/// Type alias for Asset IDs.
-	pub(crate) type AssetIdOf<T> =
+	pub type AssetIdOf<T> =
 		<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
 
 	/// The current storage version.
