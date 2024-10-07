@@ -1,8 +1,42 @@
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 use crate::{mock::*, IDGraphs, LinkedIdentityHashes, *};
 use core_primitives::Identity;
 use frame_support::{assert_noop, assert_ok};
-use sp_runtime::traits::BadOrigin;
+use sp_runtime::{traits::BadOrigin, ModuleError};
 use sp_std::vec;
+
+fn remove_identity_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
+	let call = RuntimeCall::OmniAccount(crate::Call::remove_identities { identity_hashes: hashes });
+	Box::new(call)
+}
+
+fn make_identity_public_call(hash: H256, id: MemberIdentity) -> Box<RuntimeCall> {
+	let call = RuntimeCall::OmniAccount(crate::Call::make_identity_public {
+		identity_hash: hash,
+		public_identity: id,
+	});
+	Box::new(call)
+}
+
+fn make_balance_transfer_call(dest: AccountId, value: Balance) -> Box<RuntimeCall> {
+	let call = RuntimeCall::Balances(pallet_balances::Call::transfer { dest, value });
+	Box::new(call)
+}
 
 #[test]
 fn link_identity_works() {
@@ -326,12 +360,38 @@ fn remove_identity_works() {
 			member_account.clone(),
 			None
 		));
-		assert_ok!(OmniAccount::remove_identities(
+
+		// normal signed origin should give `BadOrigin`, no matter
+		// it's from TEE-worker, or omni-account itself
+		assert_noop!(
+			OmniAccount::remove_identities(
+				RuntimeOrigin::signed(tee_signer.clone()),
+				identities_to_remove.clone()
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+
+		assert_noop!(
+			OmniAccount::remove_identities(
+				RuntimeOrigin::signed(who.clone()),
+				identities_to_remove.clone()
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+
+		let call = remove_identity_call(identities_to_remove.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity.clone(),
-			identities_to_remove.clone()
+			who_identity_hash,
+			call
 		));
-		System::assert_last_event(
+
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount { who: who.clone(), result: DispatchResult::Ok(()) }
+				.into(),
+		);
+
+		System::assert_has_event(
 			Event::IdentityRemoved { who: who.clone(), identity_hashes: identities_to_remove }
 				.into(),
 		);
@@ -345,15 +405,12 @@ fn remove_identity_works() {
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
 		assert!(!LinkedIdentityHashes::<TestRuntime>::contains_key(identity_hash));
 
-		assert_ok!(OmniAccount::remove_identities(
+		let call = remove_identity_call(vec![who_identity_hash]);
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity.clone(),
-			vec![who_identity_hash],
+			who_identity_hash,
+			call
 		));
-		System::assert_last_event(
-			Event::IdentityRemoved { who: who.clone(), identity_hashes: vec![who_identity_hash] }
-				.into(),
-		);
 
 		assert!(!IDGraphs::<TestRuntime>::contains_key(&who));
 	});
@@ -363,33 +420,37 @@ fn remove_identity_works() {
 fn remove_identity_empty_identity_check_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash().unwrap();
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
+			who_identity,
 			IDGraphMember {
 				id: MemberIdentity::Private(vec![1, 2, 3]),
 				hash: H256::from(blake2_256(&[1, 2, 3])),
 			},
 			None
 		));
-		assert_noop!(
-			OmniAccount::remove_identities(RuntimeOrigin::signed(tee_signer.clone()), who, vec![],),
-			Error::<TestRuntime>::IdentitiesEmpty
-		);
-	});
-}
 
-#[test]
-fn remove_identity_origin_check_works() {
-	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identities_to_remove = vec![H256::from(blake2_256(&[1, 2, 3]))];
-
-		assert_noop!(
-			OmniAccount::remove_identities(RuntimeOrigin::signed(bob()), who, identities_to_remove),
-			BadOrigin
+		let call = remove_identity_call(vec![]);
+		// execution itself is ok, but error is shown in the dispatch result
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity_hash,
+			call
+		));
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
+				who,
+				result: Err(DispatchError::Module(ModuleError {
+					index: 5,
+					error: [6, 0, 0, 0],
+					message: Some("IdentitiesEmpty"),
+				})),
+			}
+			.into(),
 		);
 	});
 }
@@ -400,6 +461,7 @@ fn make_identity_public_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash().unwrap();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let public_identity = MemberIdentity::Public(Identity::from(bob()));
@@ -422,13 +484,19 @@ fn make_identity_public_works() {
 		]);
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
 
-		assert_ok!(OmniAccount::make_identity_public(
+		let call = make_identity_public_call(identity_hash, public_identity.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity.clone(),
-			identity_hash,
-			public_identity.clone()
+			who_identity_hash,
+			call
 		));
-		System::assert_last_event(
+
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount { who: who.clone(), result: DispatchResult::Ok(()) }
+				.into(),
+		);
+
+		System::assert_has_event(
 			Event::IdentityMadePublic { who: who.clone(), identity_hash }.into(),
 		);
 
@@ -444,30 +512,12 @@ fn make_identity_public_works() {
 }
 
 #[test]
-fn make_identity_public_origin_check_works() {
-	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identity = Identity::from(bob());
-		let identity_hash = identity.hash().unwrap();
-		let public_identity = MemberIdentity::Public(identity.clone());
-
-		assert_noop!(
-			OmniAccount::make_identity_public(
-				RuntimeOrigin::signed(bob()),
-				who,
-				identity_hash,
-				public_identity
-			),
-			BadOrigin
-		);
-	});
-}
-
-#[test]
 fn make_identity_public_identity_not_found_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash().unwrap();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let identity = Identity::from(bob());
@@ -475,19 +525,19 @@ fn make_identity_public_identity_not_found_works() {
 		let identity_hash =
 			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
 
+		let call = make_identity_public_call(identity_hash, public_identity.clone());
 		assert_noop!(
-			OmniAccount::make_identity_public(
+			OmniAccount::dispatch_as_omni_account(
 				RuntimeOrigin::signed(tee_signer.clone()),
-				who.clone(),
-				identity_hash,
-				public_identity.clone()
+				who_identity_hash,
+				call
 			),
-			Error::<TestRuntime>::UnknownIDGraph
+			Error::<TestRuntime>::IdentityNotFound
 		);
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
+			who_identity,
 			IDGraphMember { id: private_identity.clone(), hash: identity_hash },
 			None
 		));
@@ -497,14 +547,22 @@ fn make_identity_public_identity_not_found_works() {
 		let other_identity_hash =
 			H256::from(blake2_256(&charlie_identity.to_did().unwrap().encode()));
 
-		assert_noop!(
-			OmniAccount::make_identity_public(
-				RuntimeOrigin::signed(tee_signer),
+		let call = make_identity_public_call(other_identity_hash, other_identity);
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity_hash,
+			call
+		));
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
 				who,
-				other_identity_hash,
-				other_identity,
-			),
-			Error::<TestRuntime>::IdentityNotFound
+				result: Err(DispatchError::Module(ModuleError {
+					index: 5,
+					error: [2, 0, 0, 0],
+					message: Some("IdentityNotFound"),
+				})),
+			}
+			.into(),
 		);
 	});
 }
@@ -513,26 +571,68 @@ fn make_identity_public_identity_not_found_works() {
 fn make_identity_public_identity_is_private_check_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash().unwrap();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let identity_hash = Identity::from(bob()).hash().unwrap();
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
+			who_identity,
 			IDGraphMember { id: private_identity.clone(), hash: identity_hash },
 			None
 		));
 
-		assert_noop!(
-			OmniAccount::make_identity_public(
-				RuntimeOrigin::signed(tee_signer),
+		let call = make_identity_public_call(identity_hash, private_identity);
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity_hash,
+			call
+		));
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
 				who,
-				identity_hash,
-				private_identity,
-			),
-			Error::<TestRuntime>::IdentityIsPrivate
+				result: Err(DispatchError::Module(ModuleError {
+					index: 5,
+					error: [5, 0, 0, 0],
+					message: Some("IdentityIsPrivate"),
+				})),
+			}
+			.into(),
 		);
+	});
+}
+
+#[test]
+fn dispatch_as_signed_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash().unwrap();
+
+		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let identity_hash = Identity::from(bob()).hash().unwrap();
+
+		assert_ok!(OmniAccount::link_identity(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity,
+			IDGraphMember { id: private_identity.clone(), hash: identity_hash },
+			None
+		));
+
+		let call = make_balance_transfer_call(bob(), 5);
+		assert_ok!(OmniAccount::dispatch_as_signed(
+			RuntimeOrigin::signed(tee_signer),
+			who_identity_hash,
+			call
+		));
+		System::assert_has_event(
+			Event::DispatchedAsSigned { who, result: DispatchResult::Ok(()) }.into(),
+		);
+
+		assert_eq!(Balances::free_balance(bob()), 5);
 	});
 }

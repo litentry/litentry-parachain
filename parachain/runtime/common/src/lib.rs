@@ -327,3 +327,5 @@ where
 		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
 }
+
+pub type EnsureOmniAccount = pallet_omni_account::EnsureOmniAccount<AccountId>;

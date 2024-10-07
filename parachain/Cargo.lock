@@ -11227,6 +11227,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-teebag",
  "pallet-transaction-payment",
  "pallet-treasury",
