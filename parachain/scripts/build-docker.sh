@@ -62,7 +62,7 @@ docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
     --target builder \
     --tag local-builder:latest .
 
-docker images 
+docker images
 
 # Build the image
 echo "------------------------------------------------------------"
@@ -80,7 +80,7 @@ docker build ${NOCACHE_FLAG} -f ./parachain/docker/Dockerfile \
     --tag ${GITUSER}/${GITREPO}:${TAG} .
 
 # Tag it with latest if no tag parameter was provided
-[ -z "$TAG" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
+[ -z "$2" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
 
 # Show the list of available images for this repo
 echo "Image is ready"
@@ -88,7 +88,7 @@ echo "------------------------------------------------------------"
 docker images | grep ${GITREPO}
 
 # ===================================================================================
-if [ -z "$TAG" ] || [ "$TAG" = "latest" ]; then
+if [ -z "$2" ] || [ "$TAG" = "latest" ]; then
     GITUSER=litentry
     GITREPO=litentry-chain-aio
     PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
@@ -109,7 +109,7 @@ if [ -z "$TAG" ] || [ "$TAG" = "latest" ]; then
         --tag ${GITUSER}/${GITREPO}:${TAG} .
 
     # Tag it with latest if no tag parameter was provided
-    [ -z "$TAG" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
+    [ -z "$2" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
 
     # Show the list of available images for this repo
     echo "Image is ready"
