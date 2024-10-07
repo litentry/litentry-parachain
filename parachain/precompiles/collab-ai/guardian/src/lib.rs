@@ -83,9 +83,9 @@ where
 			3u8 => Ok(GuardianVote::Specific(
 				potential_proposal_index
 					.try_into()
-					.map_err(|_| RevertReason::value_is_too_large("proposal index type"))?,
+					.map_err(|_| RevertReason::value_is_too_large("proposal index type").into())?,
 			)),
-			_ => RevertReason::custom("Out of potential status result"),
+			_ => Err(RevertReason::custom("Out of potential status result").into()),
 		}
 	}
 
