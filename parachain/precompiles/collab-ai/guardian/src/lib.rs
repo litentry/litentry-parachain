@@ -80,11 +80,13 @@ where
 			0u8 => Ok(GuardianVote::Neutral),
 			1u8 => Ok(GuardianVote::Aye),
 			2u8 => Ok(GuardianVote::Nay),
-			3u8 => Ok(GuardianVote::Specific(
-				potential_proposal_index
-					.try_into()
-					.map_err(|_| RevertReason::value_is_too_large("proposal index type").into())?,
-			)),
+			3u8 => {
+				Ok(GuardianVote::Specific(potential_proposal_index.try_into().map_err(|_| {
+					<RevertReason as Into<Revert>>::into(RevertReason::value_is_too_large(
+						"proposal index type",
+					))
+				})?))
+			},
 			_ => Err(RevertReason::custom("Out of potential status result").into()),
 		}
 	}
