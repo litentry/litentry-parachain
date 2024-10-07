@@ -21,6 +21,7 @@ itp-stf-state-handler = { workspace = true }
 itp-stf-state-observer = { workspace = true }
 itp-time-utils = { workspace = true }
 itp-types = { workspace = true }
+itp-sgx-io = { workspace = true }
 
 itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../top-pool-author", default-features = false }
 

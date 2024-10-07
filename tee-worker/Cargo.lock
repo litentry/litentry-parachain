@@ -3394,6 +3394,8 @@ dependencies = [
  "itp-node-api",
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-interface",
  "itp-stf-primitives",
@@ -3604,6 +3606,7 @@ dependencies = [
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
+ "itp-sgx-io",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-stf-state-handler",
@@ -4326,9 +4329,12 @@ version = "0.8.0"
 dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
  "itp-stf-primitives",
  "itp-types",
  "parity-scale-codec",
+ "sp-runtime",
 ]
 
 [[package]]

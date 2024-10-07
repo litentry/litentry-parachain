@@ -20,7 +20,7 @@ sp-std = { workspace = true }
 itp-node-api = { workspace = true }
 itp-node-api-metadata-provider = { workspace = true }
 itp-ocall-api = { workspace = true }
-itp-sgx-crypto = { workspace = true }
+itp-sgx-crypto = { workspace = true, features = ["mocks"] }
 itp-sgx-externalities = { workspace = true }
 itp-stf-interface = { workspace = true }
 itp-stf-primitives = { workspace = true }

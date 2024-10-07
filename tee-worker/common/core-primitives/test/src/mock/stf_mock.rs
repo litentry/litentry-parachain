@@ -14,11 +14,14 @@
 	limitations under the License.
 
 */
+use super::onchain_mock::OnchainMock;
 use alloc::{boxed::Box, sync::Arc};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_node_api::metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
+// TODO: use Aes256 when available
+use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_interface::{
 	runtime_upgrade::RuntimeUpgradeInterface, ExecuteCall, InitState, StateCallInterface,
@@ -37,14 +40,18 @@ use itp_types::{
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_core::{sr25519, Pair};
-use sp_runtime::transaction_validity::{
-	TransactionValidityError, UnknownTransaction, ValidTransaction,
+use sp_runtime::{
+	generic::Header,
+	traits::BlakeTwo256,
+	transaction_validity::{TransactionValidityError, UnknownTransaction, ValidTransaction},
 };
 use sp_std::{vec, vec::Vec};
 use std::{thread::sleep, time::Duration};
 
 // a few dummy types
 type NodeMetadataRepositoryMock = NodeMetadataRepository<NodeMetadataMock>;
+type BlockNumber = u32;
+pub type ParentchainHeader = Header<BlockNumber, BlakeTwo256>;
 
 #[derive(Debug, PartialEq, Eq, Encode)]
 pub enum StfMockError {
@@ -63,8 +70,15 @@ impl UpdateState<SgxExternalities, SgxExternalitiesDiffType> for StfMock {
 	}
 }
 
-impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRepositoryMock>
-	for StfMock
+impl
+	StateCallInterface<
+		TrustedCallSignedMock,
+		SgxExternalities,
+		NodeMetadataRepositoryMock,
+		OnchainMock,
+		ParentchainHeader,
+		KeyRepositoryMock<Aes>,
+	> for StfMock
 {
 	type Error = StfMockError;
 	type Result = ();
@@ -76,8 +90,21 @@ impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRep
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
+		ocall_api: Arc<OnchainMock>,
+		parentchain_header: &ParentchainHeader,
+		key_repository: Arc<KeyRepositoryMock<Aes>>,
 	) -> Result<(), Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
+		state.execute_with(|| {
+			call.execute(
+				shard,
+				top_hash,
+				calls,
+				node_metadata_repo,
+				ocall_api,
+				parentchain_header,
+				key_repository,
+			)
+		})
 	}
 }
 
@@ -170,7 +197,9 @@ impl Default for TrustedCallSignedMock {
 	}
 }
 
-impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
+impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock, ParentchainHeader, KeyRepositoryMock<Aes>>
+	for TrustedCallSignedMock
+{
 	type Error = StfMockError;
 	type Result = ();
 
@@ -180,6 +209,9 @@ impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
+		_ocall_api: Arc<OnchainMock>,
+		_parentchain_header: &ParentchainHeader,
+		_on_chain_encryption_key_repo: Arc<KeyRepositoryMock<Aes>>,
 	) -> Result<(), Self::Error> {
 		match self.call {
 			TrustedCallMock::noop(_) => Ok(()),

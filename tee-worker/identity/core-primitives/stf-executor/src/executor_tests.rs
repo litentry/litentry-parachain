@@ -18,9 +18,12 @@
 use crate::{executor::StfExecutor, traits::StateUpdateProposer};
 use codec::Encode;
 use itc_parentchain_test::ParentchainHeaderBuilder;
+// TODO: use Aes256 when available
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
+use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_sgx_externalities::{SgxExternalities as State, SgxExternalitiesTrait};
+use itp_sgx_io::SealedIO;
 use itp_stf_primitives::{traits::TrustedCallSigning, types::ShardIdentifier};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{
@@ -28,7 +31,7 @@ use itp_test::mock::{
 	onchain_mock::OnchainMock,
 	stf_mock::{GetterMock, StfMock, TrustedCallMock, TrustedCallSignedMock},
 };
-use itp_types::H256;
+use itp_types::{parentchain::Header as ParentchainHeader, H256};
 use sp_core::{ed25519, Pair};
 use sp_runtime::app_crypto::sp_core::blake2_256;
 use std::{sync::Arc, time::Duration, vec};
@@ -244,6 +247,8 @@ fn stf_executor() -> (
 		StfMock,
 		TrustedCallSignedMock,
 		GetterMock,
+		ParentchainHeader,
+		KeyRepositoryMock<Aes>,
 	>,
 	Arc<OnchainMock>,
 	Arc<HandleStateMock>,
@@ -251,7 +256,13 @@ fn stf_executor() -> (
 	let ocall_api = Arc::new(OnchainMock::default());
 	let state_handler = Arc::new(HandleStateMock::default());
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
-	let executor = StfExecutor::new(ocall_api.clone(), state_handler.clone(), node_metadata_repo);
+	let encryption_key_repository = Arc::new(KeyRepositoryMock::new(Aes::default()));
+	let executor = StfExecutor::new(
+		ocall_api.clone(),
+		state_handler.clone(),
+		node_metadata_repo,
+		encryption_key_repository,
+	);
 	(executor, ocall_api, state_handler)
 }
 

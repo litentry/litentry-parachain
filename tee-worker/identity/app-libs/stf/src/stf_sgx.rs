@@ -28,6 +28,9 @@ use ita_sgx_runtime::{
 	Executive, ParentchainInstanceLitentry, ParentchainInstanceTargetA, ParentchainInstanceTargetB,
 };
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_ocall_api::EnclaveOnChainOCallApi;
+// TODO: use Aes256 when available
+use itp_sgx_crypto::{aes::Aes, key_repository::AccessKey};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInstancesInterface,
@@ -47,7 +50,7 @@ use itp_types::{
 };
 use itp_utils::stringify::account_id_to_string;
 use log::*;
-use sp_runtime::traits::StaticLookup;
+use sp_runtime::traits::{Header as HeaderTrait, StaticLookup};
 
 impl<TCS, G, State, Runtime, AccountId> InitState<State, AccountId> for Stf<TCS, G, State, Runtime>
 where
@@ -134,11 +137,27 @@ where
 	}
 }
 
-impl<TCS, G, State, Runtime, NodeMetadataRepository>
-	StateCallInterface<TCS, State, NodeMetadataRepository> for Stf<TCS, G, State, Runtime>
+impl<
+		TCS,
+		G,
+		State,
+		Runtime,
+		NodeMetadataRepository,
+		OCallApi,
+		PH,
+		OnChainEncryptionKeyRepository,
+	>
+	StateCallInterface<
+		TCS,
+		State,
+		NodeMetadataRepository,
+		OCallApi,
+		PH,
+		OnChainEncryptionKeyRepository,
+	> for Stf<TCS, G, State, Runtime>
 where
 	TCS: PartialEq
-		+ ExecuteCall<NodeMetadataRepository>
+		+ ExecuteCall<NodeMetadataRepository, OCallApi, PH, OnChainEncryptionKeyRepository>
 		+ Encode
 		+ Decode
 		+ Debug
@@ -149,6 +168,9 @@ where
 	State: SgxExternalitiesTrait + Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	OCallApi: EnclaveOnChainOCallApi,
+	PH: HeaderTrait<Hash = H256>,
+	OnChainEncryptionKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Error = TCS::Error;
 	type Result = TCS::Result;
@@ -160,8 +182,21 @@ where
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		ocall_api: Arc<OCallApi>,
+		parentchain_header: &PH,
+		on_chain_encryption_key_repo: Arc<OnChainEncryptionKeyRepository>,
 	) -> Result<Self::Result, Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
+		state.execute_with(|| {
+			call.execute(
+				shard,
+				top_hash,
+				calls,
+				node_metadata_repo,
+				ocall_api,
+				parentchain_header,
+				on_chain_encryption_key_repo,
+			)
+		})
 	}
 }
 

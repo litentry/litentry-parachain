@@ -39,7 +39,10 @@ use itp_top_pool_author::{
 	author::Author,
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 };
-use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
+use itp_types::{
+	parentchain::Header as ParentchainHeader, Block as ParentchainBlock,
+	SignedBlock as SignedParentchainBlock,
+};
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_sidechain::{aura::block_importer::BlockImporter, block_composer::BlockComposer};
 use primitive_types::H256;
@@ -74,6 +77,8 @@ pub type TestStfExecutor = StfExecutor<
 	TestStf,
 	TrustedCallSigned,
 	Getter,
+	ParentchainHeader,
+	TestStateKeyRepo,
 >;
 
 pub type TestRpcResponder = RpcResponderMock<H256>;

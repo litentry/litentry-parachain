@@ -103,6 +103,7 @@ pub fn produce_sidechain_block_and_import_it() {
 		ocall_api.clone(),
 		state_handler.clone(),
 		node_metadata_repo,
+		state_key_repo.clone(),
 	));
 	let top_pool = create_top_pool();
 

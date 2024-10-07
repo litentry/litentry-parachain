@@ -20,7 +20,10 @@ use ita_stf::{Getter, Stf, TrustedCall, TrustedCallSigned};
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{
-	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, mocks::KeyRepositoryMock,
+	ed25519_derivation::DeriveEd25519,
+	key_repository::AccessKey,
+	mocks::KeyRepositoryMock,
+	Aes, // TODO: use Aes256 when available
 };
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::{enclave_signer::StfEnclaveSigner, traits::StfEnclaveSigning};
@@ -35,14 +38,20 @@ use itp_stf_primitives::{
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
-use itp_types::RsaRequest;
+use itp_types::{Header, RsaRequest};
 use litentry_primitives::Identity;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
+use sp_runtime::traits::Header as HeaderTrait;
 use std::{sync::Arc, vec::Vec};
 
 type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
+type OnChainEncryptionKeyRepositoryMock = KeyRepositoryMock<Aes>;
 type TestStf = Stf<TrustedCallSigned, GetterExecutorMock, SgxExternalities, Runtime>;
+
+pub fn latest_parentchain_header() -> Header {
+	Header::new(1, Default::default(), Default::default(), [69; 32].into(), Default::default())
+}
 
 pub fn derive_key_is_deterministic() {
 	let rsa_key = Rsa3072KeyPair::new().unwrap();
@@ -98,7 +107,7 @@ pub fn nonce_is_computed_correctly() {
 	let shard = ShardIdentifier::default();
 	let enclave_signer = StfEnclaveSigner::<_, _, _, TestStf, _, TrustedCallSigned, Getter>::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repo,
 		top_pool_author.clone(),
 	);
@@ -134,6 +143,8 @@ pub fn nonce_is_computed_correctly() {
 
 	assert_eq!(0, TestStf::get_account_nonce(&mut state, &enclave_account));
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
+	let on_chain_encryption_key_repository =
+		Arc::new(OnChainEncryptionKeyRepositoryMock::new(Aes::default()));
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -141,6 +152,9 @@ pub fn nonce_is_computed_correctly() {
 		Default::default(),
 		&mut Vec::new(),
 		repo.clone(),
+		ocall_api.clone(),
+		&latest_parentchain_header(),
+		on_chain_encryption_key_repository.clone()
 	)
 	.is_ok());
 
@@ -151,6 +165,9 @@ pub fn nonce_is_computed_correctly() {
 		Default::default(),
 		&mut Vec::new(),
 		repo,
+		ocall_api,
+		&latest_parentchain_header(),
+		on_chain_encryption_key_repository
 	)
 	.is_ok());
 	assert_eq!(2, TestStf::get_account_nonce(&mut state, &enclave_account));
