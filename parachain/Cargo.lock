@@ -7363,6 +7363,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-aiusd-convertor"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "libsecp256k1",
+ "pallet-aiusd-convertor",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-assets-erc20"
 version = "0.1.0"
 dependencies = [
@@ -7427,6 +7450,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-curator"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "libsecp256k1",
+ "pallet-curator",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-dispatch"
 version = "2.0.0-dev"
 source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.1.0#7544791796a93e85716241b72ba68b7c7231376f"
@@ -7445,6 +7491,30 @@ source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.1.0#7544
 dependencies = [
  "ed25519-dalek",
  "fp-evm",
+]
+
+[[package]]
+name = "pallet-evm-precompile-guardian"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "libsecp256k1",
+ "pallet-collab-ai-common",
+ "pallet-evm",
+ "pallet-guardian",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7475,6 +7545,30 @@ dependencies = [
  "sha3",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-evm-precompile-pool-proposal"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "libsecp256k1",
+ "pallet-collab-ai-common",
+ "pallet-evm",
+ "pallet-pool-proposal",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
