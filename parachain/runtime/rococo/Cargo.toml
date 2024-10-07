@@ -87,6 +87,7 @@ pallet-evm-assertions = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
+pallet-omni-account = { workspace = true }
 pallet-parachain-staking = { workspace = true }
 pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
@@ -172,6 +173,7 @@ runtime-benchmarks = [
     "pallet-vc-management/runtime-benchmarks",
     "pallet-account-fix/runtime-benchmarks",
     "pallet-score-staking/runtime-benchmarks",
+    "pallet-omni-account/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -265,6 +267,7 @@ std = [
     "pallet-extrinsic-filter/std",
     "pallet-group/std",
     "pallet-identity-management/std",
+    "pallet-omni-account/std",
     "pallet-score-staking/std",
     "pallet-teebag/std",
     "pallet-vc-management/std",
@@ -326,4 +329,5 @@ try-runtime = [
     "pallet-vesting/try-runtime",
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
+    "pallet-omni-account/try-runtime",
 ]

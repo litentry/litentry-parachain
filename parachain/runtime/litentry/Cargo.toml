@@ -87,6 +87,7 @@ pallet-evm-assertions = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
+pallet-omni-account = { workspace = true }
 pallet-parachain-staking = { workspace = true }
 pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
@@ -169,6 +170,7 @@ runtime-benchmarks = [
     "cumulus-pallet-parachain-system/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
     "pallet-score-staking/runtime-benchmarks",
+    "pallet-omni-account/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -254,6 +256,7 @@ std = [
     "pallet-bridge-transfer/std",
     "pallet-extrinsic-filter/std",
     "pallet-bitacross/std",
+    "pallet-omni-account/std",
     "pallet-identity-management/std",
     "pallet-score-staking/std",
     "pallet-teebag/std",
@@ -314,4 +317,5 @@ try-runtime = [
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
     "pallet-score-staking/try-runtime",
+    "pallet-omni-account/try-runtime",
 ]
