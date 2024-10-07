@@ -21,13 +21,14 @@ use sp_runtime::{traits::BadOrigin, ModuleError};
 use sp_std::vec;
 
 fn remove_identity_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
-	let call = RuntimeCall::OmniAccount(crate::Call::remove_identities { identity_hashes: hashes });
+	let call =
+		RuntimeCall::OmniAccount(crate::Call::remove_accounts { member_account_hashes: hashes });
 	Box::new(call)
 }
 
 fn publicize_account_call(hash: H256, id: MemberIdentity) -> Box<RuntimeCall> {
 	let call = RuntimeCall::OmniAccount(crate::Call::publicize_account {
-		identity_hash: hash,
+		member_account_hash: hash,
 		public_identity: id,
 	});
 	Box::new(call)
@@ -78,7 +79,8 @@ fn add_account_works() {
 			None
 		));
 		System::assert_last_event(
-			Event::IdentityLinked { who: who.clone(), identity: bob_member_account.hash }.into(),
+			Event::AccountAdded { who: who.clone(), member_account_hash: bob_member_account.hash }
+				.into(),
 		);
 
 		assert!(AccountStore::<TestRuntime>::contains_key(&who));
@@ -92,8 +94,11 @@ fn add_account_works() {
 			Some(expected_id_graph_hash),
 		));
 		System::assert_last_event(
-			Event::IdentityLinked { who: who.clone(), identity: charlie_member_account.hash }
-				.into(),
+			Event::AccountAdded {
+				who: who.clone(),
+				member_account_hash: charlie_member_account.hash,
+			}
+			.into(),
 		);
 
 		let expected_id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
@@ -197,7 +202,7 @@ fn add_account_already_linked_works() {
 				member_account,
 				None
 			),
-			Error::<TestRuntime>::IdentityAlreadyLinked
+			Error::<TestRuntime>::AccountAlreadyAdded
 		);
 
 		// intent to create a new id_graph with an identity that is already linked
@@ -213,7 +218,7 @@ fn add_account_already_linked_works() {
 				alice_member_account,
 				None
 			),
-			Error::<TestRuntime>::IdentityAlreadyLinked
+			Error::<TestRuntime>::AccountAlreadyAdded
 		);
 	});
 }
@@ -352,7 +357,7 @@ fn remove_identity_works() {
 			hash: H256::from(blake2_256(&[1, 2, 3])),
 		};
 		let identity_hash = member_account.hash;
-		let identities_to_remove = vec![identity_hash];
+		let hashes = vec![identity_hash];
 
 		assert_ok!(OmniAccount::add_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -364,22 +369,16 @@ fn remove_identity_works() {
 		// normal signed origin should give `BadOrigin`, no matter
 		// it's from TEE-worker, or omni-account itself
 		assert_noop!(
-			OmniAccount::remove_identities(
-				RuntimeOrigin::signed(tee_signer.clone()),
-				identities_to_remove.clone()
-			),
+			OmniAccount::remove_accounts(RuntimeOrigin::signed(tee_signer.clone()), hashes.clone()),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
 		assert_noop!(
-			OmniAccount::remove_identities(
-				RuntimeOrigin::signed(who.clone()),
-				identities_to_remove.clone()
-			),
+			OmniAccount::remove_accounts(RuntimeOrigin::signed(who.clone()), hashes.clone()),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
-		let call = remove_identity_call(identities_to_remove.clone());
+		let call = remove_identity_call(hashes.clone());
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity_hash,
@@ -392,8 +391,7 @@ fn remove_identity_works() {
 		);
 
 		System::assert_has_event(
-			Event::IdentityRemoved { who: who.clone(), identity_hashes: identities_to_remove }
-				.into(),
+			Event::AccountRemoved { who: who.clone(), member_account_hashes: hashes }.into(),
 		);
 
 		let expected_id_graph: MemberAccounts<TestRuntime> =
@@ -447,7 +445,7 @@ fn remove_identity_empty_identity_check_works() {
 				result: Err(DispatchError::Module(ModuleError {
 					index: 5,
 					error: [6, 0, 0, 0],
-					message: Some("IdentitiesEmpty"),
+					message: Some("EmptyAccount"),
 				})),
 			}
 			.into(),
@@ -497,7 +495,8 @@ fn publicize_account_works() {
 		);
 
 		System::assert_has_event(
-			Event::IdentityMadePublic { who: who.clone(), identity_hash }.into(),
+			Event::AccountMadePublic { who: who.clone(), member_account_hash: identity_hash }
+				.into(),
 		);
 
 		let expected_id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
@@ -532,7 +531,7 @@ fn publicize_account_identity_not_found_works() {
 				who_identity_hash,
 				call
 			),
-			Error::<TestRuntime>::IdentityNotFound
+			Error::<TestRuntime>::AccountNotFound
 		);
 
 		assert_ok!(OmniAccount::add_account(
@@ -559,7 +558,7 @@ fn publicize_account_identity_not_found_works() {
 				result: Err(DispatchError::Module(ModuleError {
 					index: 5,
 					error: [2, 0, 0, 0],
-					message: Some("IdentityNotFound"),
+					message: Some("AccountNotFound"),
 				})),
 			}
 			.into(),
@@ -597,7 +596,7 @@ fn publicize_account_identity_is_private_check_works() {
 				result: Err(DispatchError::Module(ModuleError {
 					index: 5,
 					error: [5, 0, 0, 0],
-					message: Some("IdentityIsPrivate"),
+					message: Some("AccountIsPrivate"),
 				})),
 			}
 			.into(),
