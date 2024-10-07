@@ -18,7 +18,7 @@
 #![allow(clippy::identity_op)]
 #![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
@@ -59,8 +59,8 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use core_primitives::{
-	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Nonce, Signature, DAYS,
-	HOURS, LITENTRY_PARA_ID, MINUTES, SLOT_DURATION,
+	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Identity, Nonce,
+	Signature, DAYS, HOURS, LITENTRY_PARA_ID, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -951,6 +951,21 @@ impl pallet_identity_management::Config for Runtime {
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
 }
 
+pub struct IdentityToAccountIdConverter;
+
+impl pallet_omni_account::AccountIdConverter<Runtime> for IdentityToAccountIdConverter {
+	fn convert(identity: &Identity) -> Option<AccountId> {
+		identity.to_account_id()
+	}
+}
+
+impl pallet_omni_account::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type MaxIDGraphLength = ConstU32<64>;
+	type AccountIdConverter = IdentityToAccountIdConverter;
+}
+
 impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
@@ -1209,6 +1224,7 @@ construct_runtime! {
 		VCManagement: pallet_vc_management = 81,
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 82,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 83,
+		OmniAccount: pallet_omni_account = 84,
 
 		// Frontier
 		EVM: pallet_evm = 120,

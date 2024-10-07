@@ -23,6 +23,7 @@ members = [
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
+    'pallets/omni-account',
     'precompiles/assets-erc20',
     'precompiles/bridge-transfer',
     'precompiles/collab-ai/aiusd-convertor',
@@ -271,6 +272,7 @@ pallet-bridge-transfer = { path = "pallets/bridge/bridge-transfer", default-feat
 pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features = false }
 pallet-group = { path = "pallets/group", default-features = false }
 pallet-identity-management = { path = "pallets/identity-management", default-features = false }
+pallet-omni-account = { path = "pallets/omni-account", default-features = false }
 pallet-parachain-staking = { path = "pallets/parachain-staking", default-features = false }
 pallet-score-staking = { path = "pallets/score-staking", default-features = false }
 pallet-teebag = { path = "pallets/teebag", default-features = false }
