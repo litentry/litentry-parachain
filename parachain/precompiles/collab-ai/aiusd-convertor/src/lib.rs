@@ -7,8 +7,8 @@ use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
-use sp_core::{H256, U256};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_core::U256;
+use sp_std::marker::PhantomData;
 
 use pallet_aiusd_convertor::{AssetBalanceOf, AssetIdOf};
 
@@ -35,7 +35,10 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 		})?;
 
-		let call = pallet_aiusd_convertor::Call::<Runtime>::mint_aiusd { asset_id, amount };
+		let call = pallet_aiusd_convertor::Call::<Runtime>::mint_aiusd {
+			target_asset_id: asset_id,
+			aiusd_amount: amount,
+		};
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
@@ -52,7 +55,10 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 		})?;
 
-		let call = pallet_aiusd_convertor::Call::<Runtime>::burn_aiusd { asset_id, amount };
+		let call = pallet_aiusd_convertor::Call::<Runtime>::burn_aiusd {
+			target_asset_id: asset_id,
+			aiusd_amount: amount,
+		};
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
