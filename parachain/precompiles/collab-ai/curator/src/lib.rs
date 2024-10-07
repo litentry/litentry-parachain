@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use fp_evm::{PrecompileFailure, PrecompileHandle};
+use fp_evm::PrecompileHandle;
 
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
 use pallet_evm::AddressMapping;
@@ -8,7 +8,7 @@ use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
 use sp_core::H256;
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 
 pub struct CuratorPrecompile<Runtime>(PhantomData<Runtime>);
 

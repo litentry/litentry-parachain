@@ -1,9 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use fp_evm::{PrecompileFailure, PrecompileHandle};
+use fp_evm::PrecompileHandle;
 
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
-use pallet_collab_ai_common::{GuardianVote, PoolProposalIndex};
+use pallet_collab_ai_common::GuardianVote;
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
@@ -85,6 +85,7 @@ where
 					.try_into()
 					.map_err(|_| RevertReason::value_is_too_large("proposal index type"))?,
 			)),
+			_ => RevertReason::custom("Out of potential status result"),
 		}
 	}
 
