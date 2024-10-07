@@ -172,7 +172,7 @@ impl pallet_omni_account::Config for TestRuntime {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
-	type MaxIDGraphLength = ConstU32<3>;
+	type MaxAccountGraphLength = ConstU32<3>;
 	type AccountIdConverter = IdentityToAccountIdConverter;
 	type OmniAccountOrigin = EnsureOmniAccount<Self::AccountId>;
 }

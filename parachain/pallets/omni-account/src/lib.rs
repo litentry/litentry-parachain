@@ -37,8 +37,10 @@ use sp_runtime::traits::Dispatchable;
 use sp_std::boxed::Box;
 use sp_std::vec::Vec;
 
+pub type MemberCount = u32;
+
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct IDGraphMember {
+pub struct MemberAccount {
 	pub id: MemberIdentity,
 	pub hash: H256,
 }
@@ -47,18 +49,16 @@ pub trait AccountIdConverter<T: Config> {
 	fn convert(identity: &Identity) -> Option<T::AccountId>;
 }
 
-pub trait IDGraphHash {
-	fn graph_hash(&self) -> H256;
+pub trait GetAccountStoreHash {
+	fn hash(&self) -> H256;
 }
 
-impl<T> IDGraphHash for BoundedVec<IDGraphMember, T> {
-	fn graph_hash(&self) -> H256 {
-		let id_graph_members_hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
-		H256::from(blake2_256(&id_graph_members_hashes.encode()))
+impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {
+	fn hash(&self) -> H256 {
+		let hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
+		H256::from(blake2_256(&hashes.encode()))
 	}
 }
-
-pub type MemberCount = u32;
 
 // Customized origin for this pallet, to:
 // 1. to decouple `TEECallOrigin` and extrinsic that should be sent from `OmniAccount` origin only
@@ -69,7 +69,7 @@ pub type MemberCount = u32;
 pub enum RawOrigin<AccountId> {
 	// dispatched from OmniAccount T::AccountId
 	OmniAccount(AccountId),
-	// dispatched by a given number of members of the OmniAccount IDGraph from a given total
+	// dispatched by a given number of members of the AccountStore from a given total
 	OmniAccountMembers(AccountId, MemberCount, MemberCount),
 }
 
@@ -104,13 +104,17 @@ pub mod pallet {
 
 		/// The event type of this pallet
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
 		/// The origin that represents the off-chain worker
 		type TEECallOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
-		/// The maximum number of identities an id graph can have.
+
+		/// The maximum number of accounts that an AccountGraph can have
 		#[pallet::constant]
-		type MaxIDGraphLength: Get<u32>;
+		type MaxAccountGraphLength: Get<MemberCount>;
+
 		/// AccountId converter
 		type AccountIdConverter: AccountIdConverter<Self>;
+
 		/// The origin that represents the customised OmniAccount type
 		type OmniAccountOrigin: EnsureOrigin<
 			<Self as frame_system::Config>::RuntimeOrigin,
@@ -118,23 +122,26 @@ pub mod pallet {
 		>;
 	}
 
-	pub type IDGraph<T> = BoundedVec<IDGraphMember, <T as Config>::MaxIDGraphLength>;
+	pub type MemberAccounts<T> = BoundedVec<MemberAccount, <T as Config>::MaxAccountGraphLength>;
 
 	#[pallet::origin]
 	pub type Origin<T> = RawOrigin<<T as frame_system::Config>::AccountId>;
 
+	/// A map between OmniAccount and its MemberAccounts (a bounded vector of MemberAccount)
 	#[pallet::storage]
-	pub type LinkedIdentityHashes<T: Config> =
+	#[pallet::getter(fn account_store)]
+	pub type AccountStore<T: Config> =
+		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = MemberAccounts<T>>;
+
+	/// A map between hash of MemberAccount and its belonging OmniAccount
+	#[pallet::storage]
+	pub type MemberAccountHash<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = T::AccountId>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn id_graphs)]
-	pub type IDGraphs<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = IDGraph<T>>;
-
+	/// A map between OmniAccount and hash of its AccountStore
 	#[pallet::storage]
 	#[pallet::getter(fn id_graph_hashes)]
-	pub type IDGraphHashes<T: Config> =
+	pub type AccountStoreHash<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
 
 	#[pallet::event]
@@ -157,7 +164,7 @@ pub mod pallet {
 		/// Identity is already linked
 		IdentityAlreadyLinked,
 		/// IDGraph len limit reached
-		IDGraphLenLimitReached,
+		AccountStoreLenLimitReached,
 		/// Identity not found
 		IdentityNotFound,
 		/// Invalid identity
@@ -169,9 +176,9 @@ pub mod pallet {
 		/// Identities empty
 		IdentitiesEmpty,
 		/// IDGraph hash does not match
-		IDGraphHashMismatch,
+		AccountStoreHashMismatch,
 		/// Missing IDGraph hash
-		IDGraphHashMissing,
+		AccountStoreHashMaissing,
 	}
 
 	#[pallet::call]
@@ -186,7 +193,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			let omni_account =
-				LinkedIdentityHashes::<T>::get(account_hash).ok_or(Error::<T>::IdentityNotFound)?;
+				MemberAccountHash::<T>::get(account_hash).ok_or(Error::<T>::IdentityNotFound)?;
 			let result = call.dispatch(RawOrigin::OmniAccount(omni_account.clone()).into());
 			Self::deposit_event(Event::DispatchedAsOmniAccount {
 				who: omni_account,
@@ -206,7 +213,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			let omni_account =
-				LinkedIdentityHashes::<T>::get(account_hash).ok_or(Error::<T>::IdentityNotFound)?;
+				MemberAccountHash::<T>::get(account_hash).ok_or(Error::<T>::IdentityNotFound)?;
 			let result =
 				call.dispatch(frame_system::RawOrigin::Signed(omni_account.clone()).into());
 			Self::deposit_event(Event::DispatchedAsSigned {
@@ -218,17 +225,17 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn link_identity(
+		pub fn add_account(
 			origin: OriginFor<T>,
 			who: Identity,
-			member_account: IDGraphMember,
+			member_account: MemberAccount,
 			maybe_id_graph_hash: Option<H256>,
 		) -> DispatchResult {
 			// We can't use `T::OmniAccountOrigin` here as the ownership of member account needs to
 			// be firstly validated by the TEE-worker before dispatching the extrinsic
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
-				!LinkedIdentityHashes::<T>::contains_key(member_account.hash),
+				!MemberAccountHash::<T>::contains_key(member_account.hash),
 				Error::<T>::IdentityAlreadyLinked
 			);
 			let who_account_id = match T::AccountIdConverter::convert(&who) {
@@ -243,11 +250,11 @@ pub mod pallet {
 			)?;
 			id_graph
 				.try_push(member_account)
-				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
+				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 
-			LinkedIdentityHashes::<T>::insert(identity_hash, who_account_id.clone());
-			IDGraphHashes::<T>::insert(who_account_id.clone(), id_graph.graph_hash());
-			IDGraphs::<T>::insert(who_account_id.clone(), id_graph);
+			MemberAccountHash::<T>::insert(identity_hash, who_account_id.clone());
+			AccountStoreHash::<T>::insert(who_account_id.clone(), id_graph.hash());
+			AccountStore::<T>::insert(who_account_id.clone(), id_graph);
 
 			Self::deposit_event(Event::IdentityLinked {
 				who: who_account_id,
@@ -267,11 +274,11 @@ pub mod pallet {
 			ensure!(!identity_hashes.is_empty(), Error::<T>::IdentitiesEmpty);
 
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who).ok_or(Error::<T>::UnknownIDGraph)?;
+				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownIDGraph)?;
 
 			id_graph_members.retain(|member| {
 				if identity_hashes.contains(&member.hash) {
-					LinkedIdentityHashes::<T>::remove(member.hash);
+					MemberAccountHash::<T>::remove(member.hash);
 					false
 				} else {
 					true
@@ -279,9 +286,9 @@ pub mod pallet {
 			});
 
 			if id_graph_members.is_empty() {
-				IDGraphs::<T>::remove(&who);
+				AccountStore::<T>::remove(&who);
 			} else {
-				IDGraphs::<T>::insert(who.clone(), id_graph_members);
+				AccountStore::<T>::insert(who.clone(), id_graph_members);
 			}
 
 			Self::deposit_event(Event::IdentityRemoved { who, identity_hashes });
@@ -291,7 +298,7 @@ pub mod pallet {
 
 		#[pallet::call_index(4)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn make_identity_public(
+		pub fn publicize_account(
 			origin: OriginFor<T>,
 			identity_hash: H256,
 			public_identity: MemberIdentity,
@@ -300,14 +307,14 @@ pub mod pallet {
 			ensure!(public_identity.is_public(), Error::<T>::IdentityIsPrivate);
 
 			let mut id_graph_members =
-				IDGraphs::<T>::get(&who).ok_or(Error::<T>::UnknownIDGraph)?;
+				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownIDGraph)?;
 			let id_graph_link = id_graph_members
 				.iter_mut()
 				.find(|member| member.hash == identity_hash)
 				.ok_or(Error::<T>::IdentityNotFound)?;
 			id_graph_link.id = public_identity;
 
-			IDGraphs::<T>::insert(who.clone(), id_graph_members);
+			AccountStore::<T>::insert(who.clone(), id_graph_members);
 
 			Self::deposit_event(Event::IdentityMadePublic { who, identity_hash });
 
@@ -320,8 +327,8 @@ pub mod pallet {
 			who: Identity,
 			who_account_id: T::AccountId,
 			maybe_id_graph_hash: Option<H256>,
-		) -> Result<IDGraph<T>, Error<T>> {
-			match IDGraphs::<T>::get(&who_account_id) {
+		) -> Result<MemberAccounts<T>, Error<T>> {
+			match AccountStore::<T>::get(&who_account_id) {
 				Some(id_graph_members) => {
 					Self::verify_id_graph_hash(&who_account_id, maybe_id_graph_hash)?;
 					Ok(id_graph_members)
@@ -335,15 +342,15 @@ pub mod pallet {
 			maybe_id_graph_hash: Option<H256>,
 		) -> Result<(), Error<T>> {
 			let current_id_graph_hash =
-				IDGraphHashes::<T>::get(who).ok_or(Error::<T>::IDGraphHashMissing)?;
+				AccountStoreHash::<T>::get(who).ok_or(Error::<T>::AccountStoreHashMaissing)?;
 			match maybe_id_graph_hash {
 				Some(id_graph_hash) => {
 					ensure!(
 						current_id_graph_hash == id_graph_hash,
-						Error::<T>::IDGraphHashMismatch
+						Error::<T>::AccountStoreHashMismatch
 					);
 				},
-				None => return Err(Error::<T>::IDGraphHashMissing),
+				None => return Err(Error::<T>::AccountStoreHashMaissing),
 			}
 
 			Ok(())
@@ -352,21 +359,21 @@ pub mod pallet {
 		fn create_id_graph(
 			owner_identity: Identity,
 			owner_account_id: T::AccountId,
-		) -> Result<IDGraph<T>, Error<T>> {
+		) -> Result<MemberAccounts<T>, Error<T>> {
 			let owner_identity_hash =
 				owner_identity.hash().map_err(|_| Error::<T>::InvalidIdentity)?;
-			if LinkedIdentityHashes::<T>::contains_key(owner_identity_hash) {
+			if MemberAccountHash::<T>::contains_key(owner_identity_hash) {
 				return Err(Error::<T>::IdentityAlreadyLinked);
 			}
-			let mut id_graph_members: IDGraph<T> = BoundedVec::new();
+			let mut id_graph_members: MemberAccounts<T> = BoundedVec::new();
 			id_graph_members
-				.try_push(IDGraphMember {
+				.try_push(MemberAccount {
 					id: MemberIdentity::from(owner_identity.clone()),
 					hash: owner_identity_hash,
 				})
-				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
-			LinkedIdentityHashes::<T>::insert(owner_identity_hash, owner_account_id.clone());
-			IDGraphs::<T>::insert(owner_account_id.clone(), id_graph_members.clone());
+				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
+			MemberAccountHash::<T>::insert(owner_identity_hash, owner_account_id.clone());
+			AccountStore::<T>::insert(owner_account_id.clone(), id_graph_members.clone());
 
 			Ok(id_graph_members)
 		}
