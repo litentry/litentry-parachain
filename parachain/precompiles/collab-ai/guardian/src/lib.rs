@@ -3,13 +3,13 @@
 use fp_evm::{PrecompileFailure, PrecompileHandle};
 
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
-use pallet_collab_ai_common::GuardianVote;
+use pallet_collab_ai_common::{GuardianVote, PoolProposalIndex};
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
 use sp_core::{H256, U256};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 
 pub struct GuardianPrecompile<Runtime>(PhantomData<Runtime>);
 
@@ -64,9 +64,10 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
+		let guardian: [u8; 32] = guardian.into();
 		let guardian = Runtime::AccountId::from(guardian);
 		let guardian_vote: GuardianVote =
-			to_guardian_vote(status, potential_proposal_index).in_field("guardianVote")?;
+			Self::to_guardian_vote(status, potential_proposal_index).in_field("guardianVote")?;
 		let call = pallet_guardian::Call::<Runtime>::vote { guardian, status: guardian_vote };
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
@@ -78,13 +79,11 @@ where
 			0u8 => Ok(GuardianVote::Neutral),
 			1u8 => Ok(GuardianVote::Aye),
 			2u8 => Ok(GuardianVote::Nay),
-			3u8 => {
-				Ok(GuardianVote::Specific(potential_proposal_index.try_into().map_err(|_| {
-					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large(
-						"proposal index type",
-					))
-				})?))
-			},
+			3u8 => Ok(GuardianVote::Specific(
+				potential_proposal_index
+					.try_into()
+					.map_err(|_| RevertReason::value_is_too_large("proposal index type")?),
+			)),
 		}
 	}
 

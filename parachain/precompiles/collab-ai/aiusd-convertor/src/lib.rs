@@ -28,7 +28,7 @@ where
 	fn mint_aiusd(handle: &mut impl PrecompileHandle, asset_id: U256, amount: U256) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let asset_id: AssetIdOf<Runtime> = amount.try_into().map_err(|_| {
+		let asset_id: AssetIdOf<Runtime> = asset_id.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("asset id type"))
 		})?;
 		let amount: AssetBalanceOf<Runtime> = amount.try_into().map_err(|_| {
@@ -48,7 +48,7 @@ where
 	fn burn_aiusd(handle: &mut impl PrecompileHandle, asset_id: U256, amount: U256) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let asset_id: AssetIdOf<Runtime> = amount.try_into().map_err(|_| {
+		let asset_id: AssetIdOf<Runtime> = asset_id.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("asset id type"))
 		})?;
 		let amount: AssetBalanceOf<Runtime> = amount.try_into().map_err(|_| {
