@@ -4,12 +4,12 @@ use fp_evm::{PrecompileFailure, PrecompileHandle};
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_evm::AddressMapping;
-use pallet_pool_proposal::{AssetBalanceOf, AssetIdOf};
+use pallet_pool_proposal::AssetBalanceOf;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
 use sp_core::{H256, U256};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 
 pub struct GuardianPrecompile<Runtime>(PhantomData<Runtime>);
 
@@ -56,7 +56,7 @@ where
 
 		let pool_info_hash = pool_info_hash.into();
 
-		let call = pallet_guardian::Call::<Runtime>::propose_investing_pool {
+		let call = pallet_pool_proposal::Call::<Runtime>::propose_investing_pool {
 			max_pool_size,
 			proposal_last_time,
 			pool_last_time,
@@ -82,8 +82,10 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 		})?;
 
-		let call =
-			pallet_guardian::Call::<Runtime>::pre_stake_proposal { pool_proposal_index, amount };
+		let call = pallet_pool_proposal::Call::<Runtime>::pre_stake_proposal {
+			pool_proposal_index,
+			amount,
+		};
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
@@ -103,7 +105,7 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 		})?;
 
-		let call = pallet_guardian::Call::<Runtime>::withdraw_pre_investing {
+		let call = pallet_pool_proposal::Call::<Runtime>::withdraw_pre_investing {
 			pool_proposal_index,
 			amount,
 		};
@@ -121,8 +123,9 @@ where
 
 		let pool_proposal_index = pool_proposal_index.into();
 
-		let call =
-			pallet_guardian::Call::<Runtime>::guardian_participate_proposal { pool_proposal_index };
+		let call = pallet_pool_proposal::Call::<Runtime>::guardian_participate_proposal {
+			pool_proposal_index,
+		};
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
