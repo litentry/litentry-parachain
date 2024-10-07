@@ -17,6 +17,7 @@ pub struct GuardianPrecompile<Runtime>(PhantomData<Runtime>);
 impl<Runtime> GuardianPrecompile<Runtime>
 where
 	Runtime: pallet_guardian::Config + pallet_evm::Config,
+	Runtime::AccountId: From<[u8; 32]>,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	Runtime::RuntimeCall: From<pallet_guardian::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
@@ -68,7 +69,7 @@ where
 		let guardian = Runtime::AccountId::from(guardian);
 		let guardian_vote: GuardianVote =
 			Self::to_guardian_vote(status, potential_proposal_index).in_field("guardianVote")?;
-		let call = pallet_guardian::Call::<Runtime>::vote { guardian, status: guardian_vote };
+		let call = pallet_guardian::Call::<Runtime>::vote { guardian, status: Some(guardian_vote) };
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
@@ -82,7 +83,7 @@ where
 			3u8 => Ok(GuardianVote::Specific(
 				potential_proposal_index
 					.try_into()
-					.map_err(|_| RevertReason::value_is_too_large("proposal index type")?),
+					.map_err(|_| RevertReason::value_is_too_large("proposal index type"))?,
 			)),
 		}
 	}

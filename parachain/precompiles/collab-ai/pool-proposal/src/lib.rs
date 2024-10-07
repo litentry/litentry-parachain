@@ -11,10 +11,10 @@ use sp_runtime::traits::Dispatchable;
 use sp_core::{H256, U256};
 use sp_std::marker::PhantomData;
 
-pub struct GuardianPrecompile<Runtime>(PhantomData<Runtime>);
+pub struct PoolProposalPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]
-impl<Runtime> GuardianPrecompile<Runtime>
+impl<Runtime> PoolProposalPrecompile<Runtime>
 where
 	Runtime: pallet_pool_proposal::Config + pallet_evm::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
@@ -45,7 +45,7 @@ where
 				))
 			})?;
 
-		let pool_last_time: AssetBalanceOf<Runtime> = pool_last_time.try_into().map_err(|_| {
+		let pool_last_time: BlockNumberFor<Runtime> = pool_last_time.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("block number type"))
 		})?;
 
@@ -76,7 +76,9 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let pool_proposal_index = pool_proposal_index.into();
+		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
 
 		let amount: AssetBalanceOf<Runtime> = amount.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
@@ -99,7 +101,9 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let pool_proposal_index = pool_proposal_index.into();
+		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
 
 		let amount: AssetBalanceOf<Runtime> = amount.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
@@ -121,7 +125,9 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let pool_proposal_index = pool_proposal_index.into();
+		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
 
 		let call = pallet_pool_proposal::Call::<Runtime>::guardian_participate_proposal {
 			pool_proposal_index,
