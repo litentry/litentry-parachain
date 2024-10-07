@@ -54,7 +54,7 @@ where
 				Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 			})?;
 
-		let pool_info_hash = pool_info_hash.into();
+		let pool_info_hash = pool_info_hash;
 
 		let call = pallet_pool_proposal::Call::<Runtime>::propose_investing_pool {
 			max_pool_size,
