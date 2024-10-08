@@ -13,9 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-
-pub extern crate alloc;
-
 use crate::{
 	assertion::network::{
 		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
@@ -33,7 +30,7 @@ use parity_scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{
 	crypto::{AccountId32, ByteArray},
-	ecdsa, ed25519, sr25519, H160,
+	ecdsa, ed25519, sr25519, H160, H256,
 };
 use sp_io::hashing::blake2_256;
 use sp_runtime::{
@@ -453,6 +450,11 @@ impl Identity {
 			}
 		))
 	}
+
+	pub fn hash(&self) -> Result<H256, &'static str> {
+		let did = self.to_did()?;
+		Ok(H256::from(blake2_256(&did.encode())))
+	}
 }
 
 impl From<ed25519::Public> for Identity {
@@ -749,5 +751,13 @@ mod tests {
 		let did = format!("did:litentry:solana:{}", address);
 		assert_eq!(identity.to_did().unwrap(), did.as_str());
 		assert_eq!(Identity::from_did(did.as_str()).unwrap(), identity);
+	}
+
+	#[test]
+	fn test_identity_hash() {
+		let identity = Identity::Substrate([0; 32].into());
+		let did_str = "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000";
+		let hash = identity.hash().unwrap();
+		assert_eq!(hash, H256::from(blake2_256(&did_str.encode())));
 	}
 }
