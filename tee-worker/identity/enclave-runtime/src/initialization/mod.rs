@@ -328,9 +328,10 @@ fn run_vc_issuance() -> Result<(), Error> {
 		data_provider_config,
 		evm_assertion_repository,
 	);
+	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
-	run_vc_handler_runner(Arc::new(stf_task_context), node_metadata_repo);
+	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 
 	Ok(())
 }
