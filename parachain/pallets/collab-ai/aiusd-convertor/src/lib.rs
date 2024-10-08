@@ -82,8 +82,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		InvalidAssetId,
 		AssetNotEnabled,
-		CannotPayAsFee,
-		ReachMaximumSupply,
 		Overflow,
 	}
 
