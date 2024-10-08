@@ -71,7 +71,7 @@ pub mod pallet {
 		type ManageOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
 		#[pallet::constant]
-		type MaxAccountStoreLength: Get<u32>;
+		type MaxIDGraphLength: Get<u32>;
 	}
 
 	#[pallet::event]
