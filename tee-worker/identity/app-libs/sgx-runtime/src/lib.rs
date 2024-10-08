@@ -288,7 +288,7 @@ impl pallet_parentchain::Config<crate::ParentchainInstanceTargetB> for Runtime {
 impl pallet_identity_management_tee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureRoot<AccountId>;
-	type MaxIDGraphLength = ConstU32<64>;
+	type MaxAccountStoreLength = ConstU32<64>;
 }
 
 // The plain sgx-runtime without the `evm-pallet`

@@ -100,7 +100,7 @@ ord_parameter_types! {
 impl pallet_tee_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureSignedBy<One, AccountId32>;
-	type MaxIDGraphLength = ConstU32<64>;
+	type MaxAccountStoreLength = ConstU32<64>;
 }
 
 const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";

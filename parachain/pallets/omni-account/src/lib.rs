@@ -110,7 +110,7 @@ pub mod pallet {
 
 		/// The maximum number of accounts that an AccountGraph can have
 		#[pallet::constant]
-		type MaxAccountGraphLength: Get<MemberCount>;
+		type MaxAccountStoreLength: Get<MemberCount>;
 
 		/// AccountId converter
 		type AccountIdConverter: AccountIdConverter<Self>;
@@ -122,7 +122,7 @@ pub mod pallet {
 		>;
 	}
 
-	pub type MemberAccounts<T> = BoundedVec<MemberAccount, <T as Config>::MaxAccountGraphLength>;
+	pub type MemberAccounts<T> = BoundedVec<MemberAccount, <T as Config>::MaxAccountStoreLength>;
 
 	#[pallet::origin]
 	pub type Origin<T> = RawOrigin<<T as frame_system::Config>::AccountId>;
