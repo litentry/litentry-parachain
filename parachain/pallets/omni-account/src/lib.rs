@@ -370,4 +370,3 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, Acco
 		Ok(O::from(RawOrigin::OmniAccount(zero_account_id)))
 	}
 }
-
