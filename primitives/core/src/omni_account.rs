@@ -2,7 +2,7 @@ use crate::{Hash, Identity};
 use alloc::vec::Vec;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_core::blake2_256;
+use sp_core_hashing::blake2_256;
 use sp_runtime::{BoundedVec, RuntimeDebug};
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
