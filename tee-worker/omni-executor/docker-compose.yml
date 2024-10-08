@@ -1,0 +1,19 @@
+services:
+  omni-executor:
+    image: omni-executor:latest
+    environment: 
+      - RUST_LOG=debug
+    depends_on:
+      - ethereum-node
+      - litentry-node
+  ethereum-node:
+    image: ghcr.io/foundry-rs/foundry
+    command:
+      - "anvil --host 0.0.0.0 --block-time 1"
+    ports:
+      - "8545:8545"
+  litentry-node:
+    image: litentry/litentry-parachain
+    ports: 
+      - "9944:9944"
+    command: ["--dev", "--rpc-external"]

@@ -1,0 +1,10 @@
+[package]
+name = "intention-executor"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+executor-core = { path = "../../executor-core" }
+async-trait = { workspace = true }
+alloy = { workspace = true, features = ["contract", "signer-local", "rpc", "rpc-types"]}
+log = { workspace = true }
