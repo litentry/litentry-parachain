@@ -13,9 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-
-pub extern crate alloc;
-
 use crate::{
 	assertion::network::{
 		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
@@ -33,7 +30,7 @@ use parity_scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{
 	crypto::{AccountId32, ByteArray},
-	ecdsa, ed25519, sr25519, H160,
+	ecdsa, ed25519, sr25519, H160, H256,
 };
 use sp_io::hashing::blake2_256;
 use sp_runtime::{
@@ -452,6 +449,10 @@ impl Identity {
 				),
 			}
 		))
+	}
+
+	pub fn hash(&self) -> H256 {
+		self.using_encoded(blake2_256).into()
 	}
 }
 
