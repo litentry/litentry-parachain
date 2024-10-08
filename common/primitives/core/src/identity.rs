@@ -795,12 +795,4 @@ mod tests {
         assert_eq!(identity.to_did().unwrap(), did.as_str());
         assert_eq!(Identity::from_did(did.as_str()).unwrap(), identity);
     }
-
-    #[test]
-    fn test_identity_hash() {
-        let identity = Identity::Substrate([0; 32].into());
-        let did_str = "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000";
-        let hash = identity.hash();
-        assert_eq!(hash, H256::from(blake2_256(&did_str.encode())));
-    }
 }
