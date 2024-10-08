@@ -164,7 +164,7 @@ fn add_account_hash_checking_works() {
 				charlie_member_account,
 				None
 			),
-			Error::<TestRuntime>::AccountStoreHashMaissing
+			Error::<TestRuntime>::AccountStoreHashMissing
 		);
 	});
 }
