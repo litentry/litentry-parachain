@@ -24,20 +24,18 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-mod id_graphs_repository;
-pub use id_graphs_repository::*;
+mod repository;
+pub use repository::*;
 
-mod id_graphs_store;
-pub use id_graphs_store::IDGraphsStore;
+mod in_memory_store;
+pub use in_memory_store::InMemoryStore;
 
 use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use codec::Decode;
 use itp_types::parentchain::{AccountId, Hash, Header, ParentchainId};
 use litentry_primitives::Identity;
 
-pub type IDGraphs = BTreeMap<AccountId, OmniAccountIDGraph>;
-
-pub type IDGraph = Vec<IDGraphMember>;
+pub type OmniAccounts = BTreeMap<AccountId, OmniAccountMembers>;
 
 #[derive(Debug)]
 pub enum Error {
@@ -54,13 +52,13 @@ pub enum MemberIdentity {
 }
 
 #[derive(Debug, Clone, Decode)]
-pub struct IDGraphMember {
+pub struct MemberAccount {
 	pub id: MemberIdentity,
 	pub hash: Hash,
 }
 
 #[derive(Debug, Clone)]
-pub struct OmniAccountIDGraph {
-	pub graph: IDGraph,
+pub struct OmniAccountMembers {
+	pub member_accounts: Vec<MemberAccount>,
 	pub hash: Hash,
 }
