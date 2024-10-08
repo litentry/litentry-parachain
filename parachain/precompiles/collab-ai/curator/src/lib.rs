@@ -24,8 +24,6 @@ where
 	fn regist_curator(handle: &mut impl PrecompileHandle, info_hash: H256) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let info_hash = info_hash.into();
-
 		let call = pallet_curator::Call::<Runtime>::regist_curator { info_hash };
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
@@ -35,8 +33,6 @@ where
 	#[precompile::public("updateCurator(bytes32)")]
 	fn update_curator(handle: &mut impl PrecompileHandle, info_hash: H256) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-
-		let info_hash = info_hash.into();
 
 		let call = pallet_curator::Call::<Runtime>::update_curator { info_hash };
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
