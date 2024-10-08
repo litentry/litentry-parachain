@@ -5,7 +5,7 @@ use sp_core::blake2_256;
 use sp_runtime::{BoundedVec, RuntimeDebug};
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct IDGraphMember {
+pub struct MemberAccount {
     pub id: MemberIdentity,
     pub hash: Hash,
 }
@@ -28,20 +28,20 @@ impl From<Identity> for MemberIdentity {
     }
 }
 
-pub trait IDGraphHash {
+pub trait GetAccountStoreHash {
     fn hash(&self) -> Hash;
 }
 
-impl<T> IDGraphHash for BoundedVec<IDGraphMember, T> {
+impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {
     fn hash(&self) -> Hash {
-        let members_hashes: Vec<Hash> = self.iter().map(|member| member.hash).collect();
-        Hash::from(blake2_256(&members_hashes.encode()))
+        let hashes: Vec<Hash> = self.iter().map(|member| member.hash).collect();
+        hashes.using_encoded(blake2_256).into()
     }
 }
 
-impl IDGraphHash for Vec<IDGraphMember> {
+impl GetAccountStoreHash for Vec<MemberAccount> {
     fn hash(&self) -> Hash {
-        let members_hashes: Vec<Hash> = self.iter().map(|member| member.hash).collect();
-        Hash::from(blake2_256(&members_hashes.encode()))
+        let hashes: Vec<Hash> = self.iter().map(|member| member.hash).collect();
+        hashes.using_encoded(blake2_256).into()
     }
 }
