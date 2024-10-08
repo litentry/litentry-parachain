@@ -469,9 +469,8 @@ impl Identity {
         ))
     }
 
-    pub fn hash(&self) -> Result<H256, &'static str> {
-        let did = self.to_did()?;
-        Ok(H256::from(blake2_256(&did.encode())))
+    pub fn hash(&self) -> H256 {
+        self.using_encoded(blake2_256).into()
     }
 }
 
@@ -801,7 +800,7 @@ mod tests {
     fn test_identity_hash() {
         let identity = Identity::Substrate([0; 32].into());
         let did_str = "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000";
-        let hash = identity.hash().unwrap();
+        let hash = identity.hash();
         assert_eq!(hash, H256::from(blake2_256(&did_str.encode())));
     }
 }

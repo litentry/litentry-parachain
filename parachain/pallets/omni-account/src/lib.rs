@@ -348,8 +348,7 @@ pub mod pallet {
 			owner_identity: Identity,
 			owner_account_id: T::AccountId,
 		) -> Result<MemberAccounts<T>, Error<T>> {
-			let owner_identity_hash =
-				owner_identity.hash().map_err(|_| Error::<T>::InvalidAccount)?;
+			let owner_identity_hash = owner_identity.hash();
 			if MemberAccountHash::<T>::contains_key(owner_identity_hash) {
 				return Err(Error::<T>::AccountAlreadyAdded);
 			}
