@@ -20,7 +20,7 @@ use frame_support::{assert_noop, assert_ok};
 use sp_runtime::{traits::BadOrigin, ModuleError};
 use sp_std::vec;
 
-fn remove_identity_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
+fn remove_accounts_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
 	let call =
 		RuntimeCall::OmniAccount(crate::Call::remove_accounts { member_account_hashes: hashes });
 	Box::new(call)
@@ -57,15 +57,16 @@ fn add_account_works() {
 			hash: Identity::from(charlie()).hash().unwrap(),
 		};
 
-		let expected_id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::from(who_identity.clone()),
-				hash: who_identity_hash,
-			},
-			bob_member_account.clone(),
-		]);
-		let expected_id_graph_hash = H256::from(blake2_256(
-			&expected_id_graph
+		let expected_member_accounts: MemberAccounts<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount {
+					id: MemberIdentity::from(who_identity.clone()),
+					hash: who_identity_hash,
+				},
+				bob_member_account.clone(),
+			]);
+		let expected_account_store_hash = H256::from(blake2_256(
+			&expected_member_accounts
 				.iter()
 				.map(|member| member.hash)
 				.collect::<Vec<H256>>()
@@ -84,14 +85,17 @@ fn add_account_works() {
 		);
 
 		assert!(AccountStore::<TestRuntime>::contains_key(&who));
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
-		assert_eq!(AccountStoreHash::<TestRuntime>::get(&who).unwrap(), expected_id_graph_hash);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
+		assert_eq!(
+			AccountStoreHash::<TestRuntime>::get(&who).unwrap(),
+			expected_account_store_hash
+		);
 
 		assert_ok!(OmniAccount::add_account(
 			RuntimeOrigin::signed(tee_signer),
 			who_identity.clone(),
 			charlie_member_account.clone(),
-			Some(expected_id_graph_hash),
+			Some(expected_account_store_hash),
 		));
 		System::assert_last_event(
 			Event::AccountAdded {
@@ -101,24 +105,28 @@ fn add_account_works() {
 			.into(),
 		);
 
-		let expected_id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::from(who_identity.clone()),
-				hash: who_identity_hash,
-			},
-			bob_member_account.clone(),
-			charlie_member_account.clone(),
-		]);
-		let expecte_id_graph_hash = H256::from(blake2_256(
-			&expected_id_graph
+		let expected_member_accounts: MemberAccounts<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount {
+					id: MemberIdentity::from(who_identity.clone()),
+					hash: who_identity_hash,
+				},
+				bob_member_account.clone(),
+				charlie_member_account.clone(),
+			]);
+		let expected_account_store_hash = H256::from(blake2_256(
+			&expected_member_accounts
 				.iter()
 				.map(|member| member.hash)
 				.collect::<Vec<H256>>()
 				.encode(),
 		));
 
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
-		assert_eq!(AccountStoreHash::<TestRuntime>::get(&who).unwrap(), expecte_id_graph_hash);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
+		assert_eq!(
+			AccountStoreHash::<TestRuntime>::get(&who).unwrap(),
+			expected_account_store_hash
+		);
 
 		assert!(MemberAccountHash::<TestRuntime>::contains_key(bob_member_account.hash));
 		assert!(MemberAccountHash::<TestRuntime>::contains_key(charlie_member_account.hash));
@@ -126,7 +134,7 @@ fn add_account_works() {
 }
 
 #[test]
-fn add_account_exising_id_graph_id_graph_hash_missing_works() {
+fn add_account_hash_checking_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 		let who_identity = Identity::from(alice());
@@ -148,7 +156,7 @@ fn add_account_exising_id_graph_id_graph_hash_missing_works() {
 			None
 		));
 
-		// to mutate AccountStore with a new account, the current id_graph_hash must be provided
+		// to mutate AccountStore with a new account, the current account_store_hash must be provided
 		assert_noop!(
 			OmniAccount::add_account(
 				RuntimeOrigin::signed(tee_signer),
@@ -205,7 +213,7 @@ fn add_account_already_linked_works() {
 			Error::<TestRuntime>::AccountAlreadyAdded
 		);
 
-		// intent to create a new id_graph with an identity that is already linked
+		// intent to create a new AccountStore with an account that is already added
 		let who = Identity::from(bob());
 		let alice_member_account = MemberAccount {
 			id: MemberIdentity::Public(Identity::from(alice())),
@@ -224,7 +232,7 @@ fn add_account_already_linked_works() {
 }
 
 #[test]
-fn add_account_id_graph_len_limit_reached_works() {
+fn add_account_store_len_limit_reached_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 
@@ -241,7 +249,7 @@ fn add_account_id_graph_len_limit_reached_works() {
 			hash: H256::from(blake2_256(&[4, 5, 6])),
 		};
 
-		let id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
+		let member_accounts: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
 			MemberAccount {
 				id: MemberIdentity::from(who_identity.clone()),
 				hash: who_identity_hash,
@@ -249,10 +257,10 @@ fn add_account_id_graph_len_limit_reached_works() {
 			member_account_2.clone(),
 			member_account_3.clone(),
 		]);
-		let id_graph_hash = H256::from(blake2_256(&id_graph.encode()));
+		let account_store_hash = H256::from(blake2_256(&member_accounts.encode()));
 
-		AccountStore::<TestRuntime>::insert(who.clone(), id_graph.clone());
-		AccountStoreHash::<TestRuntime>::insert(who.clone(), id_graph_hash);
+		AccountStore::<TestRuntime>::insert(who.clone(), member_accounts.clone());
+		AccountStoreHash::<TestRuntime>::insert(who.clone(), account_store_hash);
 
 		assert_noop!(
 			OmniAccount::add_account(
@@ -262,7 +270,7 @@ fn add_account_id_graph_len_limit_reached_works() {
 					id: MemberIdentity::Private(vec![7, 8, 9]),
 					hash: H256::from(blake2_256(&[7, 8, 9])),
 				},
-				Some(id_graph_hash),
+				Some(account_store_hash),
 			),
 			Error::<TestRuntime>::AccountStoreLenLimitReached
 		);
@@ -270,7 +278,7 @@ fn add_account_id_graph_len_limit_reached_works() {
 }
 
 #[test]
-fn add_account_id_graph_hash_mismatch_works() {
+fn add_account_store_hash_mismatch_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 
@@ -283,15 +291,15 @@ fn add_account_id_graph_hash_mismatch_works() {
 			hash: H256::from(blake2_256(&[1, 2, 3])),
 		};
 
-		let id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
+		let member_accounts: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
 			MemberAccount {
 				id: MemberIdentity::from(who_identity.clone()),
 				hash: who_identity_hash,
 			},
 			member_account.clone(),
 		]);
-		let id_graph_hash = H256::from(blake2_256(
-			&id_graph.iter().map(|member| member.hash).collect::<Vec<H256>>().encode(),
+		let account_store_hash = H256::from(blake2_256(
+			&member_accounts.iter().map(|member| member.hash).collect::<Vec<H256>>().encode(),
 		));
 
 		assert_ok!(OmniAccount::add_account(
@@ -301,10 +309,10 @@ fn add_account_id_graph_hash_mismatch_works() {
 			None
 		));
 
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), id_graph);
-		assert_eq!(AccountStoreHash::<TestRuntime>::get(&who).unwrap(), id_graph_hash);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), member_accounts);
+		assert_eq!(AccountStoreHash::<TestRuntime>::get(&who).unwrap(), account_store_hash);
 
-		// link another identity to the id_graph with the correct id_graph_hash
+		// add another account to the store with the correct AccountStoreHash
 		assert_ok!(OmniAccount::add_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity.clone(),
@@ -312,10 +320,10 @@ fn add_account_id_graph_hash_mismatch_works() {
 				id: MemberIdentity::Private(vec![4, 5, 6]),
 				hash: H256::from(blake2_256(&[4, 5, 6])),
 			},
-			Some(id_graph_hash),
+			Some(account_store_hash),
 		));
 
-		let id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
+		let member_accounts: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
 			MemberAccount {
 				id: MemberIdentity::from(who_identity.clone()),
 				hash: who_identity_hash,
@@ -326,9 +334,9 @@ fn add_account_id_graph_hash_mismatch_works() {
 				hash: H256::from(blake2_256(&[4, 5, 6])),
 			},
 		]);
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), id_graph);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), member_accounts);
 
-		// attempt to link an identity with an old id_graph_hash
+		// attempt to add an account with an old AccountStoreHash
 		assert_noop!(
 			OmniAccount::add_account(
 				RuntimeOrigin::signed(tee_signer),
@@ -337,7 +345,7 @@ fn add_account_id_graph_hash_mismatch_works() {
 					id: MemberIdentity::Private(vec![7, 8, 9]),
 					hash: H256::from(blake2_256(&[7, 8, 9])),
 				},
-				Some(id_graph_hash),
+				Some(account_store_hash),
 			),
 			Error::<TestRuntime>::AccountStoreHashMismatch
 		);
@@ -345,7 +353,7 @@ fn add_account_id_graph_hash_mismatch_works() {
 }
 
 #[test]
-fn remove_identity_works() {
+fn remove_account_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 		let who = alice();
@@ -378,7 +386,7 @@ fn remove_identity_works() {
 			sp_runtime::DispatchError::BadOrigin
 		);
 
-		let call = remove_identity_call(hashes.clone());
+		let call = remove_accounts_call(hashes.clone());
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity_hash,
@@ -394,16 +402,16 @@ fn remove_identity_works() {
 			Event::AccountRemoved { who: who.clone(), member_account_hashes: hashes }.into(),
 		);
 
-		let expected_id_graph: MemberAccounts<TestRuntime> =
+		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![MemberAccount {
 				id: MemberIdentity::Public(who_identity.clone()),
 				hash: who_identity_hash,
 			}]);
 
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
 		assert!(!MemberAccountHash::<TestRuntime>::contains_key(identity_hash));
 
-		let call = remove_identity_call(vec![who_identity_hash]);
+		let call = remove_accounts_call(vec![who_identity_hash]);
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity_hash,
@@ -415,7 +423,7 @@ fn remove_identity_works() {
 }
 
 #[test]
-fn remove_identity_empty_identity_check_works() {
+fn remove_account_empty_account_check_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 		let who = alice();
@@ -432,7 +440,7 @@ fn remove_identity_empty_identity_check_works() {
 			None
 		));
 
-		let call = remove_identity_call(vec![]);
+		let call = remove_accounts_call(vec![]);
 		// execution itself is ok, but error is shown in the dispatch result
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -473,14 +481,15 @@ fn publicize_account_works() {
 			None
 		));
 
-		let expected_id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::Public(who_identity.clone()),
-				hash: who_identity.hash().unwrap(),
-			},
-			MemberAccount { id: private_identity.clone(), hash: identity_hash },
-		]);
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
+		let expected_member_accounts: MemberAccounts<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount {
+					id: MemberIdentity::Public(who_identity.clone()),
+					hash: who_identity.hash().unwrap(),
+				},
+				MemberAccount { id: private_identity.clone(), hash: identity_hash },
+			]);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
 
 		let call = publicize_account_call(identity_hash, public_identity.clone());
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
@@ -499,14 +508,15 @@ fn publicize_account_works() {
 				.into(),
 		);
 
-		let expected_id_graph: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::Public(who_identity.clone()),
-				hash: who_identity.hash().unwrap(),
-			},
-			MemberAccount { id: public_identity.clone(), hash: identity_hash },
-		]);
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
+		let expected_member_accounts: MemberAccounts<TestRuntime> =
+			BoundedVec::truncate_from(vec![
+				MemberAccount {
+					id: MemberIdentity::Public(who_identity.clone()),
+					hash: who_identity.hash().unwrap(),
+				},
+				MemberAccount { id: public_identity.clone(), hash: identity_hash },
+			]);
+		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
 	});
 }
 

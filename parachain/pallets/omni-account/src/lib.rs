@@ -140,7 +140,7 @@ pub mod pallet {
 
 	/// A map between OmniAccount and hash of its AccountStore
 	#[pallet::storage]
-	#[pallet::getter(fn id_graph_hashes)]
+	#[pallet::getter(fn account_store_hash)]
 	pub type AccountStoreHash<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
 
@@ -234,18 +234,18 @@ pub mod pallet {
 				None => return Err(Error::<T>::InvalidAccount.into()),
 			};
 			let hash = member_account.hash;
-			let mut id_graph = Self::get_or_create_id_graph(
+			let mut account_store = Self::get_or_create_account_store(
 				who.clone(),
 				who_account_id.clone(),
 				maybe_account_store_hash,
 			)?;
-			id_graph
+			account_store
 				.try_push(member_account)
 				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 
 			MemberAccountHash::<T>::insert(hash, who_account_id.clone());
-			AccountStoreHash::<T>::insert(who_account_id.clone(), id_graph.hash());
-			AccountStore::<T>::insert(who_account_id.clone(), id_graph);
+			AccountStoreHash::<T>::insert(who_account_id.clone(), account_store.hash());
+			AccountStore::<T>::insert(who_account_id.clone(), account_store);
 
 			Self::deposit_event(Event::AccountAdded {
 				who: who_account_id,
@@ -264,10 +264,10 @@ pub mod pallet {
 			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
 			ensure!(!member_account_hashes.is_empty(), Error::<T>::EmptyAccount);
 
-			let mut id_graph_members =
+			let mut member_accounts =
 				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownAccountStore)?;
 
-			id_graph_members.retain(|member| {
+			member_accounts.retain(|member| {
 				if member_account_hashes.contains(&member.hash) {
 					MemberAccountHash::<T>::remove(member.hash);
 					false
@@ -276,10 +276,10 @@ pub mod pallet {
 				}
 			});
 
-			if id_graph_members.is_empty() {
+			if member_accounts.is_empty() {
 				AccountStore::<T>::remove(&who);
 			} else {
-				AccountStore::<T>::insert(who.clone(), id_graph_members);
+				AccountStore::<T>::insert(who.clone(), member_accounts);
 			}
 
 			Self::deposit_event(Event::AccountRemoved { who, member_account_hashes });
@@ -297,15 +297,15 @@ pub mod pallet {
 			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
 			ensure!(public_identity.is_public(), Error::<T>::AccountIsPrivate);
 
-			let mut id_graph_members =
+			let mut member_accounts =
 				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownAccountStore)?;
-			let id_graph_link = id_graph_members
+			let member_account = member_accounts
 				.iter_mut()
 				.find(|member| member.hash == member_account_hash)
 				.ok_or(Error::<T>::AccountNotFound)?;
-			id_graph_link.id = public_identity;
+			member_account.id = public_identity;
 
-			AccountStore::<T>::insert(who.clone(), id_graph_members);
+			AccountStore::<T>::insert(who.clone(), member_accounts);
 
 			Self::deposit_event(Event::AccountMadePublic { who, member_account_hash });
 
@@ -314,32 +314,29 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_or_create_id_graph(
+		pub fn get_or_create_account_store(
 			who: Identity,
 			who_account_id: T::AccountId,
 			maybe_account_store_hash: Option<H256>,
 		) -> Result<MemberAccounts<T>, Error<T>> {
 			match AccountStore::<T>::get(&who_account_id) {
-				Some(id_graph_members) => {
-					Self::verify_id_graph_hash(&who_account_id, maybe_account_store_hash)?;
-					Ok(id_graph_members)
+				Some(member_accounts) => {
+					Self::verify_account_store_hash(&who_account_id, maybe_account_store_hash)?;
+					Ok(member_accounts)
 				},
-				None => Self::create_id_graph(who, who_account_id),
+				None => Self::create_account_store(who, who_account_id),
 			}
 		}
 
-		fn verify_id_graph_hash(
+		fn verify_account_store_hash(
 			who: &T::AccountId,
 			maybe_account_store_hash: Option<H256>,
 		) -> Result<(), Error<T>> {
-			let current_id_graph_hash =
+			let current_account_store_hash =
 				AccountStoreHash::<T>::get(who).ok_or(Error::<T>::AccountStoreHashMaissing)?;
 			match maybe_account_store_hash {
-				Some(id_graph_hash) => {
-					ensure!(
-						current_id_graph_hash == id_graph_hash,
-						Error::<T>::AccountStoreHashMismatch
-					);
+				Some(h) => {
+					ensure!(current_account_store_hash == h, Error::<T>::AccountStoreHashMismatch);
 				},
 				None => return Err(Error::<T>::AccountStoreHashMaissing),
 			}
@@ -347,7 +344,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn create_id_graph(
+		fn create_account_store(
 			owner_identity: Identity,
 			owner_account_id: T::AccountId,
 		) -> Result<MemberAccounts<T>, Error<T>> {
@@ -356,17 +353,17 @@ pub mod pallet {
 			if MemberAccountHash::<T>::contains_key(owner_identity_hash) {
 				return Err(Error::<T>::AccountAlreadyAdded);
 			}
-			let mut id_graph_members: MemberAccounts<T> = BoundedVec::new();
-			id_graph_members
+			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
+			member_accounts
 				.try_push(MemberAccount {
 					id: MemberIdentity::from(owner_identity.clone()),
 					hash: owner_identity_hash,
 				})
 				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 			MemberAccountHash::<T>::insert(owner_identity_hash, owner_account_id.clone());
-			AccountStore::<T>::insert(owner_account_id.clone(), id_graph_members.clone());
+			AccountStore::<T>::insert(owner_account_id.clone(), member_accounts.clone());
 
-			Ok(id_graph_members)
+			Ok(member_accounts)
 		}
 	}
 }
