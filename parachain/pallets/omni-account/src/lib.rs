@@ -56,7 +56,7 @@ pub trait GetAccountStoreHash {
 impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {
 	fn hash(&self) -> H256 {
 		let hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
-		H256::from(blake2_256(&hashes.encode()))
+		hashes.using_encoded(blake2_256).into()
 	}
 }
 
@@ -169,7 +169,7 @@ pub mod pallet {
 		AccountIsPrivate,
 		EmptyAccount,
 		AccountStoreHashMismatch,
-		AccountStoreHashMaissing,
+		AccountStoreHashMissing,
 	}
 
 	#[pallet::call]
@@ -333,12 +333,12 @@ pub mod pallet {
 			maybe_account_store_hash: Option<H256>,
 		) -> Result<(), Error<T>> {
 			let current_account_store_hash =
-				AccountStoreHash::<T>::get(who).ok_or(Error::<T>::AccountStoreHashMaissing)?;
+				AccountStoreHash::<T>::get(who).ok_or(Error::<T>::AccountStoreHashMissing)?;
 			match maybe_account_store_hash {
 				Some(h) => {
 					ensure!(current_account_store_hash == h, Error::<T>::AccountStoreHashMismatch);
 				},
-				None => return Err(Error::<T>::AccountStoreHashMaissing),
+				None => return Err(Error::<T>::AccountStoreHashMissing),
 			}
 
 			Ok(())
@@ -348,8 +348,7 @@ pub mod pallet {
 			owner_identity: Identity,
 			owner_account_id: T::AccountId,
 		) -> Result<MemberAccounts<T>, Error<T>> {
-			let owner_identity_hash =
-				owner_identity.hash().map_err(|_| Error::<T>::InvalidAccount)?;
+			let owner_identity_hash = owner_identity.hash();
 			if MemberAccountHash::<T>::contains_key(owner_identity_hash) {
 				return Err(Error::<T>::AccountAlreadyAdded);
 			}
