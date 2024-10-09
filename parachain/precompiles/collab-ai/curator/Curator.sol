@@ -37,12 +37,6 @@ interface ICurator {
 	/// 				 publicCuratorToIndex(bytes32)
     function publicCuratorToIndex(bytes32 curator) external view returns (bool exist, uint256 index);
 
-    /// @notice public curator to index, ethereum address format, bool represents if such index exists
-    /// @param curator: ethereum format address
-    /// @custom:selector 0x52fe170b
-	/// 				 publicCuratorToIndex(address)
-    function publicCuratorToIndex(address curator) external view returns (bool exist, uint256 index);
-
     /// @notice Curator index to curator info, bool represents if such info exists
     /// @param index: Curator index
     /// @custom:selector 0x916d9a0d

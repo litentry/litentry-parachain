@@ -121,7 +121,7 @@ where
 
 	#[precompile::public("publicGuardianToIndex(bytes32)")]
 	#[precompile::view]
-	fn public_guardian_to_index_sub(
+	fn public_guardian_to_index(
 		handle: &mut impl PrecompileHandle,
 		guardian: H256,
 	) -> EvmResult<(bool, U256)> {
@@ -130,26 +130,6 @@ where
 		handle.record_db_read::<Runtime>(56)?;
 
 		let guardian = Runtime::AccountId::from(guardian.into());
-
-		if let Some(result) = pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian)
-		{
-			Ok((true, result.into()))
-		} else {
-			Ok((false, Default::default()))
-		}
-	}
-
-	#[precompile::public("publicGuardianToIndex(address)")]
-	#[precompile::view]
-	fn public_guardian_to_index_evm(
-		handle: &mut impl PrecompileHandle,
-		guardian: Address,
-	) -> EvmResult<(bool, U256)> {
-		// Storage item: GuardianIndex u128:
-		// Twox64Concat(8) + T::AccountId(32) + GuardianIndex(16)
-		handle.record_db_read::<Runtime>(56)?;
-
-		let guardian = Runtime::AddressMapping::into_account_id(guardian.into());
 
 		if let Some(result) = pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian)
 		{
@@ -204,7 +184,7 @@ where
 
 	#[precompile::public("guardianVotes(bytes32,uint256)")]
 	#[precompile::view]
-	fn guardian_votes_sub(
+	fn guardian_votes(
 		handle: &mut impl PrecompileHandle,
 		voter: H256,
 		guardian_index: U256,
@@ -215,30 +195,6 @@ where
 
 		let voter = Runtime::AccountId::from(voter.into());
 
-		let guardian_index: u128 = guardian_index.try_into().map_err(|_| {
-			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
-		})?;
-		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(
-			voter,
-			guardian_index,
-		))
-		.in_field("GuardianVote")?;
-
-		Ok(result)
-	}
-
-	#[precompile::public("guardianVotes(address,uint256)")]
-	#[precompile::view]
-	fn guardian_votes_evm(
-		handle: &mut impl PrecompileHandle,
-		voter: Address,
-		guardian_index: U256,
-	) -> EvmResult<(u8, U256)> {
-		// Storage item: GuardianIndex u128:
-		// 2 * Twox64Concat(8) + GuardianIndex(16) + T::AccountId(32) + GuardianVote(1) + ProposalIndex(16)
-		handle.record_db_read::<Runtime>(81)?;
-
-		let voter = Runtime::AddressMapping::into_account_id(voter.into());
 		let guardian_index: u128 = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;

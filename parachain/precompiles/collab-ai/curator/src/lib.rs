@@ -19,7 +19,7 @@ pub struct CuratorPrecompile<Runtime>(PhantomData<Runtime>);
 impl<Runtime> CuratorPrecompile<Runtime>
 where
 	Runtime: pallet_curator::Config + pallet_evm::Config,
-	Runtime::AccountId: Into<[u8; 32]>,
+	Runtime::AccountId: From<[u8; 32]> + Into<[u8; 32]>,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	Runtime::RuntimeCall: From<pallet_curator::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
@@ -67,7 +67,7 @@ where
 
 	#[precompile::public("publicCuratorToIndex(bytes32)")]
 	#[precompile::view]
-	fn public_curator_to_index_sub(
+	fn public_curator_to_index(
 		handle: &mut impl PrecompileHandle,
 		curator: H256,
 	) -> EvmResult<(bool, U256)> {
@@ -77,25 +77,6 @@ where
 
 		let curator: [u8; 32] = curator.into();
 		let curator = Runtime::AccountId::from(curator.into());
-
-		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
-			Ok((true, result.into()))
-		} else {
-			Ok((false, Default::default()))
-		}
-	}
-
-	#[precompile::public("publicCuratorToIndex(address)")]
-	#[precompile::view]
-	fn public_curator_to_index_evm(
-		handle: &mut impl PrecompileHandle,
-		curator: Address,
-	) -> EvmResult<U256> {
-		// Storage item: CuratorIndex u128:
-		// Twox64Concat(8) + T::AccountId(32) + CuratorIndex(16)
-		handle.record_db_read::<Runtime>(56)?;
-
-		let curator = Runtime::AddressMapping::into_account_id(curator.into());
 
 		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
 			Ok((true, result.into()))
@@ -122,7 +103,7 @@ where
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
 		handle.record_db_read::<Runtime>(93)?;
 
-		let index = index.try_into().map_err(|_| {
+		let index: u128 = index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		if let Some((info_hash, update_block, curator, status)) =
