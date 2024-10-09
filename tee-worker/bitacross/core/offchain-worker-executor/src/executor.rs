@@ -265,7 +265,9 @@ mod tests {
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block as ParentchainBlock, RsaRequest};
+	use itp_types::{
+		parentchain::Header as ParentchainHeader, Block as ParentchainBlock, RsaRequest,
+	};
 
 	use itp_test::mock::stf_mock::mock_top_indirect_trusted_call_signed;
 	use std::boxed::Box;
@@ -287,6 +289,7 @@ mod tests {
 		TestStfInterface,
 		TrustedCallSignedMock,
 		GetterMock,
+		ParentchainHeader,
 	>;
 
 	const EVENT_COUNT_KEY: &[u8] = b"event_count";
