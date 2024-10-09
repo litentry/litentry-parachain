@@ -33,32 +33,19 @@ pub use in_memory_store::InMemoryStore;
 use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use codec::Decode;
 use itp_types::parentchain::{AccountId, Hash, Header, ParentchainId};
-use litentry_primitives::Identity;
+use litentry_primitives::MemberAccount;
 
 pub type OmniAccounts = BTreeMap<AccountId, OmniAccountMembers>;
+
+#[derive(Debug, Clone)]
+pub struct OmniAccountMembers {
+	pub member_accounts: Vec<MemberAccount>,
+	pub hash: Hash,
+}
 
 #[derive(Debug)]
 pub enum Error {
 	LockPoisoning,
 	NotFound,
 	OCallApiError(&'static str),
-}
-
-// TODO: get this from core_primitives after the release-v0.9.19 branch has been updated
-#[derive(Debug, Clone, Decode)]
-pub enum MemberIdentity {
-	Public(Identity),
-	Private(Vec<u8>),
-}
-
-#[derive(Debug, Clone, Decode)]
-pub struct MemberAccount {
-	pub id: MemberIdentity,
-	pub hash: Hash,
-}
-
-#[derive(Debug, Clone)]
-pub struct OmniAccountMembers {
-	pub member_accounts: Vec<MemberAccount>,
-	pub hash: Hash,
 }

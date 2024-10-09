@@ -1,6 +1,4 @@
-use crate::{
-	AccountId, Error, Hash, Header, MemberAccount, OmniAccountMembers, OmniAccounts, ParentchainId,
-};
+use crate::{AccountId, Error, Hash, Header, OmniAccountMembers, OmniAccounts, ParentchainId};
 use alloc::vec::Vec;
 use codec::Encode;
 use frame_support::storage::storage_prefix;
@@ -8,18 +6,8 @@ use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_storage::{
 	decode_storage_key, extract_blake2_128concat_key, storage_map_key, StorageHasher,
 };
+use litentry_primitives::{GetAccountStoreHash, MemberAccount};
 use sp_core::blake2_256;
-
-// TODO: get this from core_primitives after the release-v0.9.19 branch has been updated
-pub trait GetAccountStoreHash {
-	fn hash(&self) -> Hash;
-}
-impl GetAccountStoreHash for Vec<MemberAccount> {
-	fn hash(&self) -> Hash {
-		let hashes: Vec<Hash> = self.iter().map(|member| member.hash).collect();
-		Hash::from(blake2_256(&hashes.encode()))
-	}
-}
 
 pub trait GetAccountStoresRepository {
 	fn get_by_owner(&self, owner: AccountId) -> Result<OmniAccountMembers, Error>;

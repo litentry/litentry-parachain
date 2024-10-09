@@ -75,6 +75,7 @@ pub use parentchain_primitives::{
 		Assertion,
 	},
 	identity::*,
+	omni_account::*,
 	AccountId as ParentchainAccountId, Balance as ParentchainBalance,
 	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
 	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
