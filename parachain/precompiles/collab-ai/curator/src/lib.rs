@@ -69,14 +69,18 @@ where
 	fn public_curator_to_index_sub(
 		handle: &mut impl PrecompileHandle,
 		curator: H256,
-	) -> EvmResult<U256> {
+	) -> EvmResult<(bool, U256)> {
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + T::AccountId(32) + CuratorIndex(16)
 		handle.record_db_read::<Runtime>(56)?;
 
 		let curator = Runtime::AccountId::from(curator.into());
 
-		Ok(pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator).into())
+		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(guardian) {
+			Ok((true, result.into()))
+		} else {
+			Ok((false, 0.into()))
+		}
 	}
 
 	#[precompile::public("publicCuratorToIndex(address)")]
@@ -91,13 +95,19 @@ where
 
 		let curator = Runtime::AddressMapping::into_account_id(curator.into());
 
-		Ok(pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator).into())
+		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(guardian) {
+			Ok((true, result.into()))
+		} else {
+			Ok((false, 0.into()))
+		}
 	}
 
 	fn candidate_status_to_u8(status: CandidateStatus) -> MayRevert<u8> {
-		status
-			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("trackId type").into())
+		match status {
+			CandidateStatus::Unverified => Ok(0u8),
+			CandidateStatus::Verified => Ok(1u8),
+			CandidateStatus::Banned => Ok(2u8),
+		}
 	}
 
 	#[precompile::public("curatorIndexToInfo(uint256)")]
@@ -105,24 +115,27 @@ where
 	fn curator_index_to_info(
 		handle: &mut impl PrecompileHandle,
 		index: U256,
-	) -> EvmResult<(H256, U256, H256, u8)> {
+	) -> EvmResult<(bool, H256, U256, H256, u8)> {
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
 		handle.record_db_read::<Runtime>(93)?;
 
-		let index: AssetBalanceOf<Runtime> = index.try_into().map_err(|_| {
+		let index = index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		let (info_hash, update_block, curator, status) =
-			pallet_curator::Pallet::<Runtime>::curator_index_to_info(index);
+		if let Some((info_hash, update_block, curator, status)) =
+			pallet_curator::Pallet::<Runtime>::curator_index_to_info(index)
+		{
+			let update_block: U256 = update_block.into();
 
-		let update_block: U256 = update_block.into();
+			let curator: [u8; 32] = curator.into();
+			let curator: H256 = curator.into();
 
-		let curator: [u8; 32] = curator.into();
-		let curator: H256 = curator.into();
+			let status = Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
 
-		let status = Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
-
-		Ok((info_hash, update_block, curator, status))
+			Ok((true, info_hash, update_block, curator, status))
+		} else {
+			Ok((false, 0.into(), 0.into(), 0.into(), 0u8))
+		}
 	}
 }

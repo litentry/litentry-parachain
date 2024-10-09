@@ -35,17 +35,17 @@ interface ICurator {
     /// @param curator: substrate format address
     /// @custom:selector 0x039997d0
 	/// 				 publicCuratorToIndex(bytes32)
-    function publicCuratorToIndex(bytes32 curator) external view returns (uint256 index);
+    function publicCuratorToIndex(bytes32 curator) external view returns (bool exist, uint256 index);
 
     /// @notice public curator to index, ethereum address format
     /// @param curator: ethereum format address
     /// @custom:selector 0x52fe170b
 	/// 				 publicCuratorToIndex(address)
-    function publicCuratorToIndex(address curator) external view returns (uint256 index);
+    function publicCuratorToIndex(address curator) external view returns (bool exist, uint256 index);
 
     /// @notice Curator index to curator info
     /// @param index: Curator index
     /// @custom:selector 0x916d9a0d
 	/// 				 curatorIndexToInfo(address)
-    function curatorIndexToInfo(uint256 index) external view returns (bytes32 info_hash, uint256 update_block, bytes32 curator, CandidateStatus status);
+    function curatorIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 curator, CandidateStatus status);
 }

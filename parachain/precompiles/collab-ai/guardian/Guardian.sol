@@ -52,19 +52,19 @@ interface IGuardian {
     /// @param guardian: substrate format address
     /// @custom:selector 0xf46175b8
 	/// 				 publicGuardianToIndex(bytes32)
-    function publicGuardianToIndex(bytes32 guardian) external view returns (uint256 index);
+    function publicGuardianToIndex(bytes32 guardian) external view returns (bool exist, uint256 index);
 
     /// @notice public guardian to index, ethereum address format
     /// @param guardian: ethereum format address
     /// @custom:selector 0x02916580
 	/// 				 publicGuardianToIndex(address)
-    function publicGuardianToIndex(address guardian) external view returns (uint256 index);
+    function publicGuardianToIndex(address guardian) external view returns (bool exist, uint256 index);
 
     /// @notice Guardian index to guardian info
     /// @param index: Guardian index
     /// @custom:selector 0x59c95743
 	/// 				 guardianIndexToInfo(address)
-    function guardianIndexToInfo(uint256 index) external view returns (bytes32 info_hash, uint256 update_block, bytes32 guardian, CandidateStatus status);
+    function guardianIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 guardian, CandidateStatus status);
     
     /// @notice Query voter's vote of one specific guardian given its guardian index, substrate
     /// @custom:selector 0xfaad0ba2

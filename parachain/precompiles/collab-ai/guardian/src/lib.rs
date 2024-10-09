@@ -124,14 +124,19 @@ where
 	fn public_guardian_to_index_sub(
 		handle: &mut impl PrecompileHandle,
 		guardian: H256,
-	) -> EvmResult<U256> {
+	) -> EvmResult<(bool, U256)> {
 		// Storage item: GuardianIndex u128:
 		// Twox64Concat(8) + T::AccountId(32) + GuardianIndex(16)
 		handle.record_db_read::<Runtime>(56)?;
 
 		let guardian = Runtime::AccountId::from(guardian.into());
 
-		Ok(pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian).into())
+		if let Some(result) = pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian)
+		{
+			Ok((true, result.into()))
+		} else {
+			Ok((false, 0.into()))
+		}
 	}
 
 	#[precompile::public("publicGuardianToIndex(address)")]
@@ -139,20 +144,27 @@ where
 	fn public_guardian_to_index_evm(
 		handle: &mut impl PrecompileHandle,
 		guardian: Address,
-	) -> EvmResult<U256> {
+	) -> EvmResult<(bool, U256)> {
 		// Storage item: GuardianIndex u128:
 		// Twox64Concat(8) + T::AccountId(32) + GuardianIndex(16)
 		handle.record_db_read::<Runtime>(56)?;
 
 		let guardian = Runtime::AddressMapping::into_account_id(guardian.into());
 
-		Ok(pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian).into())
+		if let Some(result) = pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian)
+		{
+			Ok((true, result.into()))
+		} else {
+			Ok((false, 0.into()))
+		}
 	}
 
 	fn candidate_status_to_u8(status: CandidateStatus) -> MayRevert<u8> {
-		status
-			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("trackId type").into())
+		match status {
+			CandidateStatus::Unverified => Ok(0u8),
+			CandidateStatus::Verified => Ok(1u8),
+			CandidateStatus::Banned => Ok(2u8),
+		}
 	}
 
 	#[precompile::public("guardianIndexToInfo(uint256)")]
@@ -160,25 +172,28 @@ where
 	fn guardian_index_to_info(
 		handle: &mut impl PrecompileHandle,
 		index: U256,
-	) -> EvmResult<(H256, U256, H256, u8)> {
+	) -> EvmResult<(bool, H256, U256, H256, u8)> {
 		// Storage item: GuardianIndex u128:
 		// Twox64Concat(8) + GuardianIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
 		handle.record_db_read::<Runtime>(93)?;
 
-		let index: AssetBalanceOf<Runtime> = index.try_into().map_err(|_| {
+		let index = index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		let Some((info_hash, update_block, guardian, status)) =
-			pallet_guardian::Pallet::<Runtime>::guardian_index_to_info(index);
+		if let Some((info_hash, update_block, guardian, status)) =
+			pallet_guardian::Pallet::<Runtime>::guardian_index_to_info(index)
+		{
+			let update_block: U256 = update_block.into();
 
-		let update_block: U256 = update_block.into();
+			let guardian: [u8; 32] = guardian.into();
+			let guardian: H256 = guardian.into();
 
-		let guardian: [u8; 32] = guardian.into();
-		let guardian: H256 = guardian.into();
+			let status = Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
 
-		let status = Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
-
-		Ok((info_hash, update_block, guardian, status))
+			Ok((true, info_hash, update_block, guardian, status))
+		} else {
+			Ok((false, 0.into(), 0.into(), 0.into(), 0u8))
+		}
 	}
 
 	#[precompile::public("guardianVotes(bytes32,uint256)")]
@@ -194,7 +209,7 @@ where
 
 		let voter = Runtime::AccountId::from(voter.into());
 
-		let guardian_index: AssetBalanceOf<Runtime> = guardian_index.try_into().map_err(|_| {
+		let guardian_index = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(
@@ -218,7 +233,7 @@ where
 		handle.record_db_read::<Runtime>(81)?;
 
 		let voter = Runtime::AddressMapping::into_account_id(voter.into());
-		let guardian_index: AssetBalanceOf<Runtime> = guardian_index.try_into().map_err(|_| {
+		let guardian_index = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(
