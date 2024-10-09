@@ -1,7 +1,8 @@
 [package]
 name = "executor-worker"
 version = "0.1.0"
-edition = "2021"
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition.workspace = true
 
 [dependencies]
 env_logger = { workspace = true }

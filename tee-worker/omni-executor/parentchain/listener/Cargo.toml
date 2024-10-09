@@ -1,7 +1,8 @@
 [package]
 name = "parentchain-listener"
 version = "0.1.0"
-edition = "2021"
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition.workspace = true
 
 [dependencies]
 async-trait = { workspace = true }
