@@ -142,6 +142,9 @@ pub enum TrustedCall {
 	send_erroneous_parentchain_call(Identity),
 	#[codec(index = 24)]
 	maybe_create_id_graph(Identity, Identity),
+	#[cfg(feature = "development")]
+	#[codec(index = 25)]
+	clean_id_graphs(Identity),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
@@ -230,6 +233,8 @@ impl TrustedCall {
 			#[cfg(feature = "development")]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
 			Self::request_batch_vc(sender_identity, ..) => sender_identity,
+			#[cfg(feature = "development")]
+			Self::clean_id_graphs(sender_identity) => sender_identity,
 		}
 	}
 
@@ -884,6 +889,23 @@ where
 					Ok(()) => info!("maybe_create_id_graph OK"),
 					Err(e) => warn!("maybe_create_id_graph NOK: {:?}", e),
 				};
+
+				Ok(TrustedCallResult::Empty)
+			},
+			#[cfg(feature = "development")]
+			TrustedCall::clean_id_graphs(signer) => {
+				debug!("clean_id_graphs");
+
+				let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				use crate::helpers::ensure_enclave_signer_or_alice;
+				ensure!(
+					ensure_enclave_signer_or_alice(&account),
+					StfError::CleanIDGraphsFailed(ErrorDetail::UnauthorizedSigner)
+				);
+
+				IMTCall::clean_id_graphs {}
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| StfError::CleanIDGraphsFailed(e.into()))?;
 
 				Ok(TrustedCallResult::Empty)
 			},
