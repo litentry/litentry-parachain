@@ -4,8 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
-tokio = {  workspace = true }
 async-trait = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["derive"] }
-
+tokio = { workspace = true }

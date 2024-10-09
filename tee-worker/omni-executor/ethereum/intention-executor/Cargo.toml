@@ -4,7 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
-executor-core = { path = "../../executor-core" }
+alloy = { workspace = true, features = ["contract", "signer-local", "rpc", "rpc-types"] }
 async-trait = { workspace = true }
-alloy = { workspace = true, features = ["contract", "signer-local", "rpc", "rpc-types"]}
+executor-core = { path = "../../executor-core" }
 log = { workspace = true }
