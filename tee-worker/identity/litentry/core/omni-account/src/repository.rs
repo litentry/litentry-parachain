@@ -1,13 +1,11 @@
-use crate::{AccountId, Error, Hash, Header, OmniAccountMembers, OmniAccounts, ParentchainId};
+use crate::{AccountId, Error, Header, OmniAccountMembers, OmniAccounts, ParentchainId};
 use alloc::vec::Vec;
-use codec::Encode;
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_storage::{
 	decode_storage_key, extract_blake2_128concat_key, storage_map_key, StorageHasher,
 };
 use litentry_primitives::{GetAccountStoreHash, MemberAccount};
-use sp_core::blake2_256;
 
 pub trait GetAccountStoresRepository {
 	fn get_by_owner(&self, owner: AccountId) -> Result<OmniAccountMembers, Error>;

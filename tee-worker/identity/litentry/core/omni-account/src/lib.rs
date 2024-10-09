@@ -31,7 +31,6 @@ mod in_memory_store;
 pub use in_memory_store::InMemoryStore;
 
 use alloc::{collections::btree_map::BTreeMap, vec::Vec};
-use codec::Decode;
 use itp_types::parentchain::{AccountId, Hash, Header, ParentchainId};
 use litentry_primitives::MemberAccount;
 

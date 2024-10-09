@@ -5274,7 +5274,6 @@ dependencies = [
  "lazy_static",
  "litentry-primitives",
  "log 0.4.20",
- "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
 ]
