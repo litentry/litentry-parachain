@@ -135,7 +135,7 @@ where
 		{
 			Ok((true, result.into()))
 		} else {
-			Ok((false, 0.into()))
+			Ok((false, Default::default()))
 		}
 	}
 
@@ -155,7 +155,7 @@ where
 		{
 			Ok((true, result.into()))
 		} else {
-			Ok((false, 0.into()))
+			Ok((false, Default::default()))
 		}
 	}
 
@@ -192,7 +192,13 @@ where
 
 			Ok((true, info_hash, update_block, guardian, status))
 		} else {
-			Ok((false, 0.into(), 0.into(), 0.into(), 0u8))
+			Ok((
+				false,
+				Default::default(),
+				Default::default(),
+				Default::default(),
+				Default::default(),
+			))
 		}
 	}
 
@@ -209,7 +215,7 @@ where
 
 		let voter = Runtime::AccountId::from(voter.into());
 
-		let guardian_index = guardian_index.try_into().map_err(|_| {
+		let guardian_index: u128 = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(
@@ -233,7 +239,7 @@ where
 		handle.record_db_read::<Runtime>(81)?;
 
 		let voter = Runtime::AddressMapping::into_account_id(voter.into());
-		let guardian_index = guardian_index.try_into().map_err(|_| {
+		let guardian_index: u128 = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(

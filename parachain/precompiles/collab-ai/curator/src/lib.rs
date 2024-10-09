@@ -81,7 +81,7 @@ where
 		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
 			Ok((true, result.into()))
 		} else {
-			Ok((false, 0.into()))
+			Ok((false, Default::default()))
 		}
 	}
 
@@ -100,7 +100,7 @@ where
 		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
 			Ok((true, result.into()))
 		} else {
-			Ok((false, 0.into()))
+			Ok((false, Default::default()))
 		}
 	}
 
