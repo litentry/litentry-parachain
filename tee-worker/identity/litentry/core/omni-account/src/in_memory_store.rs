@@ -14,7 +14,7 @@ pub struct InMemoryStore;
 
 impl InMemoryStore {
 	pub fn get(&self, owner: AccountId) -> Result<OmniAccountMembers, Error> {
-		let id_graph = STORE
+		let omni_account_members = STORE
 			.read()
 			.map_err(|_| {
 				log::error!("[InMemoryStore] Lock poisoning");
@@ -23,7 +23,7 @@ impl InMemoryStore {
 			.get(&owner)
 			.cloned();
 
-		id_graph.ok_or(Error::NotFound)
+		omni_account_members.ok_or(Error::NotFound)
 	}
 
 	pub fn insert(
