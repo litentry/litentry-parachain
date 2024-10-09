@@ -48,30 +48,34 @@ interface IGuardian {
 	/// 				 publicGuardianCount()
     function publicGuardianCount() external view returns (uint256 count);
 
-    /// @notice public guardian to index, substrate address format
+    /// @notice public guardian to index, substrate address format, bool represents if such index exists
     /// @param guardian: substrate format address
     /// @custom:selector 0xf46175b8
 	/// 				 publicGuardianToIndex(bytes32)
     function publicGuardianToIndex(bytes32 guardian) external view returns (bool exist, uint256 index);
 
-    /// @notice public guardian to index, ethereum address format
+    /// @notice public guardian to index, ethereum address format, bool represents if such index exists
     /// @param guardian: ethereum format address
     /// @custom:selector 0x02916580
 	/// 				 publicGuardianToIndex(address)
     function publicGuardianToIndex(address guardian) external view returns (bool exist, uint256 index);
 
-    /// @notice Guardian index to guardian info
+    /// @notice Guardian index to guardian info, bool represents if such info exists
     /// @param index: Guardian index
     /// @custom:selector 0x59c95743
 	/// 				 guardianIndexToInfo(address)
     function guardianIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 guardian, CandidateStatus status);
     
     /// @notice Query voter's vote of one specific guardian given its guardian index, substrate
+    /// @param voter: voter address, substrate
+    /// @param guardian_index: Guardian index
     /// @custom:selector 0xfaad0ba2
 	/// 				 guardianVotes(bytes32,uint256)
     function guardianVotes(bytes32 voter, uint256 guardian_index) external view returns (GuardianVote guardian_vote, uint256 potential_proposal_index);
 
     /// @notice Query voter's vote of one specific guardian given its guardian index, ethereum
+    /// @param voter: voter address, ethereum
+    /// @param guardian_index: Guardian index
     /// @custom:selector 0xcbdbf0b2
 	/// 				 guardianVotes(address,uint256)
     function guardianVotes(address voter, uint256 guardian_index) external view returns (GuardianVote guardian_vote, uint256 potential_proposal_index);

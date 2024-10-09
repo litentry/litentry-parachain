@@ -3,11 +3,12 @@
 use fp_evm::{PrecompileFailure, PrecompileHandle};
 
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
+use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
-use sp_core::H256;
+use sp_core::{H256, U256};
 use sp_std::marker::PhantomData;
 
 use pallet_collab_ai_common::CandidateStatus;
@@ -74,9 +75,10 @@ where
 		// Twox64Concat(8) + T::AccountId(32) + CuratorIndex(16)
 		handle.record_db_read::<Runtime>(56)?;
 
+		let curator: [u8; 32] = curator.into();
 		let curator = Runtime::AccountId::from(curator.into());
 
-		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(guardian) {
+		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
 			Ok((true, result.into()))
 		} else {
 			Ok((false, 0.into()))
@@ -95,7 +97,7 @@ where
 
 		let curator = Runtime::AddressMapping::into_account_id(curator.into());
 
-		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(guardian) {
+		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
 			Ok((true, result.into()))
 		} else {
 			Ok((false, 0.into()))
@@ -135,7 +137,13 @@ where
 
 			Ok((true, info_hash, update_block, curator, status))
 		} else {
-			Ok((false, 0.into(), 0.into(), 0.into(), 0u8))
+			Ok((
+				false,
+				Default::default(),
+				Default::default(),
+				Default::default(),
+				Default::default(),
+			))
 		}
 	}
 }
