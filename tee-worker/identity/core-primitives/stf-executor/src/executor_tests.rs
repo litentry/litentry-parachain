@@ -18,9 +18,9 @@
 use crate::{executor::StfExecutor, traits::StateUpdateProposer};
 use codec::Encode;
 use itc_parentchain_test::ParentchainHeaderBuilder;
-// TODO: use Aes256 when available
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
+// TODO: use Aes256 when available
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_sgx_externalities::{SgxExternalities as State, SgxExternalitiesTrait};
 use itp_sgx_io::SealedIO;
