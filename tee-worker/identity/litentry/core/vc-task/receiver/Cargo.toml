@@ -15,6 +15,7 @@ sp-core = { workspace = true, features = ["full_crypto"] }
 ita-sgx-runtime = { package = "id-ita-sgx-runtime", path = "../../../../app-libs/sgx-runtime", default-features = false }
 ita-stf = { package = "id-ita-stf", path = "../../../../app-libs/stf", default-features = false }
 itp-enclave-metrics = { workspace = true }
+itp-extrinsics-factory = { workspace = true }
 itp-node-api = { workspace = true }
 itp-ocall-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
@@ -29,7 +30,6 @@ itp-types = { workspace = true }
 frame-support = { workspace = true }
 lc-dynamic-assertion = { workspace = true }
 lc-evm-dynamic-assertions = { workspace = true }
-lc-parachain-extrinsic-task-sender = { workspace = true }
 lc-stf-task-receiver = { workspace = true }
 lc-stf-task-sender = { workspace = true }
 lc-vc-task-sender = { workspace = true }
@@ -53,6 +53,7 @@ sgx = [
     "lc-stf-task-sender/sgx",
     "itp-node-api/sgx",
     "itp-storage/sgx",
+    "itp-extrinsics-factory/sgx",
     "lc-vc-task-sender/sgx",
     "lc-dynamic-assertion/sgx",
     "lc-evm-dynamic-assertions/sgx",
@@ -66,6 +67,7 @@ std = [
     "itp-stf-executor/std",
     "itp-stf-state-handler/std",
     "itp-stf-primitives/std",
+    "itp-extrinsics-factory/std",
     "sp-core/std",
     "litentry-primitives/std",
     "ita-sgx-runtime/std",

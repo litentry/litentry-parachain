@@ -1,4 +1,20 @@
-use crate::{self as pallet_omni_account};
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
+use crate::{self as pallet_omni_account, EnsureOmniAccount};
 use core_primitives::Identity;
 use frame_support::{
 	assert_ok,
@@ -152,10 +168,13 @@ impl pallet_omni_account::AccountIdConverter<TestRuntime> for IdentityToAccountI
 }
 
 impl pallet_omni_account::Config for TestRuntime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
-	type MaxIDGraphLength = ConstU32<3>;
+	type MaxAccountStoreLength = ConstU32<3>;
 	type AccountIdConverter = IdentityToAccountIdConverter;
+	type OmniAccountOrigin = EnsureOmniAccount<Self::AccountId>;
 }
 
 pub fn get_tee_signer() -> SystemAccountId {
@@ -163,11 +182,12 @@ pub fn get_tee_signer() -> SystemAccountId {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let system = frame_system::GenesisConfig::<TestRuntime>::default();
-	let mut ext: sp_io::TestExternalities = RuntimeGenesisConfig { system, ..Default::default() }
-		.build_storage()
-		.unwrap()
-		.into();
+	let mut t = frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
+	pallet_balances::GenesisConfig::<TestRuntime> { balances: vec![(alice(), 10)] }
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
 		let signer = get_tee_signer();
