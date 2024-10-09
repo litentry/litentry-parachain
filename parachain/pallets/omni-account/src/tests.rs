@@ -47,15 +47,15 @@ fn add_account_works() {
 
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let bob_member_account = MemberAccount {
 			id: MemberIdentity::Private(bob().encode()),
-			hash: Identity::from(bob()).hash().unwrap(),
+			hash: Identity::from(bob()).hash(),
 		};
 		let charlie_member_account = MemberAccount {
 			id: MemberIdentity::Public(Identity::from(charlie())),
-			hash: Identity::from(charlie()).hash().unwrap(),
+			hash: Identity::from(charlie()).hash(),
 		};
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
@@ -142,11 +142,11 @@ fn add_account_hash_checking_works() {
 
 		let bob_member_account = MemberAccount {
 			id: MemberIdentity::Private(bob().encode()),
-			hash: Identity::from(bob()).hash().unwrap(),
+			hash: Identity::from(bob()).hash(),
 		};
 		let charlie_member_account = MemberAccount {
 			id: MemberIdentity::Public(Identity::from(charlie())),
-			hash: Identity::from(charlie()).hash().unwrap(),
+			hash: Identity::from(charlie()).hash(),
 		};
 
 		// AccountStore gets created with the first account
@@ -165,7 +165,7 @@ fn add_account_hash_checking_works() {
 				charlie_member_account,
 				None
 			),
-			Error::<TestRuntime>::AccountStoreHashMaissing
+			Error::<TestRuntime>::AccountStoreHashMissing
 		);
 	});
 }
@@ -195,7 +195,7 @@ fn add_account_already_linked_works() {
 
 		let member_account = MemberAccount {
 			id: MemberIdentity::Public(Identity::from(bob())),
-			hash: Identity::from(bob()).hash().unwrap(),
+			hash: Identity::from(bob()).hash(),
 		};
 
 		assert_ok!(OmniAccount::add_account(
@@ -218,7 +218,7 @@ fn add_account_already_linked_works() {
 		let who = Identity::from(bob());
 		let alice_member_account = MemberAccount {
 			id: MemberIdentity::Public(Identity::from(alice())),
-			hash: Identity::from(alice()).hash().unwrap(),
+			hash: Identity::from(alice()).hash(),
 		};
 		assert_noop!(
 			OmniAccount::add_account(
@@ -239,7 +239,7 @@ fn add_account_store_len_limit_reached_works() {
 
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let member_account_2 = MemberAccount {
 			id: MemberIdentity::Private(vec![1, 2, 3]),
@@ -285,7 +285,7 @@ fn add_account_store_hash_mismatch_works() {
 
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let member_account = MemberAccount {
 			id: MemberIdentity::Private(vec![1, 2, 3]),
@@ -359,7 +359,7 @@ fn remove_account_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let member_account = MemberAccount {
 			id: MemberIdentity::Private(vec![1, 2, 3]),
@@ -429,7 +429,7 @@ fn remove_account_empty_account_check_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		assert_ok!(OmniAccount::add_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -468,7 +468,7 @@ fn publicize_account_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let public_identity = MemberIdentity::Public(Identity::from(bob()));
@@ -486,7 +486,7 @@ fn publicize_account_works() {
 			BoundedVec::truncate_from(vec![
 				MemberAccount {
 					id: MemberIdentity::Public(who_identity.clone()),
-					hash: who_identity.hash().unwrap(),
+					hash: who_identity.hash(),
 				},
 				MemberAccount { id: private_identity.clone(), hash: identity_hash },
 			]);
@@ -513,7 +513,7 @@ fn publicize_account_works() {
 			BoundedVec::truncate_from(vec![
 				MemberAccount {
 					id: MemberIdentity::Public(who_identity.clone()),
-					hash: who_identity.hash().unwrap(),
+					hash: who_identity.hash(),
 				},
 				MemberAccount { id: public_identity.clone(), hash: identity_hash },
 			]);
@@ -527,7 +527,7 @@ fn publicize_account_identity_not_found_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let identity = Identity::from(bob());
@@ -583,10 +583,10 @@ fn publicize_account_identity_is_private_check_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = Identity::from(bob()).hash().unwrap();
+		let identity_hash = Identity::from(bob()).hash();
 
 		assert_ok!(OmniAccount::add_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -621,10 +621,10 @@ fn dispatch_as_signed_works() {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash().unwrap();
+		let who_identity_hash = who_identity.hash();
 
 		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = Identity::from(bob()).hash().unwrap();
+		let identity_hash = Identity::from(bob()).hash();
 
 		assert_ok!(OmniAccount::add_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
