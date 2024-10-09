@@ -7459,6 +7459,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "libsecp256k1",
+ "pallet-collab-ai-common",
  "pallet-curator",
  "pallet-evm",
  "pallet-timestamp",
