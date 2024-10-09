@@ -76,7 +76,7 @@ where
 		handle.record_db_read::<Runtime>(56)?;
 
 		let curator: [u8; 32] = curator.into();
-		let curator = Runtime::AccountId::from(curator.into());
+		let curator = Runtime::AccountId::from(curator);
 
 		if let Some(result) = pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator) {
 			Ok((true, result.into()))
