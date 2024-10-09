@@ -19,7 +19,7 @@ use std::str::FromStr;
 use alloy::network::EthereumWallet;
 use alloy::primitives::{Address, U256};
 use alloy::providers::{Provider, ProviderBuilder, WalletProvider};
-use alloy::rpc::types::TransactionRequest;
+use alloy::rpc::types::{TransactionInput, TransactionRequest};
 use alloy::signers::local::PrivateKeySigner;
 use async_trait::async_trait;
 use executor_core::intention_executor::IntentionExecutor;
@@ -55,7 +55,6 @@ impl IntentionExecutor for EthereumIntentionExecutor {
 			provider.get_account(provider.signer_addresses().next().unwrap()).await.unwrap();
 		match intention {
 			Intention::TransferEthereum(to, value) => {
-				// todo: read transfer details from intention
 				let tx = TransactionRequest::default()
 					.to(Address::from(to))
 					.nonce(account.nonce)
@@ -68,7 +67,19 @@ impl IntentionExecutor for EthereumIntentionExecutor {
 					error!("Could not get transaction receipt: {:?}", e);
 				})?;
 			},
-			Intention::CallEthereum(address, input) => todo!(),
+			Intention::CallEthereum(address, input) => {
+				let tx = TransactionRequest::default()
+					.to(Address::from(address))
+					.nonce(account.nonce)
+					.input(TransactionInput::from(input));
+				let pending_tx = provider.send_transaction(tx).await.map_err(|e| {
+					error!("Could not send transaction: {:?}", e);
+				})?;
+				// wait for transaction to be included
+				pending_tx.get_receipt().await.map_err(|e| {
+					error!("Could not get transaction receipt: {:?}", e);
+				})?;
+			},
 		}
 		Ok(())
 	}

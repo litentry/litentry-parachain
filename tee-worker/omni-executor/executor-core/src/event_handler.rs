@@ -16,7 +16,13 @@
 
 use async_trait::async_trait;
 
+#[derive(Debug)]
+pub enum Error {
+	NonRecoverableError,
+	RecoverableError,
+}
+
 #[async_trait]
 pub trait EventHandler<BlockEvent> {
-	async fn handle(&self, event: BlockEvent) -> Result<(), ()>;
+	async fn handle(&self, event: BlockEvent) -> Result<(), Error>;
 }

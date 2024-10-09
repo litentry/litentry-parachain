@@ -17,7 +17,7 @@
 use crate::metadata::{MetadataProvider, SubxtMetadataProvider};
 use crate::primitives::BlockEvent;
 use async_trait::async_trait;
-use executor_core::event_handler::EventHandler;
+use executor_core::event_handler::{Error, EventHandler};
 use executor_core::intention_executor::IntentionExecutor;
 use executor_core::primitives::Intention;
 use std::marker::PhantomData;
@@ -54,15 +54,25 @@ impl<ChainConfig: Config, EthereumIntentionExecutorT: IntentionExecutor + Send +
 	EventHandler<BlockEvent>
 	for IntentionEventHandler<Metadata, SubxtMetadataProvider<ChainConfig>, EthereumIntentionExecutorT>
 {
-	async fn handle(&self, event: BlockEvent) -> Result<(), ()> {
+	async fn handle(&self, event: BlockEvent) -> Result<(), Error> {
 		log::debug!("Handling block event: {:?}", event.id);
 		let metadata = self.metadata_provider.get(event.id.block_num).await;
 
 		let pallet = metadata.pallet_by_name(&event.pallet_name).ok_or_else(move || {
-			log::error!("No metadata found for {}", event.id.block_num);
+			log::error!(
+				"No pallet metadata found for event {} and pallet {} ",
+				event.id.block_num,
+				event.pallet_name
+			);
+			Error::NonRecoverableError
 		})?;
 		let variant = pallet.event_variant_by_index(event.variant_index).ok_or_else(move || {
-			log::error!("No metadata found for {}", event.id.block_num);
+			log::error!(
+				"No event variant metadata found for event {} and variant {}",
+				event.id.block_num,
+				event.variant_index
+			);
+			Error::NonRecoverableError
 		})?;
 
 		let mut fields = variant
@@ -76,30 +86,35 @@ impl<ChainConfig: Config, EthereumIntentionExecutorT: IntentionExecutor + Send +
 				&mut fields,
 				metadata.types(),
 			)
-			.map_err(|_| ())?;
+			.map_err(|_| {
+				log::error!("Could not decode event {:?}", event.id);
+				Error::NonRecoverableError
+			})?;
 
 		let intention = match decoded.intention {
 			crate::litentry_rococo::runtime_types::core_primitives::intention::Intention::CallEthereum(call_ethereum) => {
 				Intention::CallEthereum(call_ethereum.address.to_fixed_bytes(), call_ethereum.input.0)
 			},
 			crate::litentry_rococo::runtime_types::core_primitives::intention::Intention::TransferEthereum(transfer) => {
-				Intention::TransferEthereum(transfer.to.to_fixed_bytes(), [0; 32])
+				Intention::TransferEthereum(transfer.to.to_fixed_bytes(), transfer.value)
 			}
 		};
 
 		//to explicitly handle all intention variants
 		match intention {
 			Intention::CallEthereum(_, _) => {
-				self.ethereum_intention_executor
-					.execute(intention)
-					.await
-					.map_err(|e| log::error!("Error executing intention"))?;
+				self.ethereum_intention_executor.execute(intention).await.map_err(|e| {
+					// assume for now we can easily recover
+					log::error!("Error executing intention");
+					Error::RecoverableError
+				})?;
 			},
 			Intention::TransferEthereum(_, _) => {
-				self.ethereum_intention_executor
-					.execute(intention)
-					.await
-					.map_err(|e| log::error!("Error executing intention"))?;
+				self.ethereum_intention_executor.execute(intention).await.map_err(|e| {
+					// assume for now we can easily recover
+					log::error!("Error executing intention");
+					Error::RecoverableError
+				})?;
 			},
 		}
 		Ok(())

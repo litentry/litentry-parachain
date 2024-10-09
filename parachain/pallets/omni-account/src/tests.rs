@@ -15,8 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{mock::*, AccountStore, MemberAccountHash, *};
+use core_primitives::CallEthereum;
 use core_primitives::Identity;
 use frame_support::{assert_noop, assert_ok};
+use sp_core::H160;
 use sp_runtime::{traits::BadOrigin, ModuleError};
 use sp_std::vec;
 
@@ -32,6 +34,10 @@ fn publicize_account_call(hash: H256, id: MemberIdentity) -> Box<RuntimeCall> {
 		public_identity: id,
 	});
 	Box::new(call)
+}
+
+fn request_intention_call(intention: Intention) -> Box<RuntimeCall> {
+	RuntimeCall::OmniAccount(crate::Call::request_intention { intention }).into()
 }
 
 fn make_balance_transfer_call(dest: AccountId, value: Balance) -> Box<RuntimeCall> {
@@ -611,6 +617,43 @@ fn publicize_account_identity_is_private_check_works() {
 			}
 			.into(),
 		);
+	});
+}
+
+#[test]
+fn request_intention_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash();
+		assert_ok!(OmniAccount::add_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity,
+			MemberAccount {
+				id: MemberIdentity::Private(vec![1, 2, 3]),
+				hash: H256::from(blake2_256(&[1, 2, 3])),
+			},
+			None
+		));
+		let intention = Intention::CallEthereum(CallEthereum {
+			address: H160::zero(),
+			input: BoundedVec::new(),
+		});
+
+		let call = request_intention_call(intention.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity_hash,
+			call
+		));
+
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount { who: who.clone(), result: DispatchResult::Ok(()) }
+				.into(),
+		);
+
+		System::assert_has_event(Event::IntentionRequested { who: who.clone(), intention }.into());
 	});
 }
 

@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use log::error;
 use std::fmt::Debug;
 use std::{marker::PhantomData, thread::sleep, time::Duration};
 use tokio::{runtime::Handle, sync::oneshot::Receiver};
 
-use crate::event_handler::EventHandler;
+use crate::event_handler::{Error, EventHandler};
 use crate::fetcher::{EventsFetcher, LastFinalizedBlockNumFetcher};
 use crate::primitives::GetEventId;
 use crate::sync_checkpoint_repository::{Checkpoint, CheckpointRepository};
@@ -108,7 +109,7 @@ impl<
 		};
 		log::debug!("Starting sync from {:?}", block_number_to_sync);
 
-		loop {
+		'main: loop {
 			log::info!("Syncing block: {}", block_number_to_sync);
 			if self.stop_signal.try_recv().is_ok() {
 				break;
@@ -163,9 +164,19 @@ impl<
 									self.handle.block_on(self.intention_event_handler.handle(event))
 								{
 									log::error!("Could not execute intention: {:?}", e);
-									// sleep(Duration::from_secs(1));
-									// // it will try again in next loop
-									// continue 'main;
+									match e {
+										Error::NonRecoverableError => {
+											error!("Non-recoverable intention handling error, event: {:?}", event_id);
+											break 'main;
+										},
+										Error::RecoverableError => {
+											error!(
+												"Recoverable intention handling error, event: {:?}",
+												event_id
+											);
+											continue 'main;
+										},
+									}
 								}
 								log::info!("Intention executed");
 							} else {

@@ -29,6 +29,9 @@ pub use assertion::Assertion;
 pub mod identity;
 pub use identity::*;
 
+pub mod intention;
+pub use intention::*;
+
 extern crate alloc;
 extern crate core;
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
