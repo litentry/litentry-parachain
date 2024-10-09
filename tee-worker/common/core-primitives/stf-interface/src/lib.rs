@@ -90,7 +90,7 @@ pub trait StateCallInterface<
 	/// 1. add a parameter to pass the top_hash around
 	/// 2. returns the encoded rpc response value field that should be passed
 	/// back to the requester when the call is triggered synchronously
-	// #[allow(clippy::too_many_arguments)]
+	#[allow(clippy::too_many_arguments)]
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
@@ -126,6 +126,7 @@ where
 	///
 	/// Litentry: returns the encoded rpc response that should be passed back to
 	/// the requester when the call is triggered synchronously
+	#[allow(clippy::too_many_arguments)]
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
