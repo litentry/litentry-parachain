@@ -157,7 +157,7 @@ where
 		// Twox64Concat(8) + GuardianIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
 		handle.record_db_read::<Runtime>(93)?;
 
-		let index = index.try_into().map_err(|_| {
+		let index: u128 = index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		if let Some((info_hash, update_block, guardian, status)) =
