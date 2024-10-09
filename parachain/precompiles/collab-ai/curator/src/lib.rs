@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use fp_evm::PrecompileHandle;
+use fp_evm::{PrecompileFailure, PrecompileHandle};
 
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
 use pallet_evm::AddressMapping;
@@ -61,7 +61,7 @@ where
 		// 16
 		handle.record_db_read::<Runtime>(16)?;
 
-		Ok(pallet_curator::Pallet::<Runtime, Instance>::public_curator_count().into())
+		Ok(pallet_curator::Pallet::<Runtime>::public_curator_count().into())
 	}
 
 	#[precompile::public("publicCuratorToIndex(bytes32)")]
@@ -74,9 +74,9 @@ where
 		// Twox64Concat(8) + T::AccountId(32) + CuratorIndex(16)
 		handle.record_db_read::<Runtime>(56)?;
 
-		let curator = Runtime::AccountId::from(curator);
+		let curator = Runtime::AccountId::from(curator.into());
 
-		Ok(pallet_curator::Pallet::<Runtime, Instance>::public_curator_to_index(curator).into())
+		Ok(pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator).into())
 	}
 
 	#[precompile::public("publicCuratorToIndex(address)")]
@@ -91,7 +91,7 @@ where
 
 		let curator = Runtime::AddressMapping::into_account_id(curator.into());
 
-		Ok(pallet_curator::Pallet::<Runtime, Instance>::public_curator_to_index(curator).into())
+		Ok(pallet_curator::Pallet::<Runtime>::public_curator_to_index(curator).into())
 	}
 
 	fn candidate_status_to_u8(status: CandidateStatus) -> MayRevert<u8> {
@@ -114,7 +114,7 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 		let (info_hash, update_block, curator, status) =
-			pallet_curator::Pallet::<Runtime, Instance>::curator_index_to_info(index);
+			pallet_curator::Pallet::<Runtime>::curator_index_to_info(index);
 
 		let update_block: U256 = update_block.into();
 

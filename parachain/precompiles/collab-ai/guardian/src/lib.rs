@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use fp_evm::PrecompileHandle;
-
+use fp_evm::{PrecompileFailure, PrecompileHandle};
 use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
+use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
@@ -116,7 +116,7 @@ where
 		// 16
 		handle.record_db_read::<Runtime>(16)?;
 
-		Ok(pallet_guardian::Pallet::<Runtime, Instance>::public_guardian_count().into())
+		Ok(pallet_guardian::Pallet::<Runtime>::public_guardian_count().into())
 	}
 
 	#[precompile::public("publicGuardianToIndex(bytes32)")]
@@ -129,9 +129,9 @@ where
 		// Twox64Concat(8) + T::AccountId(32) + GuardianIndex(16)
 		handle.record_db_read::<Runtime>(56)?;
 
-		let guardian = Runtime::AccountId::from(guardian);
+		let guardian = Runtime::AccountId::from(guardian.into());
 
-		Ok(pallet_guardian::Pallet::<Runtime, Instance>::public_guardian_to_index(guardian).into())
+		Ok(pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian).into())
 	}
 
 	#[precompile::public("publicGuardianToIndex(address)")]
@@ -146,7 +146,7 @@ where
 
 		let guardian = Runtime::AddressMapping::into_account_id(guardian.into());
 
-		Ok(pallet_guardian::Pallet::<Runtime, Instance>::public_guardian_to_index(guardian).into())
+		Ok(pallet_guardian::Pallet::<Runtime>::public_guardian_to_index(guardian).into())
 	}
 
 	fn candidate_status_to_u8(status: CandidateStatus) -> MayRevert<u8> {
@@ -168,8 +168,8 @@ where
 		let index: AssetBalanceOf<Runtime> = index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		let (info_hash, update_block, guardian, status) =
-			pallet_guardian::Pallet::<Runtime, Instance>::guardian_index_to_info(index);
+		let Some((info_hash, update_block, guardian, status)) =
+			pallet_guardian::Pallet::<Runtime>::guardian_index_to_info(index);
 
 		let update_block: U256 = update_block.into();
 
@@ -192,14 +192,15 @@ where
 		// 2 * Twox64Concat(8) + GuardianIndex(16) + T::AccountId(32) + GuardianVote(1) + ProposalIndex(16)
 		handle.record_db_read::<Runtime>(81)?;
 
-		let voter = Runtime::AccountId::from(voter);
+		let voter = Runtime::AccountId::from(voter.into());
 
 		let guardian_index: AssetBalanceOf<Runtime> = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		let result = Self::guardian_vote_to(
-			pallet_guardian::Pallet::<Runtime, Instance>::guardian_votes(voter, guardian_index),
-		)
+		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(
+			voter,
+			guardian_index,
+		))
 		.in_field("GuardianVote")?;
 
 		Ok(result)
@@ -220,9 +221,10 @@ where
 		let guardian_index: AssetBalanceOf<Runtime> = guardian_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		let result = Self::guardian_vote_to(
-			pallet_guardian::Pallet::<Runtime, Instance>::guardian_votes(voter, guardian_index),
-		)
+		let result = Self::guardian_vote_to(pallet_guardian::Pallet::<Runtime>::guardian_votes(
+			voter,
+			guardian_index,
+		))
 		.in_field("GuardianVote")?;
 
 		Ok(result)
