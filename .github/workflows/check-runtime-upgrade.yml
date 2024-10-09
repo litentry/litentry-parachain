@@ -79,7 +79,7 @@ jobs:
       - name: Fork ${{ matrix.runtime.name }} and launch parachain
         timeout-minutes: 20
         run: |
-          ./scripts/fork-parachain-and-launch.sh ${{ matrix.runtime.name }}
+          ./parachain/scripts/fork-parachain-and-launch.sh ${{ matrix.runtime.name }}
 
       - name: Install subwasm ${{ env.SUBWASM_VERSION }}
         run: |
@@ -92,7 +92,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 10
         run: |
-          ./scripts/runtime-upgrade.sh ${{ matrix.runtime.name }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
+          ./parachain/scripts/runtime-upgrade.sh ${{ matrix.runtime.name }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
 
       - name: Collect docker logs if test fails
         continue-on-error: true
@@ -128,7 +128,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run ${{ matrix.runtime.name }} try-runtime check
-        uses: paritytech/try-runtime-gha@v0.2.0
+        uses: BillyWooo/try-runtime-gha@v0.3.0
         with:
           runtime-package: ${{ matrix.runtime.package }}
           node-uri: ${{ matrix.runtime.uri }}
