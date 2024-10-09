@@ -24,7 +24,11 @@ use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State, Stf, TrustedCallSigned};
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, mocks::KeyRepositoryMock};
+use itp_sgx_crypto::{
+	ed25519_derivation::DeriveEd25519,
+	mocks::KeyRepositoryMock,
+	Aes, // TODO: use Aes256 when available
+};
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::executor::StfExecutor;
 use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
@@ -33,9 +37,10 @@ use itp_test::mock::{
 };
 use itp_top_pool::{basic_pool::BasicPool, pool::ExtrinsicHash};
 use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
-use itp_types::{Block, MrEnclave};
+use itp_types::{parentchain::Header as ParentchainHeader, Block, MrEnclave};
 use sp_core::{crypto::Pair, ed25519 as spEd25519};
 use std::sync::Arc;
+
 pub type TestRpcResponder = RpcResponderMock<ExtrinsicHash<SidechainApi<Block, TrustedCallSigned>>>;
 pub type TestTopPool = BasicPool<
 	SidechainApi<Block, TrustedCallSigned>,
@@ -54,6 +59,8 @@ pub type TestTopPoolAuthor = Author<
 >;
 pub type TestStf = Stf<TrustedCallSigned, Getter, SgxExternalities, Runtime>;
 
+type TestOnChainEncryptionKeyRepository = KeyRepositoryMock<Aes>;
+
 pub type TestStfExecutor = StfExecutor<
 	OcallApi,
 	HandleStateMock,
@@ -61,6 +68,8 @@ pub type TestStfExecutor = StfExecutor<
 	TestStf,
 	TrustedCallSigned,
 	Getter,
+	ParentchainHeader,
+	TestOnChainEncryptionKeyRepository,
 >;
 
 /// Returns all the things that are commonly used in tests and runs
@@ -73,6 +82,7 @@ pub fn test_setup() -> (
 	ShieldingCryptoMock,
 	Arc<HandleStateMock>,
 	Arc<TestStfExecutor>,
+	Arc<OcallApi>,
 ) {
 	let shielding_key = ShieldingCryptoMock::default();
 	let shielding_key_repo = Arc::new(KeyRepositoryMock::new(shielding_key.clone()));
@@ -84,10 +94,13 @@ pub fn test_setup() -> (
 	let mrenclave = OcallApi.get_mrenclave_of_self().unwrap().m;
 
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
+	let on_chain_encryption_key_repository = KeyRepositoryMock::new(Aes::default());
+
 	let stf_executor = Arc::new(TestStfExecutor::new(
 		Arc::new(OcallApi),
 		state_handler.clone(),
 		node_metadata_repo,
+		Arc::new(on_chain_encryption_key_repository),
 	));
 
 	(
@@ -103,6 +116,7 @@ pub fn test_setup() -> (
 		shielding_key,
 		state_handler,
 		stf_executor,
+		Arc::new(OcallApi),
 	)
 }
 

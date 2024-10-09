@@ -55,10 +55,11 @@ where
 }
 
 /// Proposes a state update to `Externalities`.
-pub trait StateUpdateProposer<TCS, G>
+pub trait StateUpdateProposer<TCS, G, PH>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync,
 	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+	PH: HeaderTrait<Hash = H256>,
 {
 	type Externalities: SgxExternalitiesTrait + Encode;
 
@@ -66,7 +67,7 @@ where
 	///
 	/// All executed call hashes and the mutated state are returned.
 	/// If the time expires, any remaining trusted calls within the batch will be ignored.
-	fn propose_state_update<PH, F>(
+	fn propose_state_update<F>(
 		&self,
 		trusted_calls: &[TrustedOperation<TCS, G>],
 		header: &PH,
@@ -75,7 +76,6 @@ where
 		prepare_state_function: F,
 	) -> Result<BatchExecutionResult<Self::Externalities, TCS, G>>
 	where
-		PH: HeaderTrait<Hash = H256>,
 		F: FnOnce(Self::Externalities) -> Self::Externalities;
 }
 

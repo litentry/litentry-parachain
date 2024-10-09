@@ -15,6 +15,8 @@ sgx_tstd = { workspace = true, features = ["untrusted_fs", "net", "backtrace"], 
 itp-hashing = { workspace = true }
 itp-node-api = { workspace = true }
 itp-sgx-externalities = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-sgx-crypto = { workspace = true }
 itp-stf-interface = { workspace = true }
 itp-stf-primitives = { workspace = true }
 itp-storage = { workspace = true }
@@ -47,6 +49,7 @@ sgx = [
     "sp-io/sgx",
     "itp-node-api/sgx",
     "litentry-primitives/sgx",
+    "itp-sgx-crypto/sgx",
 ]
 std = [
     # crates.io
@@ -68,6 +71,7 @@ std = [
     "pallet-parentchain/std",
     "sp-io/std",
     "litentry-primitives/std",
+    "itp-sgx-crypto/std",
 ]
 test = []
 development = [

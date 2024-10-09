@@ -445,6 +445,8 @@ dependencies = [
  "hex-literal",
  "itp-hashing",
  "itp-node-api",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-interface",
  "itp-stf-primitives",

@@ -324,6 +324,8 @@ dependencies = [
  "hex-literal",
  "itp-hashing",
  "itp-node-api",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-interface",
  "itp-stf-primitives",
@@ -969,7 +971,7 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 [[package]]
 name = "core-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#84afa8035ad15a50b57ec9f7d3845d03bc9a426b"
 dependencies = [
  "base58",
  "frame-support",
@@ -980,6 +982,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-core-hashing",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -2484,9 +2487,12 @@ version = "0.8.0"
 dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
  "itp-stf-primitives",
  "itp-types",
  "parity-scale-codec",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -2544,6 +2550,7 @@ dependencies = [
  "frame-support",
  "hash-db 0.15.2",
  "itp-types",
+ "litentry-hex-utils 0.1.0",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -2764,7 +2771,7 @@ dependencies = [
 [[package]]
 name = "litentry-hex-utils"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#84afa8035ad15a50b57ec9f7d3845d03bc9a426b"
 dependencies = [
  "hex",
 ]
@@ -2776,7 +2783,7 @@ version = "0.1.0"
 [[package]]
 name = "litentry-macros"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#84afa8035ad15a50b57ec9f7d3845d03bc9a426b"
 
 [[package]]
 name = "litentry-primitives"
@@ -2815,7 +2822,7 @@ dependencies = [
 [[package]]
 name = "litentry-proc-macros"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#84afa8035ad15a50b57ec9f7d3845d03bc9a426b"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -3190,7 +3197,7 @@ dependencies = [
 [[package]]
 name = "pallet-teebag"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#84afa8035ad15a50b57ec9f7d3845d03bc9a426b"
 dependencies = [
  "base64 0.13.1",
  "chrono 0.4.31",

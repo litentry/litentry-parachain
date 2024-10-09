@@ -30,7 +30,10 @@ use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 use itp_top_pool::basic_pool::BasicPool;
 use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
-use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
+use itp_types::{
+	parentchain::Header as ParentchainHeader, Block as ParentchainBlock,
+	SignedBlock as SignedParentchainBlock,
+};
 use primitive_types::H256;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sp_core::ed25519 as spEd25519;
@@ -63,6 +66,8 @@ pub type TestStfExecutor = StfExecutor<
 	TestStf,
 	TrustedCallSigned,
 	Getter,
+	ParentchainHeader,
+	TestStateKeyRepo,
 >;
 
 pub type TestRpcResponder = RpcResponderMock<H256>;
