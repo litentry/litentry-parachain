@@ -1,19 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use fp_evm::{PrecompileFailure, PrecompileHandle};
-use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo};
+use frame_support::{
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
+	traits::Currency,
+};
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_evm::AddressMapping;
 use pallet_pool_proposal::{
-	AssetBalanceOf, PoolProposalInfo as PalletPoolProposalInfo,
+	AssetBalanceOf, Bond as PalletBond, PoolProposalInfo as PalletPoolProposalInfo,
 	PoolProposalStatus as PalletPoolProposalStatus,
 };
 use parity_scale_codec::MaxEncodedLen;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
-use sp_core::{H256, U256};
-use sp_std::marker::PhantomData;
+use sp_core::{get, H256, U256};
+use sp_std::{collections::vec_deque::VecDeque, marker::PhantomData};
 
 use pallet_collab_ai_common::PoolProposalIndex;
 
@@ -33,7 +36,7 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	AssetBalanceOf<Runtime>: TryFrom<U256> + Into<U256>,
 	BlockNumberFor<Runtime>: TryFrom<U256> + Into<U256>,
-	BalanceOf<Runtim>: TryFrom<U256> + Into<U256>,
+	BalanceOf<Runtime>: TryFrom<U256> + Into<U256>,
 {
 	#[precompile::public("proposeInvestingPool(uint256,uint256,uint256,uint256,bytes32)")]
 	fn propose_investing_pool(
@@ -168,11 +171,8 @@ where
 		// Storage item: PoolProposalDepositOf ->
 		// 		OrderedSet<Bond<PoolProposalIndex, BalanceOf<T>>, T::MaximumPoolProposed>
 		handle.record_db_read::<Runtime>(
-			Bond < PoolProposalIndex,
-			BalanceOf
-				< Runtime
-					>> ::max_encoded_len()
-						.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
+			PalletBond::<PoolProposalIndex, BalanceOf<Runtime>>::max_encoded_len()
+				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
 		)?;
 
 		let curator: [u8; 32] = curator.into();
@@ -226,12 +226,12 @@ where
 	) -> EvmResult<(bool, Vec<PoolProposalInfo>)> {
 		// Storage item: PoolProposal ->
 		// 		PoolProposalInfo<InfoHash, AssetBalanceOf<T>, BlockNumberFor<T>, T::AccountId>
-		handle.record_db_read::<Runtime>(
-			PalletPoolProposalInfo < H256,
-			AssetBalanceOf::<Runtime>,
-			BlockNumberFor::<Runtime>,
-			Runtime::AccountId > ::max_encoded_len(),
-		)?;
+		handle.record_db_read::<Runtime>(PalletPoolProposalInfo::<
+			H256,
+			AssetBalanceOf<Runtime>,
+			BlockNumberFor<Runtime>,
+			Runtime::AccountId,
+		>::max_encoded_len())?;
 
 		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
@@ -274,8 +274,7 @@ where
 		// Storage item: PoolPreInvestings ->
 		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
 		handle.record_db_read::<Runtime>(
-			Bond < Runtime::AccountId,
-			AssetBalanceOf::<Runtime>::max_encoded_len()
+			PalletBond::<Runtime::AccountId, AssetBalanceOf<Runtime>>::max_encoded_len()
 				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
 		)?;
 
@@ -312,8 +311,7 @@ where
 		// Storage item: PoolPreInvestings ->
 		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
 		handle.record_db_read::<Runtime>(
-			Bond < Runtime::AccountId,
-			AssetBalanceOf::<Runtime>::max_encoded_len()
+			PalletBond::<Runtime::AccountId, AssetBalanceOf<Runtime>>::max_encoded_len()
 				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
 		)?;
 
