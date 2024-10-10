@@ -68,7 +68,7 @@ impl<OCallApi: EnclaveOnChainOCallApi> GetAccountStoresRepository
 		let account_store_key_prefix = storage_prefix(b"OmniAccount", b"AccountStore");
 		let account_store_storage_keys_response = self
 			.ocall_api
-			.get_storage_keys(account_store_key_prefix.into())
+			.get_storage_keys(account_store_key_prefix.into(), Some(&self.header))
 			.map_err(|_| Error::OCallApiError("Failed to get storage keys"))?;
 		let account_store_storage_keys = account_store_storage_keys_response
 			.into_iter()

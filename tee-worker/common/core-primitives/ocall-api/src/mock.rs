@@ -94,7 +94,11 @@ impl EnclaveOnChainOCallApi for OnchainMock {
 		Ok(entries)
 	}
 
-	fn get_storage_keys(&self, _key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>, OCallApiError> {
+	fn get_storage_keys<H: HeaderTrait<Hash = H256>>(
+		&self,
+		_key_prefix: Vec<u8>,
+		_header: Option<&H>,
+	) -> Result<Vec<Vec<u8>>, OCallApiError> {
 		Ok(Default::default())
 	}
 }
