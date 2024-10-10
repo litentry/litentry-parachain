@@ -59,16 +59,15 @@ impl<State: Clone> StfExecutorMock<State> {
 	}
 }
 
-impl<State, TCS, G, PH> StateUpdateProposer<TCS, G, PH> for StfExecutorMock<State>
+impl<State, TCS, G> StateUpdateProposer<TCS, G> for StfExecutorMock<State>
 where
 	State: SgxExternalitiesTrait + Encode + Clone,
 	TCS: PartialEq + Encode + Decode + Clone + Debug + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Clone + Debug + Send + Sync,
-	PH: HeaderTrait<Hash = H256>,
 {
 	type Externalities = State;
 
-	fn propose_state_update<F>(
+	fn propose_state_update<PH, F>(
 		&self,
 		trusted_calls: &[TrustedOperation<TCS, G>],
 		_header: &PH,
@@ -77,6 +76,7 @@ where
 		prepare_state_function: F,
 	) -> Result<BatchExecutionResult<Self::Externalities, TCS, G>>
 	where
+		PH: HeaderTrait<Hash = H256>,
 		F: FnOnce(Self::Externalities) -> Self::Externalities,
 	{
 		let mut lock = self.state.write().unwrap();

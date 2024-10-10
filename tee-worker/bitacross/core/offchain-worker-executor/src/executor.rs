@@ -30,7 +30,7 @@ use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryS
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{parentchain::ParentchainCall, OpaqueCall, ShardIdentifier, H256};
 use log::*;
-use sp_runtime::traits::{Block, Header as HeaderTrait};
+use sp_runtime::traits::Block;
 use std::{marker::PhantomData, sync::Arc, time::Duration, vec::Vec};
 
 /// Off-chain worker executor implementation.
@@ -51,14 +51,13 @@ pub struct Executor<
 	Stf,
 	TCS,
 	G,
-	PH,
 > {
 	top_pool_author: Arc<TopPoolAuthor>,
 	stf_executor: Arc<StfExecutor>,
 	state_handler: Arc<StateHandler>,
 	validator_accessor: Arc<ValidatorAccessor>,
 	extrinsics_factory: Arc<ExtrinsicsFactory>,
-	_phantom: PhantomData<(ParentchainBlock, Stf, TCS, G, PH)>,
+	_phantom: PhantomData<(ParentchainBlock, Stf, TCS, G)>,
 }
 
 impl<
@@ -71,7 +70,6 @@ impl<
 		Stf,
 		TCS,
 		G,
-		PH,
 	>
 	Executor<
 		ParentchainBlock,
@@ -83,10 +81,9 @@ impl<
 		Stf,
 		TCS,
 		G,
-		PH,
 	> where
-	ParentchainBlock: Block<Hash = H256, Header = PH>,
-	StfExecutor: StateUpdateProposer<TCS, G, PH>,
+	ParentchainBlock: Block<Hash = H256>,
+	StfExecutor: StateUpdateProposer<TCS, G>,
 	TopPoolAuthor: AuthorApi<H256, ParentchainBlock::Hash, TCS, G>,
 	StateHandler: QueryShardState + HandleState<StateT = StfExecutor::Externalities>,
 	ValidatorAccessor: ValidatorAccess<ParentchainBlock> + Send + Sync + 'static,
@@ -95,7 +92,6 @@ impl<
 	Stf: SystemPalletEventInterface<StfExecutor::Externalities>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
-	PH: HeaderTrait<Hash = H256>,
 {
 	pub fn new(
 		top_pool_author: Arc<TopPoolAuthor>,
@@ -190,7 +186,7 @@ impl<
 	fn apply_state_update(
 		&self,
 		shard: &ShardIdentifier,
-		updated_state: <StfExecutor as StateUpdateProposer<TCS, G, PH>>::Externalities,
+		updated_state: <StfExecutor as StateUpdateProposer<TCS, G>>::Externalities,
 	) -> Result<()> {
 		self.state_handler.reset(updated_state, shard)?;
 		Ok(())

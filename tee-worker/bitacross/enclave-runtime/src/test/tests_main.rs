@@ -36,7 +36,7 @@ use ita_stf::{
 	Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
 };
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
-use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes, StateCrypto};
+use itp_sgx_crypto::{Aes, StateCrypto};
 use itp_sgx_externalities::{SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
@@ -279,7 +279,7 @@ fn test_differentiate_getter_and_call_works() {
 
 fn test_executing_call_updates_account_nonce() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
 
 	let sender = funded_pair();
 	let receiver = unfunded_public();
@@ -312,7 +312,7 @@ fn test_executing_call_updates_account_nonce() {
 }
 
 fn test_call_set_update_parentchain_block() {
-	let (_, _, shard, _, _, state_handler, _, ..) = test_setup();
+	let (_, _, shard, _, _, state_handler, _) = test_setup();
 	let (mut state, _) = state_handler.load_cloned(&shard).unwrap();
 
 	let block_number = 3;
@@ -335,7 +335,7 @@ fn test_call_set_update_parentchain_block() {
 
 fn test_signature_must_match_public_sender_in_call() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
 
 	// create accounts
 	let sender = funded_pair();
@@ -365,7 +365,7 @@ fn test_signature_must_match_public_sender_in_call() {
 
 fn test_invalid_nonce_call_is_not_executed() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
 
 	// create accounts
 	let sender = funded_pair();
@@ -395,8 +395,7 @@ fn test_invalid_nonce_call_is_not_executed() {
 
 fn test_non_root_shielding_call_is_not_executed() {
 	// given
-	let (top_pool_author, _state, shard, mrenclave, shielding_key, _, stf_executor, ..) =
-		test_setup();
+	let (top_pool_author, _state, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
 
 	let sender = funded_pair();
 	let sender_acc: AccountId = sender.public().into();
@@ -425,8 +424,7 @@ fn test_non_root_shielding_call_is_not_executed() {
 }
 
 fn test_shielding_call_with_enclave_self_is_executed() {
-	let (top_pool_author, _state, shard, mrenclave, shielding_key, _, stf_executor, ..) =
-		test_setup();
+	let (top_pool_author, _state, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
 
 	let sender = funded_pair();
 	let sender_account: AccountId = sender.public().into();
@@ -461,8 +459,7 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 
 pub fn test_retrieve_events() {
 	// given
-	let (_, mut state, shard, mrenclave, _shielding_key, _state_handler, _stf_executor, ocall_api) =
-		test_setup();
+	let (_, mut state, shard, mrenclave, ..) = test_setup();
 	let mut opaque_vec = Vec::new();
 	let sender = funded_pair();
 	let receiver = unendowed_account();
@@ -479,8 +476,6 @@ pub fn test_retrieve_events() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	let on_chain_encryption_key_repository =
-		Arc::new(KeyRepositoryMock::<Aes>::new(Aes::default()));
 	TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -488,9 +483,6 @@ pub fn test_retrieve_events() {
 		Default::default(),
 		&mut opaque_vec,
 		repo,
-		ocall_api,
-		&latest_parentchain_header(),
-		on_chain_encryption_key_repository,
 	)
 	.unwrap();
 
@@ -498,8 +490,7 @@ pub fn test_retrieve_events() {
 }
 
 pub fn test_retrieve_event_count() {
-	let (_, mut state, shard, mrenclave, _shielding_key, _state_handler, _stf_executor, ocall_api) =
-		test_setup();
+	let (_, mut state, shard, mrenclave, ..) = test_setup();
 	let mut opaque_vec = Vec::new();
 	let sender = funded_pair();
 	let receiver = unendowed_account();
@@ -518,8 +509,6 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	let on_chain_encryption_key_repository =
-		Arc::new(KeyRepositoryMock::<Aes>::new(Aes::default()));
 	TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -527,9 +516,6 @@ pub fn test_retrieve_event_count() {
 		Default::default(),
 		&mut opaque_vec,
 		repo,
-		ocall_api,
-		&latest_parentchain_header(),
-		on_chain_encryption_key_repository,
 	)
 	.unwrap();
 
@@ -538,8 +524,7 @@ pub fn test_retrieve_event_count() {
 }
 
 pub fn test_reset_events() {
-	let (_, mut state, shard, mrenclave, _shielding_key, _state_handler, _stf_executor, ocall_api) =
-		test_setup();
+	let (_, mut state, shard, mrenclave, ..) = test_setup();
 	let mut opaque_vec = Vec::new();
 	let sender = funded_pair();
 	let receiver = unendowed_account();
@@ -555,8 +540,6 @@ pub fn test_reset_events() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	let on_chain_encryption_key_repository =
-		Arc::new(KeyRepositoryMock::<Aes>::new(Aes::default()));
 	TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -564,9 +547,6 @@ pub fn test_reset_events() {
 		Default::default(),
 		&mut opaque_vec,
 		repo,
-		ocall_api,
-		&latest_parentchain_header(),
-		on_chain_encryption_key_repository,
 	)
 	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());

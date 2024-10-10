@@ -25,22 +25,15 @@ use itp_stf_interface::{
 	StateCallInterface,
 };
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
-use itp_types::{parentchain::ParentchainId, Header};
+use itp_types::parentchain::ParentchainId;
 use litentry_primitives::LitentryMultiSignature;
 use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,
 };
-use sp_runtime::traits::Header as HeaderTrait;
 use std::{sync::Arc, vec::Vec};
 
-type EncryptionKeyRepositoryMock = KeyRepositoryMock<Aes>;
-
 pub type StfState = Stf<TrustedCallSigned, Getter, State, Runtime>;
-
-pub fn latest_parentchain_header() -> Header {
-	Header::new(1, Default::default(), Default::default(), [69; 32].into(), Default::default())
-}
 
 pub fn enclave_account_initialization_works() {
 	let enclave_account = AccountId::new([2u8; 32]);
@@ -57,7 +50,6 @@ pub fn shield_funds_increments_signer_account_nonce() {
 	let enclave_call_signer = Ed25519Pair::from_seed(b"14672678901234567890123456789012");
 	let enclave_signer_account_id: AccountId = enclave_call_signer.public().into();
 	let mut state = StfState::init_state(enclave_signer_account_id.clone());
-	let ocall_api = Arc::new(OnchainMock::default());
 
 	let shield_funds_call = TrustedCallSigned::new(
 		TrustedCall::balance_shield(
@@ -72,7 +64,6 @@ pub fn shield_funds_increments_signer_account_nonce() {
 
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let shard = ShardIdentifier::default();
-	let encryption_key_repository = Arc::new(EncryptionKeyRepositoryMock::new(Aes::default()));
 	StfState::execute_call(
 		&mut state,
 		&shard,
@@ -80,9 +71,6 @@ pub fn shield_funds_increments_signer_account_nonce() {
 		Default::default(),
 		&mut Vec::new(),
 		repo,
-		ocall_api.clone(),
-		&latest_parentchain_header(),
-		encryption_key_repository.clone(),
 	)
 	.unwrap();
 	assert_eq!(1, StfState::get_account_nonce(&mut state, &enclave_signer_account_id));
