@@ -32,7 +32,6 @@ pub use assertion::Assertion;
 pub mod identity;
 pub use identity::*;
 
-extern crate alloc;
 extern crate core;
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
 use core::hash::Hash as CoreHash;
