@@ -89,7 +89,6 @@ describe('Test Identity', function () {
                 const wallet = (context.web3Wallets as any)[identityName] as WalletType;
                 mainSigner = wallet[walletName];
 
-                // await cleanIDGraphs(context, teeShieldingKey);
                 mainIdentity = await mainSigner.getIdentity(context);
                 currentNonce = (await getSidechainNonce(context, mainIdentity)).toNumber();
             });

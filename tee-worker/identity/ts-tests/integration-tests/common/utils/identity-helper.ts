@@ -146,7 +146,7 @@ export async function buildValidations(
     signerIdentitity: CorePrimitivesIdentity,
     linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
-    network: 'evm' | 'ethereum' | 'substrate' | 'bitcoin' | 'solana',
+    network: 'evm' | 'substrate' | 'bitcoin' | 'solana',
     signer?: Signer,
     options?: { prettifiedMessage?: boolean }
 ): Promise<LitentryValidationData> {
@@ -154,7 +154,7 @@ export async function buildValidations(
     const validationNonce = startingSidechainNonce++;
 
     const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
-    if (network === 'evm' || network === 'ethereum') {
+    if (network === 'evm') {
         const evmValidationData = {
             Web3Validation: {
                 Evm: {

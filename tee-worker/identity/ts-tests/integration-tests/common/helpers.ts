@@ -130,16 +130,3 @@ export function stfErrorToString(stfError: StfError): string {
 
     return stfError.type;
 }
-
-export async function cleanIDGraphs(context: IntegrationTestContext, teeShieldingKey: KeyObject) {
-    const aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
-    const nonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-    const CleanIDGraphsCall = await createSignedTrustedCallCleanIDGraphs(
-        context.api,
-        context.mrEnclave,
-        context.api.createType('Index', nonce),
-        context.web3Wallets.substrate.Alice,
-        aliceSubstrateIdentity
-    );
-    await sendRequestFromTrustedCall(context, teeShieldingKey, CleanIDGraphsCall);
-}
