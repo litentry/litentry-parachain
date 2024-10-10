@@ -211,7 +211,7 @@ where
 			.enumerate()
 			.map(|(_index, status)| PoolProposalStatus {
 				index: status.pool_proposal_index.into(),
-				expiryTime: status.proposal_expire_time.into(),
+				expiry_time: status.proposal_expire_time.into(),
 			})
 			.collect();
 
@@ -245,12 +245,12 @@ where
 
 			let info = PoolProposalInfo {
 				proposer,
-				infoHash: info.pool_info_hash,
-				maxPoolSize: info.max_pool_size.into(),
-				poolStartTime: info.pool_start_time.into(),
-				poolEndTime: info.pool_end_time.into(),
-				estimatedEpochReward: info.estimated_epoch_reward.into(),
-				proposalStatusFlags: info.proposal_status_flags.bits(),
+				info_hash: info.pool_info_hash,
+				max_pool_size: info.max_pool_size.into(),
+				pool_start_time: info.pool_start_time.into(),
+				pool_end_time: info.pool_end_time.into(),
+				estimated_epoch_reward: info.estimated_epoch_reward.into(),
+				proposal_status_flags: info.proposal_status_flags.bits(),
 			};
 
 			Ok((true, info))
@@ -283,7 +283,7 @@ where
 				.pre_investings
 				.into_iter()
 				.enumerate()
-				.map(|(index, bond)| {
+				.map(|(_index, bond)| {
 					let owner: [u8; 32] = bond.owner.into();
 					let owner = owner.into();
 					StakingBond { owner, amount: bond.amount.into() }
@@ -320,13 +320,13 @@ where
 				.queued_pre_investings
 				.into_iter()
 				.enumerate()
-				.map(|(index, bond)| {
+				.map(|(_index, bond)| {
 					let owner: [u8; 32] = bond.0.owner.into();
 					let owner = owner.into();
 					QueuedStakingBond {
 						owner,
 						amount: bond.0.amount.into(),
-						queuedTime: bond.1.into(),
+						queued_time: bond.1.into(),
 					}
 				})
 				.collect();
@@ -360,7 +360,7 @@ where
 				.0
 				.into_iter()
 				.enumerate()
-				.map(|(index, guardian)| {
+				.map(|(_index, guardian)| {
 					let guardian: [u8; 32] = guardian.into();
 					guardian.into()
 				})
@@ -389,22 +389,22 @@ pub struct StakingBond {
 pub struct QueuedStakingBond {
 	owner: H256,
 	amount: U256,
-	queuedTime: U256,
+	queued_time: U256,
 }
 
 #[derive(Default, Debug, solidity::Codec)]
 pub struct PoolProposalStatus {
 	index: U256,
-	expiryTime: U256,
+	expiry_time: U256,
 }
 
 #[derive(Default, Debug, solidity::Codec)]
 struct PoolProposalInfo {
 	proposer: H256,
-	infoHash: H256,
-	maxPoolSize: U256,
-	poolStartTime: U256,
-	poolEndTime: U256,
-	estimatedEpochReward: U256,
-	proposalStatusFlags: u8,
+	info_hash: H256,
+	max_pool_size: U256,
+	pool_start_time: U256,
+	pool_end_time: U256,
+	estimated_epoch_reward: U256,
+	proposal_status_flags: u8,
 }
