@@ -33,17 +33,11 @@ pnpm install
 pnpm --filter integration-tests run test your-testfile.test.ts
 ```
 
-II identity test: `pnpm --filter integration-tests run test ii_identity.test.ts`
+Direct invocation identity test: `pnpm --filter integration-tests run test di_identity.test.ts`
 
-II vc test: `pnpm --filter integration-tests run test ii_vc.test.ts`
+Direct invocation vc test: `pnpm --filter integration-tests run test vc_correctness.test.ts`
 
-II batch identity test: `pnpm --filter integration-tests run test ii_batch.test.ts`
-
-Direct invocation substrate identity test: `pnpm --filter integration-tests run test di_substrate_identity.test.ts`
-
-Direct invocation evm identity test: `pnpm --filter integration-tests run test di_evm_identity.test.ts`
-
-Direct invocation vc test: `pnpm --filter integration-tests run test di_vc.test.ts`
+Direct requect vc test: `pnpm --filter integration-tests run test dr_vc.test.ts`
 
 ## Data-provider test
 
