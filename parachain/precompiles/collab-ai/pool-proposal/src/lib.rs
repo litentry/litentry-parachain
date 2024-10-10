@@ -15,7 +15,7 @@ use parity_scale_codec::MaxEncodedLen;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
-use sp_core::{get, H256, U256};
+use sp_core::{Get, H256, U256};
 use sp_std::{collections::vec_deque::VecDeque, marker::PhantomData};
 
 use pallet_collab_ai_common::PoolProposalIndex;
@@ -202,9 +202,10 @@ where
 	) -> EvmResult<Vec<PoolProposalStatus>> {
 		// Storage item: PendingPoolProposalStatus ->
 		// 		VecDeque<PoolProposalStatus<BlockNumberFor<T>>
-		handle.record_db_read::<Runtime>(VecDeque::<
-			PalletPoolProposalStatus<BlockNumberFor<Runtime>>,
-		>::max_encoded_len())?;
+		//      16 * max number
+		handle.record_db_read::<Runtime>(
+			16usize.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
+		)?;
 
 		let result = pallet_pool_proposal::Pallet::<Runtime>::pending_pool_proposal_status()
 			.into_iter()
@@ -223,7 +224,7 @@ where
 	fn pool_proposal(
 		handle: &mut impl PrecompileHandle,
 		pool_proposal_index: U256,
-	) -> EvmResult<(bool, Vec<PoolProposalInfo>)> {
+	) -> EvmResult<(bool, PoolProposalInfo)> {
 		// Storage item: PoolProposal ->
 		// 		PoolProposalInfo<InfoHash, AssetBalanceOf<T>, BlockNumberFor<T>, T::AccountId>
 		handle.record_db_read::<Runtime>(PalletPoolProposalInfo::<
@@ -237,29 +238,23 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
-		if let Some(result) =
+		if let Some(info) =
 			pallet_pool_proposal::Pallet::<Runtime>::pool_proposal(pool_proposal_index)
 		{
-			let info_vec = result
-				.into_iter()
-				.enumerate()
-				.map(|(index, info)| {
-					let proposer: [u8; 32] = info.proposer.into();
-					let proposer = proposer.into();
+			let proposer: [u8; 32] = info.proposer.into();
+			let proposer = proposer.into();
 
-					PoolProposalInfo {
-						proposer,
-						infoHash: info.pool_info_hash,
-						maxPoolSize: info.max_pool_size.into(),
-						poolStartTime: info.pool_start_time.into(),
-						poolEndTime: info.pool_end_time.into(),
-						estimatedEpochReward: info.estimated_epoch_reward.into(),
-						proposalStatusFlags: info.proposal_status_flags.bits(),
-					}
-				})
-				.collect();
+			let info = PoolProposalInfo {
+				proposer,
+				infoHash: info.pool_info_hash,
+				maxPoolSize: info.max_pool_size.into(),
+				poolStartTime: info.pool_start_time.into(),
+				poolEndTime: info.pool_end_time.into(),
+				estimatedEpochReward: info.estimated_epoch_reward.into(),
+				proposalStatusFlags: info.proposal_status_flags.bits(),
+			};
 
-			Ok((true, info_vec))
+			Ok((true, info))
 		} else {
 			Ok((false, Default::default()))
 		}
@@ -307,7 +302,7 @@ where
 	fn pool_pre_investings_queued(
 		handle: &mut impl PrecompileHandle,
 		pool_proposal_index: U256,
-	) -> EvmResult<Vec<StakingBond>> {
+	) -> EvmResult<Vec<QueuedStakingBond>> {
 		// Storage item: PoolPreInvestings ->
 		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
 		handle.record_db_read::<Runtime>(
@@ -352,7 +347,7 @@ where
 		// Storage item: PoolGuardian ->
 		// 		OrderedSet<T::AccountId, T::MaxGuardianPerProposal>
 		handle.record_db_read::<Runtime>(
-			32.saturating_mul(Runtime::MaxGuardianPerProposal::get() as usize),
+			32usize.saturating_mul(Runtime::MaxGuardianPerProposal::get() as usize),
 		)?;
 
 		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
@@ -363,7 +358,6 @@ where
 			pallet_pool_proposal::Pallet::<Runtime>::pool_guardian(pool_proposal_index)
 		{
 			let guardian_vec = result
-				.queued_pre_investings
 				.0
 				.into_iter()
 				.enumerate()
