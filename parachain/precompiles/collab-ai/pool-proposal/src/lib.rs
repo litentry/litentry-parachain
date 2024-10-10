@@ -9,14 +9,13 @@ use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_evm::AddressMapping;
 use pallet_pool_proposal::{
 	AssetBalanceOf, Bond as PalletBond, PoolProposalInfo as PalletPoolProposalInfo,
-	PoolProposalStatus as PalletPoolProposalStatus,
 };
 use parity_scale_codec::MaxEncodedLen;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
 use sp_core::{Get, H256, U256};
-use sp_std::{collections::vec_deque::VecDeque, marker::PhantomData};
+use sp_std::marker::PhantomData;
 
 use pallet_collab_ai_common::PoolProposalIndex;
 
@@ -89,7 +88,7 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
@@ -114,7 +113,7 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
@@ -138,7 +137,7 @@ where
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
@@ -185,7 +184,7 @@ where
 				.0
 				.into_iter()
 				.enumerate()
-				.map(|(index, bond)| DepositBond {
+				.map(|(_index, bond)| DepositBond {
 					owner: bond.owner.into(),
 					amount: bond.amount.into(),
 				})
@@ -210,7 +209,7 @@ where
 		let result = pallet_pool_proposal::Pallet::<Runtime>::pending_pool_proposal_status()
 			.into_iter()
 			.enumerate()
-			.map(|(index, status)| PoolProposalStatus {
+			.map(|(_index, status)| PoolProposalStatus {
 				index: status.pool_proposal_index.into(),
 				expiryTime: status.proposal_expire_time.into(),
 			})
@@ -234,7 +233,7 @@ where
 			Runtime::AccountId,
 		>::max_encoded_len())?;
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
@@ -273,7 +272,7 @@ where
 				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
 		)?;
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
@@ -310,7 +309,7 @@ where
 				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
 		)?;
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
@@ -350,7 +349,7 @@ where
 			32usize.saturating_mul(Runtime::MaxGuardianPerProposal::get() as usize),
 		)?;
 
-		let pool_proposal_index = pool_proposal_index.try_into().map_err(|_| {
+		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
