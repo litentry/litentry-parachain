@@ -255,6 +255,19 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		// Clean all id_graph related storage
+		#[pallet::call_index(6)]
+		#[pallet::weight({15_000_000})]
+		pub fn clean_id_graphs(origin: OriginFor<T>) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			Self::clear_id_graphs();
+			Self::clear_id_graph_lens();
+			Self::clear_linked_identities();
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -323,6 +336,38 @@ pub mod pallet {
 			let stats = IDGraphLens::<T>::iter().collect();
 			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)
+		}
+
+		fn clear_id_graphs() {
+			// Retrieve all the outer and inner keys from the storage by collecting tuples of (outer_key, inner_key)
+			let keys: Vec<(Identity, Identity)> = IDGraphs::<T>::iter()
+				.map(|(outer_key, inner_key, _)| (outer_key, inner_key))
+				.collect();
+
+			// Iterate through all the key pairs (outer_key, inner_key) and remove the corresponding entries from storage
+			for (outer_key, inner_key) in keys {
+				IDGraphs::<T>::remove(outer_key, inner_key);
+			}
+		}
+
+		fn clear_id_graph_lens() {
+			// Retrieve all the keys from the storage
+			let keys: Vec<Identity> = IDGraphLens::<T>::iter_keys().collect();
+
+			// Iterate through each key and remove the entry
+			for key in keys {
+				IDGraphLens::<T>::remove(key);
+			}
+		}
+
+		fn clear_linked_identities() {
+			// Retrieve all the keys from the storage
+			let keys: Vec<Identity> = LinkedIdentities::<T>::iter_keys().collect();
+
+			// Iterate through each key and remove the entry
+			for key in keys {
+				LinkedIdentities::<T>::remove(key);
+			}
 		}
 	}
 }
