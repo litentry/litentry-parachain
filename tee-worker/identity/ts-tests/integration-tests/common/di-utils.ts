@@ -347,6 +347,26 @@ export async function createSignedTrustedGetterIdGraph(
     return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
+export async function createSignedTrustedCallCleanIDGraphs(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Signer,
+    primeIdentity: CorePrimitivesIdentity,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        ['clean_id_graphs', '(LitentryIdentity)'],
+        signer,
+        mrenclave,
+        nonce,
+        primeIdentity.toHuman(),
+        options?.withWrappedBytes,
+        options?.withPrefix
+    );
+}
+
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
     primeIdentity: CorePrimitivesIdentity

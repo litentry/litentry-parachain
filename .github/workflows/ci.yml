@@ -709,15 +709,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - test_name: lit-di-substrate-identity-test
-          - test_name: lit-di-evm-identity-test
-          - test_name: lit-di-bitcoin-identity-test
-          - test_name: lit-di-solana-identity-test
+          - test_name: lit-di-identity-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
-          - test_name: lit-twitter-identity-test
-          - test_name: lit-discord-identity-test
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
@@ -785,10 +780,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - test_name: lit-di-bitcoin-identity-multiworker-test
-          - test_name: lit-di-evm-identity-multiworker-test
-          - test_name: lit-di-solana-identity-multiworker-test
-          - test_name: lit-di-substrate-identity-multiworker-test
+          - test_name: lit-di-identity-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
     name: ${{ matrix.test_name }}
