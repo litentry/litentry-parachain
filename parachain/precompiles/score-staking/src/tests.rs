@@ -20,6 +20,7 @@ use core_primitives::YEARS;
 use frame_support::{assert_err, assert_ok};
 use pallet_parachain_staking::Delegator;
 use pallet_score_staking::{Error, Event, ScorePayment};
+use pallet_teebag::{Enclave, WorkerType};
 use precompile_utils::testing::*;
 use sp_runtime::Perbill;
 
@@ -34,15 +35,19 @@ fn precompiles() -> ScoreStakingMockPrecompile<Test> {
 #[test]
 fn claim_is_ok() {
 	new_test_ext(true).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
 		run_to_block(2);
 		assert_ok!(ScoreStaking::start_pool(RuntimeOrigin::root()));
 
 		run_to_block(3);
+		let alice_staking = 1000;
 		pallet_parachain_staking::DelegatorState::<Test>::insert(
 			alice(),
-			Delegator::new(bob(), bob(), 1000),
+			Delegator::new(bob(), bob(), alice_staking),
 		);
-		pallet_parachain_staking::Total::<Test>::put(1000);
+		pallet_parachain_staking::Total::<Test>::put(alice_staking);
 
 		assert_ok!(ScoreStaking::update_score(
 			RuntimeOrigin::signed(alice()),
@@ -52,10 +57,31 @@ fn claim_is_ok() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: round_reward(),
+		let total_staking = pallet_parachain_staking::Total::<Test>::get();
+		let total_score = ScoreStaking::total_score();
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
+
+		// calculates the rewards
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			2,
+			total_staking,
+			total_score
+		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward(),
+			round_index: 2,
 		}));
+
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -63,6 +89,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -86,6 +113,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -109,6 +137,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
+				last_token_distribution_round: 2,
 			}
 		);
 

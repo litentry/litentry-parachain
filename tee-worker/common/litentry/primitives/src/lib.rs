@@ -45,6 +45,7 @@ use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use log::error;
+pub use pallet_parachain_staking::Delegator;
 pub use pallet_teebag::{
 	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, DcapProvider, Enclave,
 	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,

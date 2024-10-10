@@ -28,6 +28,8 @@ itp-sgx-runtime-primitives = { workspace = true }
 pallet-teebag = { workspace = true }
 parentchain-primitives = { workspace = true }
 
+pallet-parachain-staking = { workspace = true }
+
 [dev-dependencies]
 base64 = { workspace = true }
 

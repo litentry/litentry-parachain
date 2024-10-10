@@ -969,7 +969,7 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 [[package]]
 name = "core-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "base58",
  "frame-support",
@@ -2764,7 +2764,7 @@ dependencies = [
 [[package]]
 name = "litentry-hex-utils"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "hex",
 ]
@@ -2776,7 +2776,7 @@ version = "0.1.0"
 [[package]]
 name = "litentry-macros"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 
 [[package]]
 name = "litentry-primitives"
@@ -2788,6 +2788,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "log 0.4.21",
+ "pallet-parachain-staking",
  "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3",
@@ -2815,7 +2816,7 @@ dependencies = [
 [[package]]
 name = "litentry-proc-macros"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -3123,6 +3124,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "pallet-authorship"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -3161,6 +3176,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-parachain-staking"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
+dependencies = [
+ "core-primitives",
+ "frame-support",
+ "frame-system",
+ "log 0.4.21",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "substrate-fixed",
+]
+
+[[package]]
 name = "pallet-parentchain"
 version = "0.1.0"
 dependencies = [
@@ -3171,6 +3206,26 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-session"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "log 0.4.21",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
 ]
 
 [[package]]
@@ -3190,7 +3245,7 @@ dependencies = [
 [[package]]
 name = "pallet-teebag"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "base64 0.13.1",
  "chrono 0.4.31",
@@ -4589,6 +4644,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-session"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -4791,6 +4859,26 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-runtime-interface",
+]
+
+[[package]]
+name = "substrate-fixed"
+version = "0.5.9"
+source = "git+https://github.com/encointer/substrate-fixed#879c58bcc6fd676a74315dcd38b598f28708b0b5"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "substrate-typenum",
+]
+
+[[package]]
+name = "substrate-typenum"
+version = "1.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0f0091e93c2c75b233ae39424c52cb8a662c0811fb68add149e20e5d7e8a788"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
 ]
 
 [[package]]
@@ -5050,7 +5138,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.7",
  "static_assertions",
 ]

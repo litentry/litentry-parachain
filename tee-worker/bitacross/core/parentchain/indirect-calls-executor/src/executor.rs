@@ -195,7 +195,9 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
+		let processed_events =
+			self.parentchain_event_handler
+				.handle_events(self, events, block.header().clone())?;
 
 		if self.parentchain_id == ParentchainId::Litentry {
 			// Include a processed parentchain block confirmation for each block.

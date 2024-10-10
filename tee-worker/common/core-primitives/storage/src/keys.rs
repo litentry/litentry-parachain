@@ -17,12 +17,26 @@
 
 use codec::Encode;
 use frame_metadata::v14::StorageHasher;
+use sp_core::crypto::AccountId32 as AccountId;
 use sp_std::vec::Vec;
 
 pub fn storage_value_key(module_prefix: &str, storage_prefix: &str) -> Vec<u8> {
 	let mut bytes = sp_core::twox_128(module_prefix.as_bytes()).to_vec();
 	bytes.extend(&sp_core::twox_128(storage_prefix.as_bytes())[..]);
 	bytes
+}
+
+/// Extracts the AccountId from a storage key
+pub fn key_to_account_id(key: &Vec<u8>) -> Option<AccountId> {
+	if key.len() >= 32 {
+		let account_id_bytes = &key[key.len() - 32..];
+		let mut account_id_32_bytes = [0; 32];
+		account_id_32_bytes.copy_from_slice(account_id_bytes);
+
+		Some(AccountId::new(account_id_32_bytes))
+	} else {
+		None
+	}
 }
 
 pub fn storage_map_key<K: Encode>(

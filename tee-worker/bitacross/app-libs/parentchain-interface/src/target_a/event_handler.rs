@@ -28,6 +28,7 @@ use itp_types::{
 	H256,
 };
 use log::*;
+use sp_runtime::traits::Header;
 use std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
@@ -56,6 +57,7 @@ where
 		&self,
 		_executor: &Executor,
 		_events: impl FilterEvents,
+		_header: impl Header,
 	) -> Result<Vec<H256>, Error> {
 		debug!("not handling any events for target a");
 		Ok(Vec::new())

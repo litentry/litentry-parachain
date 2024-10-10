@@ -18,9 +18,10 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
-	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	pallet_proxy::ProxyCallIndexes, pallet_score_staking::ScoreStakingCallIndexes,
+	pallet_system::SystemConstants, pallet_teebag::TeebagCallIndexes,
+	pallet_timestamp::TimestampCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall, NodeMetadataProvider,
 };
 use codec::{Decode, Encode};
 
@@ -89,6 +90,11 @@ pub struct NodeMetadataMock {
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 
+	//ScoreStaking
+	score_staking_module: u8,
+	distribute_rewards: u8,
+	complete_rewards_distribution: u8,
+
 	bitacross_module: u8,
 	bitacross_add_relayer: u8,
 	bitacross_remove_relayer: u8,
@@ -151,6 +157,10 @@ impl NodeMetadataMock {
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
 
+			score_staking_module: 100u8,
+			distribute_rewards: 10u8,
+			complete_rewards_distribution: 11u8,
+
 			bitacross_module: 69u8,
 			bitacross_add_relayer: 0u8,
 			bitacross_remove_relayer: 1u8,
@@ -188,6 +198,16 @@ impl TeebagCallIndexes for NodeMetadataMock {
 	}
 	fn sidechain_block_imported_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teebag_module, self.sidechain_block_imported])
+	}
+}
+
+impl ScoreStakingCallIndexes for NodeMetadataMock {
+	fn distribute_rewards_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.score_staking_module, self.distribute_rewards])
+	}
+
+	fn complete_rewards_distribution_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.score_staking_module, self.complete_rewards_distribution])
 	}
 }
 
@@ -344,5 +364,11 @@ impl EvmAssertionsCallIndexes for NodeMetadataMock {
 
 	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
+	}
+}
+
+impl NodeMetadataProvider for NodeMetadataMock {
+	fn get_metadata(&self) -> Option<&Metadata> {
+		None
 	}
 }

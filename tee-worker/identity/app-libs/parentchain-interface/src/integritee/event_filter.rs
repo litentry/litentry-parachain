@@ -98,6 +98,11 @@ impl FilterEvents for FilterableEvents {
 		self.filter()
 	}
 
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<RewardDistributionStarted>, Self::Error> {
+		self.filter()
+	}
 	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error> {
 		self.filter()
 	}

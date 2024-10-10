@@ -8,6 +8,7 @@ use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use litentry_primitives::DecryptableRequest;
+use sp_runtime::traits::Header;
 
 use bc_enclave_registry::EnclaveRegistry;
 use itp_node_api::api_client::{CallIndex, PairSignature, UncheckedExtrinsicV4};
@@ -196,6 +197,12 @@ impl FilterEvents for MockEvents {
 	) -> Result<Vec<itp_types::parentchain::events::BtcWalletGenerated>, Self::Error> {
 		Ok(Vec::new())
 	}
+
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<RewardDistributionStarted>, Self::Error> {
+		Ok(Vec::new())
+	}
 }
 
 pub struct MockParentchainEventHandler {}
@@ -224,6 +231,7 @@ where
 		&self,
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
+		_: impl Header,
 	) -> core::result::Result<Vec<H256>, Error> {
 		Ok(Vec::from([H256::default()]))
 	}

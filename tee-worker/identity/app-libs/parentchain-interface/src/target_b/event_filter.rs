@@ -106,6 +106,12 @@ impl FilterEvents for FilterableEvents {
 		Ok(Vec::new())
 	}
 
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RewardDistributionStarted>, Self::Error> {
+		Ok(Vec::new())
+	}
+
 	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error> {
 		self.filter()
 	}

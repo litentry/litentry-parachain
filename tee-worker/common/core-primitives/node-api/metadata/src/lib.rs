@@ -22,9 +22,10 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
-	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	pallet_proxy::ProxyCallIndexes, pallet_score_staking::ScoreStakingCallIndexes,
+	pallet_system::SystemConstants, pallet_teebag::TeebagCallIndexes,
+	pallet_timestamp::TimestampCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -38,6 +39,7 @@ pub mod pallet_bitacross;
 pub mod pallet_evm_assertion;
 pub mod pallet_imp;
 pub mod pallet_proxy;
+pub mod pallet_score_staking;
 pub mod pallet_system;
 pub mod pallet_teebag;
 pub mod pallet_utility;
@@ -49,6 +51,10 @@ pub mod pallet_timestamp;
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
+pub trait NodeMetadataProvider {
+	fn get_metadata(&self) -> Option<&Metadata>;
+}
+
 pub trait NodeMetadataTrait:
 	TeebagCallIndexes
 	+ IMPCallIndexes
@@ -59,6 +65,8 @@ pub trait NodeMetadataTrait:
 	+ BalancesCallIndexes
 	+ TimestampCallIndexes
 	+ EvmAssertionsCallIndexes
+	+ ScoreStakingCallIndexes
+	+ NodeMetadataProvider
 	+ BitAcrossCallIndexes
 {
 }
@@ -73,6 +81,8 @@ impl<
 			+ BalancesCallIndexes
 			+ TimestampCallIndexes
 			+ EvmAssertionsCallIndexes
+			+ ScoreStakingCallIndexes
+			+ NodeMetadataProvider
 			+ BitAcrossCallIndexes,
 	> NodeMetadataTrait for T
 {
@@ -104,10 +114,6 @@ impl NodeMetadata {
 			runtime_spec_version,
 			runtime_transaction_version,
 		}
-	}
-
-	pub fn get_metadata(&self) -> Option<&Metadata> {
-		self.node_metadata.as_ref()
 	}
 
 	/// Return the substrate chain runtime version.
@@ -182,5 +188,11 @@ impl NodeMetadata {
 				.map(|key| key.into())
 				.map_err(Error::NodeMetadata),
 		}
+	}
+}
+
+impl NodeMetadataProvider for NodeMetadata {
+	fn get_metadata(&self) -> Option<&Metadata> {
+		self.node_metadata.as_ref()
 	}
 }

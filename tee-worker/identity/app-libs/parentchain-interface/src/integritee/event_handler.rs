@@ -16,39 +16,53 @@
 */
 
 use codec::{Decode, Encode};
-pub use ita_sgx_runtime::{Balance, Index};
+use frame_support::storage::storage_prefix;
+pub use ita_sgx_runtime::{Balance, Index, Runtime};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
 use itp_enclave_metrics::EnclaveMetric;
-use itp_ocall_api::EnclaveMetricsOCallApi;
+use itp_node_api::metadata::{
+	pallet_score_staking::ScoreStakingCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+};
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
+use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
+use itp_stf_state_handler::handle_state::HandleState;
+use itp_storage::{key_to_account_id, storage_map_key, StorageHasher};
 use itp_types::{
 	parentchain::{
-		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
-		ParentchainEventProcessingError, ProcessedEventsArtifacts,
+		events::{ParentchainBlockProcessed, RewardDistributionStarted},
+		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
+		ParentchainId, ProcessedEventsArtifacts,
 	},
-	RsaRequest, H256,
+	Delegator, OpaqueCall, RsaRequest, H256,
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
+use litentry_hex_utils::decode_hex;
 use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
+use pallet_identity_management_tee::IdentityContext;
 use sp_core::{blake2_256, H160};
+use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
-use std::{format, string::String, sync::Arc, time::Instant};
+use std::{collections::BTreeMap, format, println, string::String, sync::Arc, time::Instant};
 
-pub struct ParentchainEventHandler<MetricsApi>
-where
-	MetricsApi: EnclaveMetricsOCallApi,
-{
+pub struct ParentchainEventHandler<OCallApi, HandleState, NodeMetadataRepository> {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
-	pub metrics_api: Arc<MetricsApi>,
+	pub ocall_api: Arc<OCallApi>,
+	pub state_handler: Arc<HandleState>,
+	pub node_metadata_repository: Arc<NodeMetadataRepository>,
 }
 
-impl<MetricsApi> ParentchainEventHandler<MetricsApi>
+impl<OCallApi, HS, NMR> ParentchainEventHandler<OCallApi, HS, NMR>
 where
-	MetricsApi: EnclaveMetricsOCallApi,
+	OCallApi: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
+	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
+	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
@@ -210,28 +224,176 @@ where
 			.save(id, (byte_code, decrypted_secrets))
 			.map_err(Error::AssertionCreatedHandling)?;
 		let duration = start_time.elapsed();
-		if let Err(e) = self
-			.metrics_api
-			.update_metric(EnclaveMetric::DynamicAssertionSaveTime(duration))
+		if let Err(e) =
+			self.ocall_api.update_metric(EnclaveMetric::DynamicAssertionSaveTime(duration))
 		{
 			warn!("Failed to update DynamicAssertionSaveTime metric with error: {:?}", e);
 		}
 
 		Ok(())
 	}
+
+	fn distribute_staking_rewards<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>,
+	>(
+		&self,
+		executor: &Executor,
+		block_header: impl Header<Hash = H256>,
+		event: &RewardDistributionStarted,
+	) -> Result<(), Error> {
+		let scores_key_prefix = storage_prefix(b"ScoreStaking", b"Scores");
+		let scores_storage_keys_response = self
+			.ocall_api
+			.get_storage_keys(scores_key_prefix.into())
+			.map_err(|_| Error::Other("Failed to get storage keys".into()))?;
+		let scores_storage_keys: Vec<Vec<u8>> = scores_storage_keys_response
+			.into_iter()
+			.filter_map(decode_storage_key)
+			.collect();
+		let account_ids: Vec<AccountId> =
+			scores_storage_keys.iter().filter_map(key_to_account_id).collect();
+
+		let delegator_state_storage_keys: Vec<Vec<u8>> = account_ids
+			.iter()
+			.map(|account_id| {
+				storage_map_key(
+					"ParachainStaking",
+					"DelegatorState",
+					account_id,
+					&StorageHasher::Blake2_128Concat,
+				)
+			})
+			.collect();
+		let delegator_states: BTreeMap<AccountId, Delegator<AccountId, Balance>> = self
+			.ocall_api
+			.get_multiple_storages_verified(
+				delegator_state_storage_keys,
+				&block_header,
+				&ParentchainId::Litentry,
+			)
+			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
+			.into_iter()
+			.filter_map(|entry| {
+				let storage_key = decode_storage_key(entry.key)?;
+				let account_id = key_to_account_id(&storage_key)?;
+				let delegator = entry.value?;
+				Some((account_id, delegator))
+			})
+			.collect();
+
+		let id_graphs_storage_keys: Vec<Vec<u8>> = account_ids
+			.iter()
+			.map(|account_id| {
+				storage_map_key(
+					"IdentityManagement",
+					"IDGraphs",
+					&Identity::from(account_id.clone()),
+					&StorageHasher::Blake2_128Concat,
+				)
+			})
+			.collect();
+
+		let shard = executor.get_default_shard();
+
+		let id_graphs = self
+			.state_handler
+			.execute_on_current(&shard, |state, _| {
+				let mut id_graphs_accounts: BTreeMap<AccountId, Vec<AccountId>> = BTreeMap::new();
+				for id_graph_storage_key in id_graphs_storage_keys.iter() {
+					let id_graph: Vec<(Identity, IdentityContext<Runtime>)> = state
+						.iter_prefix::<Identity, IdentityContext<Runtime>>(id_graph_storage_key)
+						.unwrap_or_default();
+					let graph_accounts: Vec<AccountId> = id_graph
+						.iter()
+						.filter_map(|(identity, _)| identity.to_account_id())
+						.collect();
+					if let Some(account_id) = key_to_account_id(id_graph_storage_key) {
+						id_graphs_accounts.insert(account_id, graph_accounts);
+					}
+				}
+
+				id_graphs_accounts
+			})
+			.map_err(|_| Error::Other("Failed to get id graphs".into()))?;
+
+		let extrinsic_sender = ParachainExtrinsicSender::new();
+
+		let distribute_rewards_call_index = self
+			.node_metadata_repository
+			.get_from_metadata(|m| m.distribute_rewards_call_indexes())
+			.map_err(|_| {
+				Error::Other("Metadata retrieval for distribute_rewards_call_indexes failed".into())
+			})?
+			.map_err(|_| Error::Other("Invalid metadata".into()))?;
+
+		for account_id in account_ids.iter() {
+			let staking_amount: Balance = match id_graphs.get(account_id) {
+				Some(id_graph) => id_graph
+					.iter()
+					.filter_map(|identity| {
+						let delegator = delegator_states.get(identity)?;
+						Some(delegator.total)
+					})
+					.sum(),
+				None => match delegator_states.get(account_id) {
+					Some(delegator) => delegator.total,
+					None => 0,
+				},
+			};
+			let call = OpaqueCall::from_tuple(&(
+				distribute_rewards_call_index,
+				account_id,
+				staking_amount,
+				event.round_index,
+				event.total_stake,
+				event.total_score,
+			));
+			extrinsic_sender
+				.send(call)
+				.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
+		}
+
+		let complete_rewards_distribution_call_index = self
+			.node_metadata_repository
+			.get_from_metadata(|m| m.complete_rewards_distribution_call_indexes())
+			.map_err(|_| {
+				Error::Other(
+					"Metadata retrieval for complete_rewards_distribution_call_indexes failed"
+						.into(),
+				)
+			})?
+			.map_err(|_| Error::Other("Invalid metadata".into()))?;
+		let call =
+			OpaqueCall::from_tuple(&(complete_rewards_distribution_call_index, event.round_index));
+		extrinsic_sender
+			.send(call)
+			.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
+
+		Ok(())
+	}
 }
 
-impl<Executor, MetricsApi> HandleParentchainEvents<Executor, TrustedCallSigned, Error, (), (), ()>
-	for ParentchainEventHandler<MetricsApi>
+fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
+	let hex_key = String::decode(&mut raw_key.as_slice()).unwrap_or_default();
+	decode_hex(hex_key).ok()
+}
+
+impl<Executor, OCallApi, HS, NMR>
+	HandleParentchainEvents<Executor, TrustedCallSigned, Error, (), (), ()>
+	for ParentchainEventHandler<OCallApi, HS, NMR>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>,
-	MetricsApi: EnclaveMetricsOCallApi,
+	OCallApi: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
+	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
+	NMR::MetadataType: NodeMetadataTrait,
 {
 	type Output = ProcessedEventsArtifacts;
 	fn handle_events(
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
+		block_header: impl Header<Hash = H256>,
 	) -> Result<ProcessedEventsArtifacts, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
 		let mut successful_assertion_ids: Vec<H160> = Vec::new();
@@ -348,6 +510,21 @@ where
 				// This is for monitoring purposes
 				handled_events.push(hash_of(ParentchainBlockProcessed::EVENT));
 			});
+		}
+
+		if let Ok(events) = events.get_reward_distribution_started_events() {
+			println!("Handling RewardDistributionStarted events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					let event_hash = hash_of(&event);
+					let result =
+						self.distribute_staking_rewards(executor, block_header.clone(), event);
+					handled_events.push(event_hash);
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::RewardDistributionStartedFailure)?;
 		}
 
 		Ok((handled_events, successful_assertion_ids, failed_assertion_ids))

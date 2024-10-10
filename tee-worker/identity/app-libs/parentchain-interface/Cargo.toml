@@ -14,7 +14,10 @@ itp-api-client-types = { workspace = true }
 itp-enclave-metrics = { workspace = true }
 itp-node-api = { workspace = true }
 itp-ocall-api = { workspace = true }
+itp-sgx-externalities = { workspace = true }
 itp-stf-primitives = { workspace = true }
+itp-stf-state-handler = { workspace = true }
+itp-storage = { workspace = true }
 itp-types = { workspace = true }
 
 codec = { package = "parity-scale-codec", workspace = true }
@@ -27,7 +30,13 @@ substrate-api-client = { workspace = true, optional = true }
 
 lc-dynamic-assertion = { workspace = true }
 lc-evm-dynamic-assertions = { workspace = true }
+lc-parachain-extrinsic-task-sender = { workspace = true }
+
+litentry-hex-utils = { workspace = true }
 litentry-primitives = { workspace = true }
+
+frame-support = { workspace = true }
+pallet-identity-management-tee = { workspace = true }
 
 [dev-dependencies]
 env_logger = { workspace = true }
@@ -52,6 +61,7 @@ std = [
     "itp-stf-executor/std",
     "itp-stf-primitives/std",
     "itp-top-pool-author/std",
+    "itp-sgx-externalities/std",
     "itp-types/std",
     "log/std",
     "sp-core/std",
@@ -60,6 +70,7 @@ std = [
     "litentry-primitives/std",
     "lc-dynamic-assertion/std",
     "lc-evm-dynamic-assertions/std",
+    "lc-parachain-extrinsic-task-sender/std",
     "sp-std/std",
 ]
 sgx = [
@@ -69,8 +80,10 @@ sgx = [
     "itp-node-api/sgx",
     "itp-sgx-crypto/sgx",
     "itp-stf-executor/sgx",
+    "itp-sgx-externalities/sgx",
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
     "lc-dynamic-assertion/sgx",
     "lc-evm-dynamic-assertions/sgx",
+    "lc-parachain-extrinsic-task-sender/sgx",
 ]

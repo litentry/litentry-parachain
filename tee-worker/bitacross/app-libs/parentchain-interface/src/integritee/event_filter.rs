@@ -117,4 +117,10 @@ impl FilterEvents for FilterableEvents {
 	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error> {
 		self.filter()
 	}
+
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<RewardDistributionStarted>, Self::Error> {
+		self.filter()
+	}
 }

@@ -284,6 +284,26 @@ impl StaticEvent for AssertionCreated {
 	const EVENT: &'static str = "AssertionCreated";
 }
 
+#[derive(Encode, Decode, Debug)]
+pub struct RewardDistributionStarted {
+	pub round_index: u32,
+	pub total_stake: Balance,
+	pub total_score: Balance,
+}
+
+impl core::fmt::Display for RewardDistributionStarted {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"{:?} :: round_index: {}, total_stake: {}, total_score: {}",
+			RewardDistributionStarted::EVENT,
+			self.round_index,
+			self.total_stake,
+			self.total_score
+		);
+		write!(f, "{}", message)
+	}
+}
+
 //  Bitacross pallet events
 
 #[derive(Encode, Decode, Debug)]
@@ -340,6 +360,11 @@ impl core::fmt::Display for BtcWalletGenerated {
 		let message = format!("BtcWalletGenerated :: account_id: {:?}", account_id);
 		write!(f, "{}", message)
 	}
+}
+
+impl StaticEvent for RewardDistributionStarted {
+	const PALLET: &'static str = "ScoreStaking";
+	const EVENT: &'static str = "RewardDistributionStarted";
 }
 
 impl StaticEvent for BtcWalletGenerated {
