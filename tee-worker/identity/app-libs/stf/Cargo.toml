@@ -17,8 +17,6 @@ sgx_tstd = { workspace = true, features = ["untrusted_fs", "net", "backtrace"], 
 itp-hashing = { workspace = true }
 itp-node-api = { workspace = true }
 itp-node-api-metadata = { workspace = true }
-itp-ocall-api = { workspace = true }
-itp-sgx-crypto = { workspace = true }
 itp-sgx-externalities = { workspace = true }
 itp-stf-interface = { workspace = true }
 itp-stf-primitives = { workspace = true }
