@@ -39,9 +39,6 @@ pub use ita_sgx_runtime::{
 };
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
-use itp_ocall_api::EnclaveOnChainOCallApi;
-// TODO: use Aes256 when available
-use itp_sgx_crypto::{key_repository::AccessKey, Aes};
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
 	error::StfError,
@@ -65,10 +62,7 @@ use sp_core::{
 	ed25519,
 };
 use sp_io::hashing::blake2_256;
-use sp_runtime::{
-	traits::{ConstU32, Header as HeaderTrait},
-	BoundedVec, MultiAddress,
-};
+use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_identity_management_tee::Pallet<Runtime>;
@@ -350,15 +344,10 @@ impl TrustedCallVerification for TrustedCallSigned {
 	}
 }
 
-impl<NodeMetadataRepository, OCallApi, PH, OnChainEncryptionKeyRepository>
-	ExecuteCall<NodeMetadataRepository, OCallApi, PH, OnChainEncryptionKeyRepository>
-	for TrustedCallSigned
+impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-	OCallApi: EnclaveOnChainOCallApi,
-	PH: HeaderTrait<Hash = H256>,
-	OnChainEncryptionKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Error = StfError;
 	type Result = TrustedCallResult;
@@ -402,9 +391,6 @@ where
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-		_ocall_api: Arc<OCallApi>,
-		_parentchain_header: &PH,
-		_on_chain_encryption_key_repo: Arc<OnChainEncryptionKeyRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;

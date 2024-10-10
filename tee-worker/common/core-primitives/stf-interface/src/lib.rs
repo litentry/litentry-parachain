@@ -27,15 +27,11 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
-use itp_ocall_api::EnclaveOnChainOCallApi;
-// TODO: use Aes256 when available
-use itp_sgx_crypto::{aes::Aes, key_repository::AccessKey};
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{BlockHash, BlockNumber, ParentchainCall, ParentchainId},
 	ShardIdentifier, H256,
 };
-use sp_runtime::traits::Header as HeaderTrait;
 
 #[cfg(feature = "mocks")]
 pub mod mocks;
@@ -66,20 +62,11 @@ pub trait UpdateState<State, StateDiff> {
 }
 
 /// Interface to execute state mutating calls on a state.
-pub trait StateCallInterface<
-	TCS,
-	State,
-	NodeMetadataRepository,
-	OCallApi,
-	PH,
-	OnChainEncryptionKeyRepository,
-> where
+pub trait StateCallInterface<TCS, State, NodeMetadataRepository>
+where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
-	OCallApi: EnclaveOnChainOCallApi,
-	PH: HeaderTrait<Hash = H256>,
-	OnChainEncryptionKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -90,7 +77,6 @@ pub trait StateCallInterface<
 	/// 1. add a parameter to pass the top_hash around
 	/// 2. returns the encoded rpc response value field that should be passed
 	/// back to the requester when the call is triggered synchronously
-	#[allow(clippy::too_many_arguments)]
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
@@ -98,9 +84,6 @@ pub trait StateCallInterface<
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-		ocall_api: Arc<OCallApi>,
-		parentchain_header: &PH,
-		on_chain_encryption_key_repo: Arc<OnChainEncryptionKeyRepository>,
 	) -> Result<Self::Result, Self::Error>;
 }
 
@@ -111,13 +94,10 @@ pub trait StateGetterInterface<G, S> {
 }
 
 /// Trait used to abstract the call execution.
-pub trait ExecuteCall<NodeMetadataRepository, OCallApi, PH, OnChainEncryptionKeyRepository>
+pub trait ExecuteCall<NodeMetadataRepository>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-	OCallApi: EnclaveOnChainOCallApi,
-	PH: HeaderTrait<Hash = H256>,
-	OnChainEncryptionKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -126,16 +106,12 @@ where
 	///
 	/// Litentry: returns the encoded rpc response that should be passed back to
 	/// the requester when the call is triggered synchronously
-	#[allow(clippy::too_many_arguments)]
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-		ocall_api: Arc<OCallApi>,
-		parentchain_header: &PH,
-		on_chain_encryption_key_repo: Arc<OnChainEncryptionKeyRepository>,
 	) -> Result<Self::Result, Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.

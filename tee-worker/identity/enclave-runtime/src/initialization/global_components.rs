@@ -79,10 +79,7 @@ use itp_top_pool_author::{
 	api::SidechainApi,
 	author::{Author, AuthorTopFilter, BroadcastedTopFilter},
 };
-use itp_types::{
-	parentchain::Header as ParentchainHeader, Block as ParentchainBlock,
-	SignedBlock as SignedParentchainBlock,
-};
+use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use its_primitives::{
 	traits::{Block as SidechainBlockTrait, SignedBlock as SignedSidechainBlockTrait},
 	types::block::SignedBlock as SignedSidechainBlock,
@@ -129,8 +126,6 @@ pub type EnclaveStfExecutor = StfExecutor<
 	EnclaveStf,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
-	ParentchainHeader,
-	EnclaveStateKeyRepository, // TODO: use new aes256 key repository when available
 >;
 pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveOCallApi,
@@ -367,7 +362,6 @@ pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor:
 	EnclaveStf,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
-	ParentchainHeader,
 >;
 
 // Base component instances

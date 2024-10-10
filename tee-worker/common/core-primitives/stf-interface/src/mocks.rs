@@ -27,18 +27,11 @@ use codec::{Decode, Encode};
 use core::{fmt::Debug, marker::PhantomData};
 use itp_node_api_metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
-use itp_ocall_api::mock::OnchainMock;
-// TODO: use Aes256 when available
-use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{ParentchainCall, ParentchainId},
 	AccountId, Index, ShardIdentifier, H256,
 };
-use sp_runtime::{generic::Header, traits::BlakeTwo256};
-
-type BlockNumber = u32;
-pub type ParentchainHeader = Header<BlockNumber, BlakeTwo256>;
 
 #[derive(Default)]
 pub struct StateInterfaceMock<State, StateDiff> {
@@ -63,15 +56,8 @@ impl<State, StateDiff> UpdateState<State, StateDiff> for StateInterfaceMock<Stat
 	}
 }
 
-impl<TCS, State, StateDiff>
-	StateCallInterface<
-		TCS,
-		State,
-		NodeMetadataRepository<NodeMetadataMock>,
-		OnchainMock,
-		ParentchainHeader,
-		KeyRepositoryMock<Aes>,
-	> for StateInterfaceMock<State, StateDiff>
+impl<TCS, State, StateDiff> StateCallInterface<TCS, State, NodeMetadataRepository<NodeMetadataMock>>
+	for StateInterfaceMock<State, StateDiff>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
@@ -85,9 +71,6 @@ where
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-		_ocall_api: Arc<OnchainMock>,
-		_parentchain_header: &ParentchainHeader,
-		_key_repository: Arc<KeyRepositoryMock<Aes>>,
 	) -> Result<Self::Result, Self::Error> {
 		unimplemented!()
 	}
@@ -117,14 +100,7 @@ impl<State, StateDiff> SystemPalletAccountInterface<State, AccountId>
 
 pub struct CallExecutorMock;
 
-impl
-	ExecuteCall<
-		NodeMetadataRepository<NodeMetadataMock>,
-		OnchainMock,
-		ParentchainHeader,
-		KeyRepositoryMock<Aes>,
-	> for CallExecutorMock
-{
+impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock {
 	type Error = String;
 	type Result = ();
 
@@ -134,9 +110,6 @@ impl
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-		_ocall_api: Arc<OnchainMock>,
-		_parentchain_header: &ParentchainHeader,
-		_key_repository: Arc<KeyRepositoryMock<Aes>>,
 	) -> Result<(), Self::Error> {
 		unimplemented!()
 	}

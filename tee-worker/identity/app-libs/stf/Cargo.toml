@@ -59,7 +59,6 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "itp-node-api-metadata-provider/sgx",
-    "itp-sgx-crypto/sgx",
 ]
 std = [
     "codec/std",
@@ -83,7 +82,6 @@ std = [
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
     "itp-node-api-metadata-provider/std",
-    "itp-sgx-crypto/std",
 ]
 test = []
 development = [

@@ -32,7 +32,7 @@ use its_primitives::traits::{
 };
 use its_state::{SidechainState, SidechainSystemExt};
 use sp_runtime::{
-	traits::{Block, Header as ParentchainHeaderTrait, NumberFor},
+	traits::{Block, NumberFor},
 	MultiSignature,
 };
 use std::{marker::PhantomData, sync::Arc};
@@ -45,18 +45,16 @@ pub struct ProposerFactory<
 	StfExecutor,
 	BlockComposer,
 	MetricsApi,
-	PH,
 > {
 	top_pool_author: Arc<TopPoolAuthor>,
 	stf_executor: Arc<StfExecutor>,
 	block_composer: Arc<BlockComposer>,
 	metrics_api: Arc<MetricsApi>,
 	_phantom: PhantomData<ParentchainBlock>,
-	_phantom_header: PhantomData<PH>,
 }
 
-impl<ParentchainBlock: Block, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi, PH>
-	ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi, PH>
+impl<ParentchainBlock: Block, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi>
+	ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi>
 {
 	pub fn new(
 		top_pool_executor: Arc<TopPoolAuthor>,
@@ -70,21 +68,19 @@ impl<ParentchainBlock: Block, TopPoolAuthor, StfExecutor, BlockComposer, Metrics
 			block_composer,
 			metrics_api,
 			_phantom: Default::default(),
-			_phantom_header: Default::default(),
 		}
 	}
 }
 
 impl<
-		ParentchainBlock: Block<Hash = H256, Header = PH>,
+		ParentchainBlock: Block<Hash = H256>,
 		SignedSidechainBlock,
 		TopPoolAuthor,
 		StfExecutor,
 		BlockComposer,
 		MetricsApi,
-		PH,
 	> Environment<ParentchainBlock, SignedSidechainBlock>
-	for ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi, PH>
+	for ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi>
 where
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	SignedSidechainBlock: SignedSidechainBlockTrait<Public = sp_core::ed25519::Public, Signature = MultiSignature>
@@ -94,19 +90,18 @@ where
 		HeaderTrait<ShardIdentifier = H256>,
 	TopPoolAuthor:
 		AuthorApi<H256, ParentchainBlock::Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
-	StfExecutor: StateUpdateProposer<TrustedCallSigned, Getter, PH> + Send + Sync + 'static,
-	ExternalitiesFor<StfExecutor, PH>:
+	StfExecutor: StateUpdateProposer<TrustedCallSigned, Getter> + Send + Sync + 'static,
+	ExternalitiesFor<StfExecutor>:
 		SgxExternalitiesTrait + SidechainState + SidechainSystemExt + StateHash,
-	<ExternalitiesFor<StfExecutor, PH> as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
+	<ExternalitiesFor<StfExecutor> as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	BlockComposer: ComposeBlock<
-			ExternalitiesFor<StfExecutor, PH>,
+			ExternalitiesFor<StfExecutor>,
 			ParentchainBlock,
 			SignedSidechainBlock = SignedSidechainBlock,
 		> + Send
 		+ Sync
 		+ 'static,
 	MetricsApi: EnclaveMetricsOCallApi,
-	PH: ParentchainHeaderTrait<Hash = H256>,
 {
 	type Proposer = SlotProposer<
 		ParentchainBlock,
@@ -115,7 +110,6 @@ where
 		StfExecutor,
 		BlockComposer,
 		MetricsApi,
-		PH,
 	>;
 	type Error = ConsensusError;
 
@@ -132,7 +126,6 @@ where
 			shard,
 			metrics_api: self.metrics_api.clone(),
 			_phantom: PhantomData,
-			_phantom_header: PhantomData,
 		})
 	}
 }

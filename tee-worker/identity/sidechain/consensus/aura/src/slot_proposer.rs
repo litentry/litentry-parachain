@@ -35,31 +35,28 @@ use its_primitives::traits::{
 use its_state::{SidechainState, SidechainSystemExt};
 use log::*;
 use sp_runtime::{
-	traits::{Block, Header as ParentchainHeaderTrait, NumberFor},
+	traits::{Block, NumberFor},
 	MultiSignature,
 };
 use std::{marker::PhantomData, string::ToString, sync::Arc, time::Duration, vec::Vec};
 
-pub type ExternalitiesFor<T, PH> =
-	<T as StateUpdateProposer<TrustedCallSigned, Getter, PH>>::Externalities;
+pub type ExternalitiesFor<T> = <T as StateUpdateProposer<TrustedCallSigned, Getter>>::Externalities;
 ///! `SlotProposer` instance that has access to everything needed to propose a sidechain block.
 pub struct SlotProposer<
-	ParentchainBlock: Block<Header = ParentchainHeader>,
+	ParentchainBlock: Block,
 	SignedSidechainBlock: SignedSidechainBlockTrait,
 	TopPoolAuthor,
 	StfExecutor,
 	BlockComposer,
 	MetricsApi,
-	ParentchainHeader,
 > {
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) stf_executor: Arc<StfExecutor>,
 	pub(crate) block_composer: Arc<BlockComposer>,
-	pub(crate) parentchain_header: ParentchainHeader,
+	pub(crate) parentchain_header: ParentchainBlock::Header,
 	pub(crate) shard: ShardIdentifierFor<SignedSidechainBlock>,
 	pub(crate) metrics_api: Arc<MetricsApi>,
 	pub(crate) _phantom: PhantomData<ParentchainBlock>,
-	pub(crate) _phantom_header: PhantomData<ParentchainHeader>,
 }
 
 impl<
@@ -69,7 +66,6 @@ impl<
 		BlockComposer,
 		StfExecutor,
 		MetricsApi,
-		PH,
 	> Proposer<ParentchainBlock, SignedSidechainBlock>
 	for SlotProposer<
 		ParentchainBlock,
@@ -78,30 +74,28 @@ impl<
 		StfExecutor,
 		BlockComposer,
 		MetricsApi,
-		PH,
 	> where
-	ParentchainBlock: Block<Hash = H256, Header = PH>,
+	ParentchainBlock: Block<Hash = H256>,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	SignedSidechainBlock: SignedSidechainBlockTrait<Public = sp_core::ed25519::Public, Signature = MultiSignature>
 		+ 'static,
 	SignedSidechainBlock::Block: SidechainBlockTrait<Public = sp_core::ed25519::Public>,
 	<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as SidechainBlockTrait>::HeaderType:
 		HeaderTrait<ShardIdentifier = H256>,
-	StfExecutor: StateUpdateProposer<TrustedCallSigned, Getter, PH>,
-	ExternalitiesFor<StfExecutor, PH>:
+	StfExecutor: StateUpdateProposer<TrustedCallSigned, Getter>,
+	ExternalitiesFor<StfExecutor>:
 		SgxExternalitiesTrait + SidechainState + SidechainSystemExt + StateHash,
-	<ExternalitiesFor<StfExecutor, PH> as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
+	<ExternalitiesFor<StfExecutor> as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	TopPoolAuthor:
 		AuthorApi<H256, ParentchainBlock::Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	BlockComposer: ComposeBlock<
-			ExternalitiesFor<StfExecutor, PH>,
+			ExternalitiesFor<StfExecutor>,
 			ParentchainBlock,
 			SignedSidechainBlock = SignedSidechainBlock,
 		> + Send
 		+ Sync
 		+ 'static,
 	MetricsApi: EnclaveMetricsOCallApi,
-	PH: ParentchainHeaderTrait<Hash = H256>,
 {
 	/// Proposes a new sidechain block.
 	///
