@@ -26,7 +26,6 @@ use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMet
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519,
-	key_repository::KeyRepository,
 	mocks::KeyRepositoryMock,
 	Aes, // TODO: use Aes256 when available
 };
