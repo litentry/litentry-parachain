@@ -32,6 +32,7 @@ use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 
 mod sgx_verify;
+use core_primitives::*;
 pub use sgx_verify::{
 	deserialize_enclave_identity, deserialize_tcb_info, extract_certs,
 	extract_tcb_info_from_raw_dcap_quote, verify_certificate_chain, verify_dcap_quote,
@@ -42,9 +43,6 @@ pub use pallet::*;
 
 pub mod weights;
 pub use crate::weights::WeightInfo;
-
-mod types;
-pub use types::*;
 
 mod quoting_enclave;
 pub use quoting_enclave::*;

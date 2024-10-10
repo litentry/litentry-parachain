@@ -1447,9 +1447,12 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "scale-info",
+ "serde",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
  "strum 0.26.3",
  "strum_macros 0.26.4",
 ]
@@ -8121,6 +8124,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
  "chrono",
+ "core-primitives",
  "der 0.6.1",
  "env_logger 0.10.2",
  "frame-benchmarking",

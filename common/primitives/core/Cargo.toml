@@ -9,6 +9,8 @@ base58 = { version = "0.2", default-features = false }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "max-encoded-len"] }
 strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "=1.0.120", default-features = false }
 
 frame-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v1.1.0", default-features = false }
@@ -16,6 +18,7 @@ scale-info = { version = "2.11", default-features = false, features = ["derive"]
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-std = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 
 litentry-hex-utils = { path = "../../utils/hex", default-features = false }
 litentry-macros = { path = "macros" }
@@ -24,6 +27,8 @@ litentry-proc-macros = { path = "proc-macros" }
 [features]
 default = ["std"]
 std = [
+    "serde/std",
+    "serde_json/std",
     "strum/std",
     "parity-scale-codec/std",
     "scale-info/std",
@@ -31,6 +36,7 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "sp-io/std",
+    "sp-std/std",
     "pallet-evm/std",
     "litentry-hex-utils/std",
 ]

@@ -23,6 +23,9 @@ pub use error::*;
 mod vc;
 pub use vc::*;
 
+pub mod teebag;
+pub use teebag::*;
+
 pub mod assertion;
 pub use assertion::Assertion;
 
@@ -33,6 +36,7 @@ extern crate alloc;
 extern crate core;
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
 use core::hash::Hash as CoreHash;
+use sp_core::H256;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub use constants::*;
@@ -44,10 +48,12 @@ pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 /// Common types of parachains.
 mod types {
+    use super::H256;
     use sp_runtime::{
         traits::{IdentifyAccount, Verify},
         MultiSignature,
     };
+
     /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
     pub type Signature = MultiSignature;
 
@@ -68,7 +74,7 @@ mod types {
     pub type Nonce = u32;
 
     /// A hash of some data used by the chain.
-    pub type Hash = sp_core::H256;
+    pub type Hash = H256;
 
     /// An index to a block.
     pub type BlockNumber = u32;
