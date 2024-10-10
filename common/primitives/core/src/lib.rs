@@ -23,11 +23,14 @@ pub use error::*;
 mod vc;
 pub use vc::*;
 
-pub mod assertion;
+mod assertion;
 pub use assertion::Assertion;
 
-pub mod identity;
+mod identity;
 pub use identity::*;
+
+mod omni_account;
+pub use omni_account::*;
 
 extern crate alloc;
 extern crate core;

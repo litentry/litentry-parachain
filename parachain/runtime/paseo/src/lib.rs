@@ -994,21 +994,12 @@ impl pallet_identity_management::Config for Runtime {
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
 }
 
-pub struct IdentityToAccountIdConverter;
-
-impl pallet_omni_account::AccountIdConverter<Runtime> for IdentityToAccountIdConverter {
-	fn convert(identity: &Identity) -> Option<AccountId> {
-		identity.to_account_id()
-	}
-}
-
 impl pallet_omni_account::Config for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type MaxAccountStoreLength = ConstU32<64>;
-	type AccountIdConverter = IdentityToAccountIdConverter;
 	type OmniAccountOrigin = EnsureOmniAccount;
 }
 

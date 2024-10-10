@@ -166,7 +166,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 	fn execute(self) -> Option<Vec<u8>> {
 		match self.getter {
 			TrustedGetter::free_balance(who) =>
-				if let Some(account_id) = who.to_account_id() {
+				if let Some(account_id) = who.to_native_account() {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter free_balance");
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
@@ -176,7 +176,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			TrustedGetter::reserved_balance(who) =>
-				if let Some(account_id) = who.to_account_id() {
+				if let Some(account_id) = who.to_native_account() {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter reserved_balance");
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);

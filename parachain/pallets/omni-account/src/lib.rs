@@ -21,7 +21,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{Identity, MemberIdentity};
+pub use core_primitives::{GetAccountStoreHash, Identity, MemberAccount};
 pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
@@ -32,33 +32,11 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use sp_core::H256;
-use sp_core_hashing::blake2_256;
 use sp_runtime::traits::Dispatchable;
 use sp_std::boxed::Box;
 use sp_std::vec::Vec;
 
 pub type MemberCount = u32;
-
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct MemberAccount {
-	pub id: MemberIdentity,
-	pub hash: H256,
-}
-
-pub trait AccountIdConverter<T: Config> {
-	fn convert(identity: &Identity) -> Option<T::AccountId>;
-}
-
-pub trait GetAccountStoreHash {
-	fn hash(&self) -> H256;
-}
-
-impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {
-	fn hash(&self) -> H256 {
-		let hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
-		hashes.using_encoded(blake2_256).into()
-	}
-}
 
 // Customized origin for this pallet, to:
 // 1. to decouple `TEECallOrigin` and extrinsic that should be sent from `OmniAccount` origin only
@@ -111,9 +89,6 @@ pub mod pallet {
 		/// The maximum number of accounts that an AccountGraph can have
 		#[pallet::constant]
 		type MaxAccountStoreLength: Get<MemberCount>;
-
-		/// AccountId converter
-		type AccountIdConverter: AccountIdConverter<Self>;
 
 		/// The origin that represents the customised OmniAccount type
 		type OmniAccountOrigin: EnsureOrigin<
@@ -226,14 +201,11 @@ pub mod pallet {
 			// be firstly validated by the TEE-worker before dispatching the extrinsic
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
-				!MemberAccountHash::<T>::contains_key(member_account.hash),
+				!MemberAccountHash::<T>::contains_key(member_account.hash()),
 				Error::<T>::AccountAlreadyAdded
 			);
-			let who_account_id = match T::AccountIdConverter::convert(&who) {
-				Some(account_id) => account_id,
-				None => return Err(Error::<T>::InvalidAccount.into()),
-			};
-			let hash = member_account.hash;
+			let who_account_id = who.to_omni_account();
+			let hash = member_account.hash();
 			let mut account_store = Self::get_or_create_account_store(
 				who.clone(),
 				who_account_id.clone(),
