@@ -625,7 +625,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0",
+ "sp-std",
  "strum",
  "strum_macros",
 ]
@@ -1248,7 +1248,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-runtime-interface",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -1262,7 +1262,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -1277,7 +1277,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-tracing",
 ]
 
@@ -1317,7 +1317,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-tracing",
  "sp-weights",
  "tt-call",
@@ -1373,7 +1373,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-version",
  "sp-weights",
 ]
@@ -1772,7 +1772,7 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -1795,7 +1795,7 @@ dependencies = [
  "sp-api",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-version",
 ]
 
@@ -1833,7 +1833,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -2397,7 +2397,7 @@ dependencies = [
  "sgx_types",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -2510,7 +2510,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -2559,7 +2559,7 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-trie",
  "thiserror",
 ]
@@ -2590,7 +2590,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -2617,7 +2617,7 @@ dependencies = [
  "sp-consensus-grandpa",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "substrate-api-client",
 ]
 
@@ -2760,7 +2760,7 @@ dependencies = [
  "serde 1.0.204",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -2827,7 +2827,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3140,7 +3140,7 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "thiserror",
 ]
 
@@ -3150,7 +3150,7 @@ version = "0.1.0"
 dependencies = [
  "itp-storage",
  "itp-types",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3287,7 +3287,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3602,7 +3602,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3625,7 +3625,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3642,7 +3642,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3669,7 +3669,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -3684,7 +3684,7 @@ dependencies = [
  "scale-info",
  "sp-inherents",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -3700,7 +3700,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -4829,7 +4829,7 @@ dependencies = [
  "sp-core",
  "sp-metadata-ir",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-version",
 ]
 
@@ -4856,7 +4856,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -4868,7 +4868,7 @@ dependencies = [
  "num-traits 0.2.16",
  "parity-scale-codec",
  "scale-info",
- "sp-std 5.0.0",
+ "sp-std",
  "static_assertions",
 ]
 
@@ -4885,7 +4885,7 @@ dependencies = [
  "sp-application-crypto",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -4895,7 +4895,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff
 dependencies = [
  "parity-scale-codec",
  "scale-info",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -4924,7 +4924,7 @@ dependencies = [
  "sp-core-hashing",
  "sp-debug-derive",
  "sp-runtime-interface",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-storage",
  "ss58-registry",
  "zeroize",
@@ -4940,7 +4940,7 @@ dependencies = [
  "digest 0.10.7",
  "sha2 0.10.7",
  "sha3 0.10.8",
- "sp-std 5.0.0",
+ "sp-std",
  "twox-hash",
 ]
 
@@ -4972,7 +4972,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff
 dependencies = [
  "environmental 1.1.4",
  "parity-scale-codec",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-storage",
 ]
 
@@ -4985,7 +4985,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -5008,7 +5008,7 @@ dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -5027,7 +5027,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-weights",
 ]
 
@@ -5042,7 +5042,7 @@ dependencies = [
  "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-storage",
  "sp-tracing",
  "sp-wasm-interface",
@@ -5070,18 +5070,13 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-std"
 version = "5.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-
-[[package]]
-name = "sp-std"
-version = "8.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.1.0#65a434a0ed474c14f692dcf9f69f8da66a99d401"
 
 [[package]]
 name = "sp-storage"
@@ -5091,7 +5086,7 @@ dependencies = [
  "parity-scale-codec",
  "ref-cast",
  "sp-debug-derive",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -5102,7 +5097,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-inherents",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -5111,7 +5106,7 @@ version = "6.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "parity-scale-codec",
- "sp-std 5.0.0",
+ "sp-std",
  "tracing",
  "tracing-core",
 ]
@@ -5126,7 +5121,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-std 5.0.0",
+ "sp-std",
  "trie-db",
  "trie-root",
 ]
@@ -5140,7 +5135,7 @@ dependencies = [
  "scale-info",
  "sp-core-hashing-proc-macro",
  "sp-runtime",
- "sp-std 5.0.0",
+ "sp-std",
  "sp-version-proc-macro",
 ]
 
@@ -5162,7 +5157,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -5176,7 +5171,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-debug-derive",
- "sp-std 5.0.0",
+ "sp-std",
 ]
 
 [[package]]

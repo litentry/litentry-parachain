@@ -50,7 +50,6 @@ frame-metadata = "15.0.0"
 litentry-hex-utils = { workspace = true }
 litentry-primitives = { workspace = true, features = ["std"] }
 scale-value = "0.6.0"
-sp-core-hashing = "6.0.0"
 
 [features]
 default = []

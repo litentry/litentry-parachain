@@ -177,6 +177,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-io = { path = "../../common/core-primitives/substrate-sgx/sp-io" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 [patch."https://github.com/paritytech/frontier"]
 pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v0.9.42" }
