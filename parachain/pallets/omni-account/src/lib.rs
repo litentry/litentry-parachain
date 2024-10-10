@@ -311,6 +311,21 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn update_account_store_by_one(
+			origin: OriginFor<T>,
+			owner_identity: Identity,
+			member_accounts: Vec<MemberAccount>,
+		) -> DispatchResult {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			let bounded_member_accounts: MemberAccounts<T> = member_accounts
+				.try_into()
+				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {

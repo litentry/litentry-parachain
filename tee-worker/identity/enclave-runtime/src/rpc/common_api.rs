@@ -532,7 +532,6 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 				match local_state.load_cloned(&shard) {
 					Ok((mut state, _)) => {
-
 						// TODO
 					},
 					Err(e) => {
