@@ -18,8 +18,6 @@
 use crate::{Getter, State, Stf, TrustedCall, TrustedCallSigned};
 use ita_sgx_runtime::Runtime;
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
-use itp_ocall_api::mock::OnchainMock;
-use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_stf_interface::{
 	sudo_pallet::SudoPalletInterface, system_pallet::SystemPalletAccountInterface, InitState,
 	StateCallInterface,
