@@ -2,10 +2,23 @@
 pragma solidity >=0.8.3;
 
 interface IPoolProposal {
-    /// @dev A structure for bonding of all kind
-    struct Bond {
+    /// @dev A structure for bonding of curator's pool desposit
+    struct DepositBond {
+        uint256 owner;
+        uint256 amount;
+    }
+
+    /// @dev A structure for bonding of user's official pre-staking
+    struct StakingBond {
         bytes32 owner;
         uint256 amount;
+    }
+
+    /// @dev A structure for bonding of user's queued pre-staking
+    struct QueuedStakingBond {
+        bytes32 owner;
+        uint256 amount;
+        uint256 queuedTime;
     }
 
     /// @dev A structure for proposal and its expiry time
@@ -80,34 +93,39 @@ interface IPoolProposal {
 	/// 				 guardianParticipateProposal(uint256)
     function guardianParticipateProposal(uint256 pool_proposal_index) external;
 
+    /// @notice The next free Pool Proposal index, aka the number of pool proposed so far.
+    /// @custom:selector 0x1b9e695b
+	/// 				 poolProposalCount()
+    function poolProposalCount() external view returns (uint256 next_proposal_index);
+
     /// @notice Query a curator's pool proposal deposit, bond owner = proposal index
     /// @param curator: curator address, substrate
     /// @custom:selector 0x87178c26
 	/// 				 poolProposalDepositOf(bytes32)
-    function poolProposalDepositOf(bytes32 curator) external view returns (Bond[] memory deposit_record);
+    function poolProposalDepositOf(bytes32 curator) external view returns (DepositBond[] memory deposit_record);
 
     /// @notice Query all pending pool proposal and their schedule
     /// @custom:selector 0x2f4f6b2a
 	/// 				 pendingPoolProposalStatus()
     function pendingPoolProposalStatus() external view returns (PoolProposalStatus[] memory proposal_status);
 
-    /// @notice Query a single pool proposal and its detail
+    /// @notice Query a single pool proposal and its detail, bool represents if such info exists
     /// @param pool_proposal_index: Index of pool proposal
     /// @custom:selector 0x18afd9ad
 	/// 				 poolProposal(uint256)
-    function poolProposal(uint256 pool_proposal_index) external view returns (PoolProposalInfo memory proposal_info);
+    function poolProposal(uint256 pool_proposal_index) external view returns (bool exist, PoolProposalInfo memory proposal_info);
 
     /// @notice Query a single pool proposal and its existing included pre staking
     /// @param pool_proposal_index: Index of pool proposal
     /// @custom:selector 0xf081aa73
 	/// 				 poolPreInvestings(uint256)
-    function poolPreInvestings(uint256 pool_proposal_index) external view returns (Bond[] memory pre_investing_bond);
+    function poolPreInvestings(uint256 pool_proposal_index) external view returns (StakingBond[] memory pre_investing_bond);
 
     /// @notice Query a single pool proposal and its queued pre staking
     /// @param pool_proposal_index: Index of pool proposal
     /// @custom:selector 0x884df5eb
 	/// 				 poolPreInvestingsQueued(uint256)
-    function poolPreInvestingsQueued(uint256 pool_proposal_index) external view returns (Bond[] memory queued_bond);
+    function poolPreInvestingsQueued(uint256 pool_proposal_index) external view returns (QueuedStakingBond[] memory queued_bond);
 
     /// @notice Query a single pool proposal and its potential guardian detail
     /// @param pool_proposal_index: Index of pool proposal
