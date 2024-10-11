@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, Error, ShardIdentifier, Status};
-use core_primitives::{Assertion, Identity};
+use crate::{mock::*, Error, Status};
+use core_primitives::{Assertion, Identity, ShardIdentifier};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 use sp_std::{vec, vec::Vec};
