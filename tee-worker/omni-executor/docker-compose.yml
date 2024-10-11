@@ -6,6 +6,7 @@ services:
     depends_on:
       - ethereum-node
       - litentry-node
+    command: ["ws://litentry-node:9944", "http://ethereum-node:8545"]
   ethereum-node:
     image: ghcr.io/foundry-rs/foundry
     command:
