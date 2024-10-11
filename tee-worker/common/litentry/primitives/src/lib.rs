@@ -45,10 +45,6 @@ use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use log::error;
-pub use pallet_teebag::{
-	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, DcapProvider, Enclave,
-	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
-};
 pub use parentchain_primitives::{
 	assertion::{
 		achainable::{
@@ -74,11 +70,13 @@ pub use parentchain_primitives::{
 		web3_token::Web3TokenType,
 		Assertion,
 	},
+	decl_rsa_request,
 	identity::*,
 	omni_account::*,
+	teebag::*,
 	AccountId as ParentchainAccountId, Balance as ParentchainBalance,
 	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
-	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
+	Header as ParentchainHeader, IMPError, IntoErrorDetail, Nonce as ParentchainIndex,
 	ParameterString, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
 	VCMPError, MINUTES,
 };

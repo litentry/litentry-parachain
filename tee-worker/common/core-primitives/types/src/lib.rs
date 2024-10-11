@@ -21,7 +21,6 @@
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_primitives::decl_rsa_request;
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
@@ -31,8 +30,8 @@ pub use sidechain::SidechainBlockHash;
 
 pub use itp_sgx_runtime_primitives::types::*;
 pub use litentry_primitives::{
-	Assertion, AttestationType, DcapProvider, DecryptableRequest, Enclave, EnclaveFingerprint,
-	MrEnclave, SidechainBlockNumber, WorkerType,
+	decl_rsa_request, Assertion, AttestationType, DcapProvider, DecryptableRequest, Enclave,
+	EnclaveFingerprint, Fmspc, MrEnclave, SidechainBlockNumber, WorkerType,
 };
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
