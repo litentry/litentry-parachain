@@ -138,7 +138,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 				let account_id = match Identity::from_hex(identity_hex.as_str()) {
 					Ok(identity) =>
-						if let Some(account_id) = identity.to_account_id() {
+						if let Some(account_id) = identity.to_native_account() {
 							account_id
 						} else {
 							return Ok(json!(compute_hex_encoded_return_error(
@@ -427,7 +427,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 			Ok((encoded_did, redirect_url)) => {
 				let account_id = match Identity::from_did(encoded_did.as_str()) {
 					Ok(identity) =>
-						if let Some(account_id) = identity.to_account_id() {
+						if let Some(account_id) = identity.to_native_account() {
 							account_id
 						} else {
 							return Ok(json!(compute_hex_encoded_return_error("Invalid identity")))
@@ -465,7 +465,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 			Ok((encoded_did, email)) => {
 				let account_id = match Identity::from_did(encoded_did.as_str()) {
 					Ok(identity) =>
-						if let Some(account_id) = identity.to_account_id() {
+						if let Some(account_id) = identity.to_native_account() {
 							account_id
 						} else {
 							return Ok(json!(compute_hex_encoded_return_error("Invalid identity")))

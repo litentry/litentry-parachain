@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{Hash, Identity, Vec};
+use crate::{AccountId, Hash, Identity, Vec};
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_io::hashing::blake2_256;
@@ -47,6 +47,20 @@ impl From<Identity> for MemberAccount {
 
 pub trait GetAccountStoreHash {
     fn hash(&self) -> Hash;
+}
+
+pub trait OmniAccountConverter {
+    type OmniAccount;
+    fn convert(identity: &Identity) -> Self::OmniAccount;
+}
+
+pub struct DefaultOmniAccountConverter;
+
+impl OmniAccountConverter for DefaultOmniAccountConverter {
+    type OmniAccount = AccountId;
+    fn convert(identity: &Identity) -> AccountId {
+        identity.to_omni_account()
+    }
 }
 
 impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {

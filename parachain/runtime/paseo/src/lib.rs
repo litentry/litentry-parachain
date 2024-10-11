@@ -69,7 +69,8 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, teebag::OperationalMode as TeebagOperationalMode, AccountId, Amount, AssetId, Balance,
-	BlockNumber, Hash, Header, Identity, Nonce, Signature, DAYS, HOURS, MINUTES, SLOT_DURATION,
+	BlockNumber, DefaultOmniAccountConverter, Hash, Header, Identity, Nonce, Signature, DAYS,
+	HOURS, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 
@@ -1000,6 +1001,7 @@ impl pallet_omni_account::Config for Runtime {
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type MaxAccountStoreLength = ConstU32<64>;
 	type OmniAccountOrigin = EnsureOmniAccount;
+	type OmniAccountConverter = DefaultOmniAccountConverter;
 }
 
 impl pallet_bitacross::Config for Runtime {

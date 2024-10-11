@@ -29,7 +29,7 @@ pub use teebag::*;
 pub mod assertion;
 pub use assertion::Assertion;
 
-mod identity;
+pub mod identity;
 pub use identity::*;
 
 mod omni_account;
@@ -47,7 +47,7 @@ pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 /// Common types of parachains.
 mod types {
-    use super::H256;
+    use sp_core::H256;
     use sp_runtime::{
         traits::{IdentifyAccount, Verify},
         MultiSignature,

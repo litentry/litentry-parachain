@@ -198,7 +198,7 @@ impl ExecuteGetter for PublicGetter {
 		match self {
 			PublicGetter::some_value => Some(42u32.encode()),
 			PublicGetter::nonce(identity) =>
-				if let Some(account_id) = identity.to_account_id() {
+				if let Some(account_id) = identity.to_native_account() {
 					let nonce = System::account_nonce(&account_id);
 					debug!("PublicGetter nonce");
 					debug!("Account nonce is {}", nonce);
