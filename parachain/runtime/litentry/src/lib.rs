@@ -59,8 +59,9 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use core_primitives::{
-	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Identity, Nonce,
-	Signature, DAYS, HOURS, LITENTRY_PARA_ID, MINUTES, SLOT_DURATION,
+	opaque, teebag::OperationalMode as TeebagOperationalMode, AccountId, Amount, AssetId, Balance,
+	BlockNumber, Hash, Header, Identity, Nonce, Signature, DAYS, HOURS, LITENTRY_PARA_ID, MINUTES,
+	SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -84,7 +85,6 @@ use pallet_evm::{
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]

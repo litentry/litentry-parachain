@@ -31,26 +31,12 @@ use sp_core::{ed25519::Public as Ed25519Public, H256};
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 
-mod sgx_verify;
-pub use sgx_verify::{
-	deserialize_enclave_identity, deserialize_tcb_info, extract_certs,
-	extract_tcb_info_from_raw_dcap_quote, verify_certificate_chain, verify_dcap_quote,
-	verify_ias_report, SgxReport,
-};
+use core_primitives::*;
 
 pub use pallet::*;
 
 pub mod weights;
 pub use crate::weights::WeightInfo;
-
-mod types;
-pub use types::*;
-
-mod quoting_enclave;
-pub use quoting_enclave::*;
-
-mod tcb;
-pub use tcb::*;
 
 const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_DCAP_QUOTE_LEN: usize = 5000;

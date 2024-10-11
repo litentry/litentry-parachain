@@ -43,7 +43,6 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -69,8 +68,8 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use core_primitives::{
-	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Identity, Nonce,
-	Signature, DAYS, HOURS, MINUTES, SLOT_DURATION,
+	opaque, teebag::OperationalMode as TeebagOperationalMode, AccountId, Amount, AssetId, Balance,
+	BlockNumber, Hash, Header, Identity, Nonce, Signature, DAYS, HOURS, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 

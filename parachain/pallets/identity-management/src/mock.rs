@@ -64,7 +64,7 @@ where
 		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
 			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(
 				&signer,
-				&pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE),
+				&core_primitives::Enclave::default().with_mrenclave(TEST8_MRENCLAVE),
 			));
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
@@ -188,20 +188,20 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		assert_ok!(Teebag::set_admin(RuntimeOrigin::root(), signer.clone()));
 		assert_ok!(Teebag::set_mode(
 			RuntimeOrigin::signed(signer.clone()),
-			pallet_teebag::OperationalMode::Development
+			core_primitives::OperationalMode::Development
 		));
 
 		Timestamp::set_timestamp(TEST8_TIMESTAMP);
 		if !pallet_teebag::EnclaveRegistry::<Test>::contains_key(signer.clone()) {
 			assert_ok!(Teebag::register_enclave(
 				RuntimeOrigin::signed(signer),
-				pallet_teebag::WorkerType::Identity,
-				pallet_teebag::WorkerMode::Sidechain,
+				core_primitives::WorkerType::Identity,
+				core_primitives::WorkerMode::Sidechain,
 				TEST8_CERT.to_vec(),
 				URL.to_vec(),
 				None,
 				None,
-				pallet_teebag::AttestationType::Ias,
+				core_primitives::AttestationType::Ias,
 			));
 		}
 	});
