@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::H256;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
-use sp_core::{ed25519::Public as Ed25519Public, RuntimeDebug};
+use sp_core::{ed25519::Public as Ed25519Public, RuntimeDebug, H256};
 use sp_std::prelude::*;
 
 pub type MrSigner = [u8; 32];

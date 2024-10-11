@@ -92,7 +92,7 @@ pub fn verify(
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 				let state = vec_to_string(state.to_vec())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-				let Some(account_id) = who.to_account_id() else {
+				let Some(account_id) = who.to_native_account() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
 				let (code_verifier, state_verifier) =
@@ -207,7 +207,7 @@ pub fn verify(
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 			let verification_code = vec_to_string(data.verification_code.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-			let Some(account_id) = who.to_account_id() else {
+			let Some(account_id) = who.to_native_account() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
 			let stored_verification_code =

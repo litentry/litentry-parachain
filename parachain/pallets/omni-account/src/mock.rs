@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_omni_account, EnsureOmniAccount};
-use core_primitives::Identity;
+use core_primitives::DefaultOmniAccountConverter;
 use frame_support::{
 	assert_ok,
 	pallet_prelude::EnsureOrigin,
@@ -159,22 +159,14 @@ impl pallet_teebag::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
-pub struct IdentityToAccountIdConverter;
-
-impl pallet_omni_account::AccountIdConverter<TestRuntime> for IdentityToAccountIdConverter {
-	fn convert(identity: &Identity) -> Option<AccountId> {
-		identity.to_account_id()
-	}
-}
-
 impl pallet_omni_account::Config for TestRuntime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type MaxAccountStoreLength = ConstU32<3>;
-	type AccountIdConverter = IdentityToAccountIdConverter;
 	type OmniAccountOrigin = EnsureOmniAccount<Self::AccountId>;
+	type OmniAccountConverter = DefaultOmniAccountConverter;
 }
 
 pub fn get_tee_signer() -> SystemAccountId {
