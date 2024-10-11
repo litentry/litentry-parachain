@@ -178,7 +178,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v0.9.42", default-features = false }
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "bar/polkadot-v0.9.42", default-features = false }
 
 # SGX SDK
 sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
@@ -325,7 +325,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 [patch."https://github.com/paritytech/frontier"]
-pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v0.9.42" }
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "bar/polkadot-v0.9.42" }
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
 sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }

@@ -1092,7 +1092,8 @@ dependencies = [
 [[package]]
 name = "evm"
 version = "0.39.1"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a49a4e11987c51220aa89dbe1a5cc877f5079fa6864c0a5b4533331db44e9365"
 dependencies = [
  "auto_impl",
  "ethereum 0.14.0",
@@ -1129,7 +1130,8 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.39.0"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f1f13264b044cb66f0602180f0bc781c29accb41ff560669a3ec15858d5b606"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -1150,7 +1152,8 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.39.0"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d43eadc395bd1a52990787ca1495c26b0248165444912be075c28909a853b8c"
 dependencies = [
  "evm-core 0.39.0",
  "evm-runtime 0.39.0",
@@ -1171,7 +1174,8 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.39.0"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2aa5b32f59ec582a5651978004e5c784920291263b7dcb6de418047438e37f4f"
 dependencies = [
  "auto_impl",
  "evm-core 0.39.0",
@@ -1275,7 +1279,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/polkadot-evm/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
+source = "git+https://github.com/polkadot-evm/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
  "hex",
  "libsecp256k1",
@@ -1285,14 +1289,13 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-runtime-interface",
  "sp-std",
 ]
 
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/polkadot-evm/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
+source = "git+https://github.com/polkadot-evm/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
  "evm 0.39.1",
  "frame-support",
@@ -3646,7 +3649,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/polkadot-evm/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
+source = "git+https://github.com/polkadot-evm/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
  "evm 0.39.1",
  "fp-account",
@@ -3654,7 +3657,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "hex-literal",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
