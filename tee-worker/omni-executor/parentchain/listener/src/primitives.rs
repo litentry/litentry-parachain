@@ -15,14 +15,15 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::listener::IntentionEventId;
+use executor_core::primitives::GetEventId;
 use executor_core::sync_checkpoint_repository::Checkpoint;
 use parity_scale_codec::{Decode, Encode};
 
 /// Used to uniquely identify intention event on parentchain.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct EventId {
-	block_num: u64,
-	event_idx: u64,
+	pub block_num: u64,
+	pub event_idx: u64,
 }
 
 impl EventId {
@@ -91,5 +92,31 @@ impl PartialOrd for SyncCheckpoint {
 		} else {
 			Some(std::cmp::Ordering::Equal)
 		}
+	}
+}
+
+pub struct BlockEvent {
+	pub id: EventId,
+	pub pallet_name: String,
+	pub variant_name: String,
+	pub variant_index: u8,
+	pub field_bytes: Vec<u8>,
+}
+
+impl BlockEvent {
+	pub fn new(
+		id: EventId,
+		pallet_name: String,
+		variant_name: String,
+		variant_index: u8,
+		field_bytes: Vec<u8>,
+	) -> Self {
+		Self { id, pallet_name, variant_name, variant_index, field_bytes }
+	}
+}
+
+impl GetEventId<EventId> for BlockEvent {
+	fn get_event_id(&self) -> EventId {
+		self.id.clone()
 	}
 }

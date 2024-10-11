@@ -14,17 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::primitives::GetEventId;
 use async_trait::async_trait;
 
-/// Returns the last finalized block number
 #[async_trait]
-pub trait LastFinalizedBlockNumFetcher {
-	async fn get_last_finalized_block_num(&mut self) -> Result<Option<u64>, ()>;
-}
-
-/// Returns all events emitted on given chain
-#[async_trait]
-pub trait EventsFetcher<EventId, BlockEvent: GetEventId<EventId>> {
-	async fn get_block_events(&mut self, block_num: u64) -> Result<Vec<BlockEvent>, ()>;
+pub trait EventHandler<BlockEvent> {
+	async fn handle(&self, event: BlockEvent) -> Result<(), ()>;
 }

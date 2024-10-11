@@ -14,38 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::primitives::EventId;
+use crate::primitives::{BlockEvent, EventId};
 use async_trait::async_trait;
+use parity_scale_codec::Encode;
 use std::marker::PhantomData;
+use std::ops::Deref;
 use subxt::backend::legacy::LegacyRpcMethods;
 use subxt::backend::BlockRef;
 use subxt::config::Header;
 use subxt::events::EventsClient;
 use subxt::{Config, OnlineClient};
 
-pub struct BlockEvent {
-	pub id: EventId,
-	pub pallet_name: String,
-	pub variant_name: String,
-	pub field_bytes: Vec<u8>,
-}
-
-impl BlockEvent {
-	pub fn new(
-		id: EventId,
-		pallet_name: String,
-		variant_name: String,
-		field_bytes: Vec<u8>,
-	) -> Self {
-		Self { id, pallet_name, variant_name, field_bytes }
-	}
-}
-
 /// For fetching data from Substrate RPC node
 #[async_trait]
 pub trait SubstrateRpcClient {
 	async fn get_last_finalized_block_num(&mut self) -> Result<u64, ()>;
 	async fn get_block_events(&mut self, block_num: u64) -> Result<Vec<BlockEvent>, ()>;
+	async fn get_raw_metadata(&mut self, block_num: u64) -> Result<Vec<u8>, ()>;
 }
 
 pub struct SubxtClient<ChainConfig: Config> {
@@ -68,7 +53,6 @@ impl<ChainConfig: Config> SubstrateRpcClient for SubxtClient<ChainConfig> {
 		match self.legacy.chain_get_block_hash(Some(block_num.into())).await.map_err(|_| ())? {
 			Some(hash) => {
 				let events = self.events.at(BlockRef::from_hash(hash)).await.map_err(|_| ())?;
-
 				Ok(events
 					.iter()
 					.enumerate()
@@ -78,6 +62,7 @@ impl<ChainConfig: Config> SubstrateRpcClient for SubxtClient<ChainConfig> {
 							EventId::new(block_num, i as u64),
 							event.pallet_name().to_string(),
 							event.variant_name().to_string(),
+							event.variant_index(),
 							event.field_bytes().to_vec(),
 						)
 					})
@@ -85,6 +70,12 @@ impl<ChainConfig: Config> SubstrateRpcClient for SubxtClient<ChainConfig> {
 			},
 			None => Err(()),
 		}
+	}
+
+	async fn get_raw_metadata(&mut self, block_num: u64) -> Result<Vec<u8>, ()> {
+		let maybe_hash =
+			self.legacy.chain_get_block_hash(Some(block_num.into())).await.map_err(|_| ())?;
+		Ok(self.legacy.state_get_metadata(maybe_hash).await.unwrap().deref().encode())
 	}
 }
 
@@ -99,6 +90,10 @@ impl SubstrateRpcClient for MockedRpcClient {
 	}
 
 	async fn get_block_events(&mut self, _block_num: u64) -> Result<Vec<BlockEvent>, ()> {
+		Ok(vec![])
+	}
+
+	async fn get_raw_metadata(&mut self, _block_num: u64) -> Result<Vec<u8>, ()> {
 		Ok(vec![])
 	}
 }

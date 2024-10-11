@@ -14,15 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::fmt::Debug;
 use std::{marker::PhantomData, thread::sleep, time::Duration};
-
 use tokio::{runtime::Handle, sync::oneshot::Receiver};
 
-use crate::fetcher::{IntentionEventsFetcher, LastFinalizedBlockNumFetcher};
-use crate::{
-	intention_executor::IntentionExecutor,
-	sync_checkpoint_repository::{Checkpoint, CheckpointRepository},
-};
+use crate::event_handler::EventHandler;
+use crate::fetcher::{EventsFetcher, LastFinalizedBlockNumFetcher};
+use crate::primitives::GetEventId;
+use crate::sync_checkpoint_repository::{Checkpoint, CheckpointRepository};
 
 /// Represents event emitted on listened chain.
 #[derive(Clone, Debug, PartialEq)]
@@ -39,31 +38,43 @@ impl<Id: Clone> IntentionEvent<Id> {
 
 /// Component, used to listen to chain and execute requested intentions
 /// Requires specific implementations of:
-/// `Fetcher` - used to fetch data from source chain
-/// `IntentionExecutor` - used to execute intentions on destination chain
+/// `Fetcher` - used to fetch data from chain
+/// `IntentionExecutor` - used to execute intentions on target chain
 /// `CheckpointRepository` - used to store listener's progress
-pub struct Listener<Fetcher, Checkpoint, CheckpointRepository, IntentionEvent> {
+///	`EventId` - represents chain event id
+/// `BlockEvent` - represents chain event
+pub struct Listener<
+	Fetcher,
+	Checkpoint,
+	CheckpointRepository,
+	BlockEventId,
+	BlockEvent,
+	IntentionEventHandler,
+> {
 	id: String,
 	handle: Handle,
 	fetcher: Fetcher,
-	intention_executor: Box<dyn IntentionExecutor>,
+	intention_event_handler: IntentionEventHandler,
 	stop_signal: Receiver<()>,
 	checkpoint_repository: CheckpointRepository,
-	_phantom: PhantomData<(Checkpoint, IntentionEvent)>,
+	_phantom: PhantomData<(Checkpoint, BlockEventId, BlockEvent)>,
 }
 
 impl<
-		EventId: Into<CheckpointT> + Clone,
-		Fetcher: LastFinalizedBlockNumFetcher + IntentionEventsFetcher<EventId>,
+		EventId: Into<CheckpointT> + Clone + Debug,
+		BlockEventT: GetEventId<EventId>,
+		Fetcher: LastFinalizedBlockNumFetcher + EventsFetcher<EventId, BlockEventT>,
 		CheckpointT: PartialOrd + Checkpoint + From<u64>,
 		CheckpointRepositoryT: CheckpointRepository<CheckpointT>,
-	> Listener<Fetcher, CheckpointT, CheckpointRepositoryT, EventId>
+		IntentionEventHandler: EventHandler<BlockEventT>,
+	>
+	Listener<Fetcher, CheckpointT, CheckpointRepositoryT, EventId, BlockEventT, IntentionEventHandler>
 {
 	pub fn new(
 		id: &str,
 		handle: Handle,
 		fetcher: Fetcher,
-		intention_executor: Box<dyn IntentionExecutor>,
+		intention_event_handler: IntentionEventHandler,
 		stop_signal: Receiver<()>,
 		last_processed_log_repository: CheckpointRepositoryT,
 	) -> Result<Self, ()> {
@@ -71,7 +82,7 @@ impl<
 			id: id.to_string(),
 			handle,
 			fetcher,
-			intention_executor,
+			intention_event_handler,
 			stop_signal,
 			checkpoint_repository: last_processed_log_repository,
 			_phantom: PhantomData,
@@ -97,7 +108,7 @@ impl<
 		};
 		log::debug!("Starting sync from {:?}", block_number_to_sync);
 
-		'main: loop {
+		loop {
 			log::info!("Syncing block: {}", block_number_to_sync);
 			if self.stop_signal.try_recv().is_ok() {
 				break;
@@ -142,37 +153,38 @@ impl<
 					self.handle.block_on(self.fetcher.get_block_events(block_number_to_sync))
 				{
 					for event in events {
+						let event_id = event.get_event_id().clone();
 						if let Some(ref checkpoint) =
 							self.checkpoint_repository.get().expect("Could not read checkpoint")
 						{
-							if checkpoint.lt(&event.id.clone().into()) {
+							if checkpoint.lt(&event.get_event_id().clone().into()) {
 								log::info!("Executing intention");
-								if let Err(e) = self.handle.block_on(
-									self.intention_executor
-										.execute(crate::primitives::Intention::Transfer {}),
-								) {
+								if let Err(e) =
+									self.handle.block_on(self.intention_event_handler.handle(event))
+								{
 									log::error!("Could not execute intention: {:?}", e);
-									sleep(Duration::from_secs(1));
-									// it will try again in next loop
-									continue 'main;
+									// sleep(Duration::from_secs(1));
+									// // it will try again in next loop
+									// continue 'main;
 								}
+								log::info!("Intention executed");
 							} else {
 								log::debug!("Skipping event");
 							}
 						} else {
-							log::info!("Executing intention");
-							if let Err(e) = self.handle.block_on(
-								self.intention_executor
-									.execute(crate::primitives::Intention::Call {}),
-							) {
+							log::info!("Handling event: {:?}", event_id);
+							if let Err(e) =
+								self.handle.block_on(self.intention_event_handler.handle(event))
+							{
 								log::error!("Could not execute intention: {:?}", e);
-								sleep(Duration::from_secs(1));
-								// it will try again in next loop
-								continue 'main;
+								// sleep(Duration::from_secs(1));
+								// // it will try again in next loop
+								// continue 'main;
 							}
+							log::info!("Intention executed");
 						}
 						self.checkpoint_repository
-							.save(event.id.into())
+							.save(event_id.into())
 							.expect("Could not save checkpoint");
 					}
 					// we processed block completely so store new checkpoint

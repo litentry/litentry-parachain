@@ -50,17 +50,18 @@ async fn main() -> Result<(), ()> {
 async fn listen_to_parentchain() -> Result<JoinHandle<()>, ()> {
 	let (_sub_stop_sender, sub_stop_receiver) = oneshot::channel();
 
-	let relayer = EthereumIntentionExecutor::new("http://ethereum-node:8545")
+	let ethereum_intention_executor = EthereumIntentionExecutor::new("http://ethereum-node:8545")
 		.map_err(|e| log::error!("{:?}", e))?;
 
-	let mut parentchain_listener = parentchain_listener::create_listener::<CustomConfig>(
-		"litentry_rococo",
-		Handle::current(),
-		"ws://litentry-node:9944",
-		Box::new(relayer),
-		sub_stop_receiver,
-	)
-	.await?;
+	let mut parentchain_listener =
+		parentchain_listener::create_listener::<CustomConfig, EthereumIntentionExecutor>(
+			"litentry_rococo",
+			Handle::current(),
+			"ws://litentry-node:9944",
+			ethereum_intention_executor,
+			sub_stop_receiver,
+		)
+		.await?;
 
 	Ok(thread::Builder::new()
 		.name("litentry_rococo_sync".to_string())

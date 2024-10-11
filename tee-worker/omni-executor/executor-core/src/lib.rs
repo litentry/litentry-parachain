@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod event_handler;
 pub mod fetcher;
 pub mod intention_executor;
 pub mod listener;

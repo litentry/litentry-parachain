@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::primitives::{BlockEvent, EventId};
+use crate::rpc_client::SubstrateRpcClient;
 use crate::rpc_client::SubstrateRpcClientFactory;
-use crate::{listener::IntentionEventId, rpc_client::SubstrateRpcClient};
 use async_trait::async_trait;
-use executor_core::fetcher::{IntentionEventsFetcher, LastFinalizedBlockNumFetcher};
-use executor_core::listener::IntentionEvent;
+use executor_core::fetcher::{EventsFetcher, LastFinalizedBlockNumFetcher};
 use log::error;
 
 /// Used for fetching data from parentchain
@@ -69,20 +69,18 @@ impl<
 impl<
 		RpcClient: SubstrateRpcClient + Sync + Send,
 		RpcClientFactory: SubstrateRpcClientFactory<RpcClient> + Sync + Send,
-	> IntentionEventsFetcher<IntentionEventId> for Fetcher<RpcClient, RpcClientFactory>
+	> EventsFetcher<EventId, BlockEvent> for Fetcher<RpcClient, RpcClientFactory>
 {
-	async fn get_block_events(
-		&mut self,
-		block_num: u64,
-	) -> Result<Vec<IntentionEvent<IntentionEventId>>, ()> {
+	async fn get_block_events(&mut self, block_num: u64) -> Result<Vec<BlockEvent>, ()> {
 		self.connect_if_needed().await;
 
 		if let Some(ref mut client) = self.client {
-			client.get_block_events(block_num).await.map(|events| {
-				events.into_iter().map(|event| IntentionEvent::new(event.id)).collect()
-			})
+			client.get_block_events(block_num).await
+		// client.get_block_events(block_num).await.map(|events| {
+		// 	events.into_iter().map(|event| IntentionEvent::new(event.id)).collect()
+		// })
 		} else {
-			Ok(vec![])
+			Err(())
 		}
 	}
 }

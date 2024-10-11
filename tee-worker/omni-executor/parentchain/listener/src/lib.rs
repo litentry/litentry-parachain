@@ -14,13 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+mod event_handler;
 mod fetcher;
 mod listener;
+mod metadata;
 mod primitives;
 mod rpc_client;
 
+use crate::event_handler::IntentionEventHandler;
 use crate::fetcher::Fetcher;
 use crate::listener::ParentchainListener;
+use crate::metadata::SubxtMetadataProvider;
 use crate::rpc_client::{SubxtClient, SubxtClientFactory};
 use executor_core::intention_executor::IntentionExecutor;
 use executor_core::listener::Listener;
@@ -32,7 +36,7 @@ use tokio::runtime::Handle;
 use tokio::sync::oneshot::Receiver;
 
 // Generate an interface that we can use from the node's metadata.
-#[subxt::subxt(runtime_metadata_path = "../artifacts/rococo-omni-execution.scale")]
+#[subxt::subxt(runtime_metadata_path = "../artifacts/rococo-omni-account.scale")]
 pub mod litentry_rococo {}
 
 // We don't need to construct this at runtime,
@@ -67,17 +71,22 @@ impl Config for CustomConfig {
 }
 
 /// Creates parentchain listener
-pub async fn create_listener<ChainConfig: Config>(
+pub async fn create_listener<
+	ChainConfig: Config,
+	EthereumIntentionExecutorT: IntentionExecutor + Send + Sync,
+>(
 	id: &str,
 	handle: Handle,
 	ws_rpc_endpoint: &str,
-	intention_executor: Box<dyn IntentionExecutor>,
+	ethereum_intention_executor: EthereumIntentionExecutorT,
 	stop_signal: Receiver<()>,
 ) -> Result<
 	ParentchainListener<
 		SubxtClient<ChainConfig>,
 		SubxtClientFactory<ChainConfig>,
 		FileCheckpointRepository,
+		ChainConfig,
+		EthereumIntentionExecutorT,
 	>,
 	(),
 > {
@@ -87,11 +96,15 @@ pub async fn create_listener<ChainConfig: Config>(
 	let last_processed_log_repository =
 		FileCheckpointRepository::new("data/parentchain_last_log.bin");
 
+	let metadata_provider = SubxtMetadataProvider::new(SubxtClientFactory::new(ws_rpc_endpoint));
+	let intention_event_handler =
+		IntentionEventHandler::new(metadata_provider, ethereum_intention_executor);
+
 	Listener::new(
 		id,
 		handle,
 		fetcher,
-		intention_executor,
+		intention_event_handler,
 		stop_signal,
 		last_processed_log_repository,
 	)

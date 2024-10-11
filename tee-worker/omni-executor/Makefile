@@ -75,4 +75,4 @@ stop-local:
 
 .PHONY: get-omni-pallet-metadata
 get-omni-pallet-metadata:
-	subxt metadata --url http://localhost:9944 --allow-insecure --pallets OmniExecution > substrate/artifacts/rococo-omni-execution.scale
+	subxt metadata --url http://localhost:9944 --allow-insecure --pallets OmniAccount > parentchain/artifacts/rococo-omni-account.scale

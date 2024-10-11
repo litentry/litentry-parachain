@@ -16,7 +16,7 @@
 
 use std::str::FromStr;
 
-use alloy::network::{EthereumWallet, NetworkWallet};
+use alloy::network::EthereumWallet;
 use alloy::primitives::{Address, U256};
 use alloy::providers::{Provider, ProviderBuilder, WalletProvider};
 use alloy::rpc::types::TransactionRequest;
@@ -54,12 +54,12 @@ impl IntentionExecutor for EthereumIntentionExecutor {
 		let account =
 			provider.get_account(provider.signer_addresses().next().unwrap()).await.unwrap();
 		match intention {
-			Intention::Transfer {} => {
+			Intention::TransferEthereum(to, value) => {
 				// todo: read transfer details from intention
 				let tx = TransactionRequest::default()
-					.to(Address::from_str("0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65").unwrap())
+					.to(Address::from(to))
 					.nonce(account.nonce)
-					.value(U256::from(1));
+					.value(U256::from_be_bytes(value));
 				let pending_tx = provider.send_transaction(tx).await.map_err(|e| {
 					error!("Could not send transaction: {:?}", e);
 				})?;
@@ -68,7 +68,7 @@ impl IntentionExecutor for EthereumIntentionExecutor {
 					error!("Could not get transaction receipt: {:?}", e);
 				})?;
 			},
-			Intention::Call {} => todo!(),
+			Intention::CallEthereum(address, input) => todo!(),
 		}
 		Ok(())
 	}

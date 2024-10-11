@@ -16,6 +16,10 @@
 
 #[derive(Debug)]
 pub enum Intention {
-	Transfer {},
-	Call {},
+	TransferEthereum([u8; 20], [u8; 32]),
+	CallEthereum([u8; 20], Vec<u8>),
+}
+
+pub trait GetEventId<Id> {
+	fn get_event_id(&self) -> Id;
 }
