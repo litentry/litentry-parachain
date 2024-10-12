@@ -196,7 +196,7 @@ pub struct TcbInfo {
 	pce_id: String,
 	tcb_type: u16,
 	tcb_evaluation_data_number: u16,
-	tcb_levels: Vec<TcbLevelFull>,
+	pub tcb_levels: Vec<TcbLevelFull>,
 }
 
 impl TcbInfo {

@@ -782,6 +782,8 @@ where
 		let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
 		report_data.d[..32].clone_from_slice(&pub_k[..]);
 
+		// error!("Billy, retrieve_qe_dcap_quote, quoting_enclave_target_info: {:?}", quoting_enclave_target_info);
+		error!("Billy, retrieve_qe_dcap_quote, report_data: {:?}", report_data);
 		let app_report = match rsgx_create_report(quoting_enclave_target_info, &report_data) {
 			Ok(report) => {
 				debug!(

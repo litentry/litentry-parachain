@@ -18,7 +18,10 @@ function print_divider() {
 CHAIN=$1
 
 ZOMBIENET_VERSION=v1.3.109
-ZOMBIENET_DIR=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 8; echo)
+ZOMBIENET_DIR="/home/ubuntu/zombie_log/log"
+
+# $(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 8; echo)
+
 
 LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 [ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
@@ -68,7 +71,7 @@ if [ -f "$PARACHAIN_BIN" ]; then
   echo "found one, version:"
   ./litentry-collator --version
 else
-  echo "not here, copying from docker image if we are on Linux ..." 
+  echo "not here, copying from docker image if we are on Linux ..."
   if [ $(uname -s) = "Linux" ]; then
     docker cp "$(docker create --rm litentry/litentry-parachain:latest):/usr/local/bin/litentry-collator" .
     chmod +x litentry-collator

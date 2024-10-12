@@ -479,8 +479,8 @@ mod impl_ffi {
 			// SAFETY: the fields should be nul terminated C strings.
 			unsafe {
 				let collateral = &*collateral_ptr;
-				trace!(
-					"version: {}\n, \
+				error!(
+					"Billy version: {}\n, \
 				 tee_type: {}\n, \
 				 pck_crl_issuer_chain: {:?}\n, \
 				 pck_crl_issuer_chain_size: {}\n, \

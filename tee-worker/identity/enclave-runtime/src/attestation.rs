@@ -477,6 +477,7 @@ pub unsafe extern "C" fn generate_register_tcb_info_extrinsic(
 		None => return sgx_status_t::SGX_ERROR_INVALID_PARAMETER,
 	};
 
+	error!("Billy, generate_register_tcb_info_extrinsic, before send extinsic, tcb_infos: {:?}", &collateral_data.0);
 	let call_index_getter = |m: &NodeMetadata| m.register_tcb_info_call_indexes();
 	*unchecked_extrinsic_size = match generate_generic_register_collateral_extrinsic(
 		call_index_getter,

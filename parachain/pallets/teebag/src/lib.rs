@@ -31,6 +31,8 @@ use sp_core::{ed25519::Public as Ed25519Public, H256};
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 
+use crate::sgx_verify::alloc::string::ToString;
+
 mod sgx_verify;
 pub use sgx_verify::{
 	deserialize_enclave_identity, deserialize_tcb_info, extract_certs,
@@ -51,6 +53,8 @@ pub use quoting_enclave::*;
 
 mod tcb;
 pub use tcb::*;
+
+use log::error;
 
 const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_DCAP_QUOTE_LEN: usize = 5000;
@@ -468,6 +472,7 @@ pub mod pallet {
 			vc_pubkey: Option<Ed25519Public>,
 			attestation_type: AttestationType,
 		) -> DispatchResultWithPostInfo {
+			error!("Billy register enclave 1");
 			let sender = ensure_signed(origin)?;
 
 			ensure!(worker_url.len() <= MAX_URL_LEN, Error::<T>::EnclaveUrlTooLong);
@@ -481,6 +486,7 @@ pub mod pallet {
 
 			match attestation_type {
 				AttestationType::Ignore => {
+					error!("Billy register enclave: AttestationType::Ignore");
 					ensure!(
 						Self::mode() == OperationalMode::Development,
 						Error::<T>::InvalidAttestationType
@@ -491,20 +497,25 @@ pub mod pallet {
 					enclave.sgx_build_mode = SgxBuildMode::default();
 				},
 				AttestationType::Ias => {
+					error!("Billy register enclave: AttestationType::Ias");
 					let report = Self::verify_ias(&sender, attestation)?;
 					enclave.mrenclave = report.mr_enclave;
 					enclave.last_seen_timestamp = report.timestamp;
 					enclave.sgx_build_mode = report.build_mode;
 				},
 				AttestationType::Dcap(provider) => {
+					error!("Billy register enclave: AttestationType::Dcap");
 					ensure!(provider == DcapProvider::Intel, Error::<T>::DcapProviderNotSupported);
+					error!("Billy register enclave: AttestationType::Dcap verify_dcap");
 					let report = Self::verify_dcap(&sender, attestation)?;
+					error!("Billy register enclave: AttestationType::Dcap verify succeed, report: {:?}", report);
 					enclave.mrenclave = report.mr_enclave;
 					enclave.last_seen_timestamp = report.timestamp;
 					enclave.sgx_build_mode = report.build_mode;
 				},
 			};
 
+			error!("Billy register enclave 2");
 			match Self::mode() {
 				OperationalMode::Production | OperationalMode::Maintenance => {
 					if !Self::allow_sgx_debug_mode()
@@ -528,6 +539,7 @@ pub mod pallet {
 					})?;
 				},
 			};
+			error!("Billy register enclave 3");
 			Self::add_enclave(&sender, &enclave)?;
 			Ok(Pays::No.into())
 		}
@@ -564,10 +576,15 @@ pub mod pallet {
 			signature: Vec<u8>,
 			certificate_chain: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			error!("Billy, register_tcb_info, input raw before verify, tcb_info: {:?}", tcb_info);
 			// TCB info is registered globally and not for a specific sender
 			let _ = ensure_signed(origin)?;
 			let (fmspc, on_chain_info) =
 				Self::verify_tcb_info(tcb_info, signature, certificate_chain)?;
+
+			let serialized_info = serde_json::to_string(&on_chain_info).unwrap_or_else(|_| "Failed to serialize".to_string());
+			error!("Billy, register_tcb_info, fmspc: {:?}, on_chain_tcb_info: {:?}", fmspc, serialized_info);
+
 			TcbInfo::<T>::insert(fmspc, on_chain_info);
 			Ok(Pays::No.into())
 		}
@@ -777,22 +794,30 @@ impl<T: Config> Pallet<T> {
 		sender: &T::AccountId,
 		dcap_quote: Vec<u8>,
 	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
+		error!("Billy verify_dcap 1");
 		ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, Error::<T>::AttestationTooLong);
 		let timestamp = Self::now();
 		let qe = <QuotingEnclaveRegistry<T>>::get();
 		let (fmspc, tcb_info, report) =
 			verify_dcap_quote(&dcap_quote, timestamp.saturated_into(), &qe).map_err(|e| {
-				log::warn!("verify_dcap_quote failed: {:?}", e);
+				log::warn!("BILLY verify_dcap_quote failed: {:?}", e);
 				Error::<T>::RemoteAttestationVerificationFailed
 			})?;
-
+		error!("Billy verify_dcap, fmspc: {:?}, tcb_info: {:?}, report: {:?}", fmspc, tcb_info, report);
 		let tcb_info_on_chain = <TcbInfo<T>>::get(fmspc);
+
+		let onchain_serialized_info = serde_json::to_string(&tcb_info_on_chain).unwrap_or_else(|_| "Failed to serialize".to_string());
+		let input_serialized_info = serde_json::to_string(&tcb_info).unwrap_or_else(|_| "Failed to serialize".to_string());
+		error!("Billy, verify_dcap, fmspc: {:?}, onchain_tcb_info: {:?}, input_tcb_info: {:?}", fmspc, onchain_serialized_info, input_serialized_info);
+
 		ensure!(tcb_info_on_chain.verify_examinee(&tcb_info), "tcb_info is outdated");
 
+		error!("Billy verify_dcap 2");
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| Error::<T>::EnclaveSignerDecodeError)?;
 		ensure!(sender == &enclave_signer, Error::<T>::SenderIsNotAttestedEnclave);
 
+		error!("Billy verify_dcap 3");
 		Ok(report)
 	}
 
@@ -836,6 +861,7 @@ impl<T: Config> Pallet<T> {
 		verify_certificate_chain(&leaf_cert, &intermediate_slices, verification_time)?;
 		let tcb_info = deserialize_tcb_info(&tcb_info, &signature, &leaf_cert)?;
 		if tcb_info.is_valid(verification_time.try_into().unwrap()) {
+			error!("Billy, tcb_info levels: {:?}", tcb_info.tcb_levels.len());
 			Ok(tcb_info.to_chain_tcb_info())
 		} else {
 			Err(Error::<T>::CollateralInvalid.into())

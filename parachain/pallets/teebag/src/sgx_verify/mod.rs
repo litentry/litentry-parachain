@@ -57,6 +57,8 @@ use x509_cert::Certificate;
 pub mod collateral;
 mod ephemeral_key;
 mod netscape_comment;
+use log::error;
+
 #[cfg(test)]
 mod tests;
 mod utils;
@@ -543,6 +545,7 @@ pub fn verify_dcap_quote(
 	let quote: DcapQuote =
 		Decode::decode(&mut dcap_quote_clone).map_err(|_| "Failed to decode attestation report")?;
 
+	error!("Billy verify_dcap_quote get inside 1, quote: {:?}", quote);
 	ensure!(quote.header.version == 3, "Only support for version 3");
 	ensure!(quote.header.attestation_key_type == 2, "Only support for ECDSA-256");
 	ensure!(
@@ -564,6 +567,7 @@ pub fn verify_dcap_quote(
 
 	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
 
+	error!("Billy verify_dcap_quote get inside 2: fmspc: {:?}, tcb_info: {:?}", fmspc, tcb_info);
 	// For this part some understanding of the document (Especially chapter A.4: Quote Format)
 	// Intel® Software Guard Extensions (Intel® SGX) Data Center Attestation Primitives: ECDSA Quote
 	// Library API https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_SGX_ECDSA_QuoteLibReference_DCAP_API.pdf
@@ -600,6 +604,7 @@ pub fn verify_dcap_quote(
 		"Hashes must match"
 	);
 
+	error!("Billy verify_dcap_quote get inside 3");
 	let qe_report_offset = attestation_key_offset + ATTESTATION_KEY_SIZE;
 	let qe_report_slice = &dcap_quote_raw[qe_report_offset..(qe_report_offset + REPORT_SIZE)];
 	let mut pub_key = [0x04u8; 65]; //Prepend 0x04 to specify uncompressed format
@@ -614,6 +619,7 @@ pub fn verify_dcap_quote(
 		.verify(isv_report_slice, &quote.quote_signature_data.isv_enclave_report_signature)
 		.map_err(|_| "Failed to verify report signature")?;
 
+	error!("Billy verify_dcap_quote get inside 4");
 	// Verify that the QE report was signed by Intel. This establishes trust into the QE report.
 	let asn1_signature = encode_as_der(&quote.quote_signature_data.qe_report_signature)?;
 	verify_signature(
@@ -631,6 +637,8 @@ pub fn verify_dcap_quote(
 		timestamp: verification_time,
 		build_mode: quote.body.sgx_build_mode(),
 	};
+
+	error!("Billy verify_dcap_quote get inside 5");
 	Ok((fmspc, tcb_info, report))
 }
 
@@ -727,6 +735,7 @@ pub fn verify_signature(
 	signature: &[u8],
 	signature_algorithm: &dyn webpki::types::SignatureVerificationAlgorithm,
 ) -> Result<(), &'static str> {
+	error!("Billy verify_signature 1");
 	match entity_cert.verify_signature(signature_algorithm, data, signature) {
 		Ok(()) => Ok(()),
 		Err(_e) => Err("bad signature"),
