@@ -57,7 +57,7 @@ impl TrustedCallSigned {
 		req_ext_hash: H256,
 	) -> StfResult<bool> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+			ensure_enclave_signer_or_self(&signer, who.to_native_account()),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
@@ -111,7 +111,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 	) -> StfResult<()> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+			ensure_enclave_signer_or_self(&signer, who.to_native_account()),
 			StfError::DeactivateIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
@@ -128,7 +128,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 	) -> StfResult<()> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+			ensure_enclave_signer_or_self(&signer, who.to_native_account()),
 			StfError::ActivateIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
@@ -190,7 +190,7 @@ impl TrustedCallSigned {
 		let old_id_graph = IMT::id_graph(&who);
 
 		Self::link_identity_callback_internal(
-			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
+			signer.to_native_account().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
 			identity,
 			web3networks,

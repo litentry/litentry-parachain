@@ -359,19 +359,33 @@ impl Identity {
         }
     }
 
-    /// Currently we only support mapping from Address32/Address20 to AccountId, not opposite.
-    pub fn to_account_id(&self) -> Option<AccountId> {
+    /// map an `Identity` to a native parachain account that:
+    /// - has a private key for substrate and evm accounts, or any connect that can connect to parachain directly
+    /// - appears as origin when submitting extrinsics
+    ///
+    /// this account is also used within the worker as e.g. sidechain accounts
+    pub fn to_native_account(&self) -> Option<AccountId> {
         match self {
-            Identity::Substrate(address) | Identity::Solana(address) => Some(address.into()),
+            Identity::Substrate(address) => Some(address.into()),
             Identity::Evm(address) => Some(HashedAddressMapping::into_account_id(
                 H160::from_slice(address.as_ref()),
             )),
-            Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
+            // we use `to_omni_account` impl for non substrate/evm web3 accounts, as they
+            // can't connect to the parachain directly
+            Identity::Bitcoin(_) | Identity::Solana(_) => Some(self.to_omni_account()),
             Identity::Twitter(_)
             | Identity::Discord(_)
             | Identity::Github(_)
             | Identity::Email(_) => None,
         }
+    }
+
+    /// derive an `OmniAccount` from `Identity` by hashing the encoded identity,
+    /// it should always be successful
+    ///
+    /// an `OmniAccount` has no private key and can only be controlled by its MemberAccount
+    pub fn to_omni_account(&self) -> AccountId {
+        self.hash().to_fixed_bytes().into()
     }
 
     pub fn from_did(s: &str) -> Result<Self, &'static str> {

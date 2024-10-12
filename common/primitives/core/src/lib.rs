@@ -38,8 +38,6 @@ pub use omni_account::*;
 extern crate alloc;
 extern crate core;
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
-use core::hash::Hash as CoreHash;
-use sp_core::H256;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub use constants::*;
@@ -51,7 +49,7 @@ pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 /// Common types of parachains.
 mod types {
-    use super::H256;
+    use sp_core::H256;
     use sp_runtime::{
         traits::{IdentifyAccount, Verify},
         MultiSignature,

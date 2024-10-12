@@ -60,8 +60,8 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, teebag::OperationalMode as TeebagOperationalMode, AccountId, Amount, AssetId, Balance,
-	BlockNumber, Hash, Header, Identity, Nonce, Signature, DAYS, HOURS, LITENTRY_PARA_ID, MINUTES,
-	SLOT_DURATION,
+	BlockNumber, DefaultOmniAccountConverter, Hash, Header, Identity, Nonce, Signature, DAYS,
+	HOURS, LITENTRY_PARA_ID, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -951,22 +951,14 @@ impl pallet_identity_management::Config for Runtime {
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
 }
 
-pub struct IdentityToAccountIdConverter;
-
-impl pallet_omni_account::AccountIdConverter<Runtime> for IdentityToAccountIdConverter {
-	fn convert(identity: &Identity) -> Option<AccountId> {
-		identity.to_account_id()
-	}
-}
-
 impl pallet_omni_account::Config for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type MaxAccountStoreLength = ConstU32<64>;
-	type AccountIdConverter = IdentityToAccountIdConverter;
 	type OmniAccountOrigin = EnsureOmniAccount;
+	type OmniAccountConverter = DefaultOmniAccountConverter;
 }
 
 impl pallet_bitacross::Config for Runtime {

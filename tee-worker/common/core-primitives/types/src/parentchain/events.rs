@@ -293,7 +293,7 @@ pub struct RelayerAdded {
 
 impl core::fmt::Display for RelayerAdded {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		if let Some(account_id) = self.who.to_account_id() {
+		if let Some(account_id) = self.who.to_native_account() {
 			let message = format!("RelayerAdded :: account_id: {:?}", account_id);
 			write!(f, "{}", message)
 		} else {
@@ -314,7 +314,7 @@ pub struct RelayerRemoved {
 
 impl core::fmt::Display for RelayerRemoved {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		if let Some(account_id) = self.who.to_account_id() {
+		if let Some(account_id) = self.who.to_native_account() {
 			let message = format!("RelayerRemoved :: account_id: {:?}", account_id);
 			write!(f, "{}", message)
 		} else {

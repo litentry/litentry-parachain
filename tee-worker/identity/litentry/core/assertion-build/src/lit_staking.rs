@@ -192,7 +192,7 @@ impl DelegatorState {
 		// 0xa686a3043d0adcf2fa655e57bc595a78131da8bc800de21b19b3ba9ed33cfacc
 		let params = "0xa686a3043d0adcf2fa655e57bc595a78131da8bc800de21b19b3ba9ed33cfacc";
 		let acc = identity
-			.to_account_id()
+			.to_native_account()
 			.ok_or(Error::RequestVCFailed(Assertion::LITStaking, ErrorDetail::ParseError))?;
 		let cocat = Twox64Concat::hash(acc.as_ref());
 

@@ -542,7 +542,7 @@ where
 		ensure!(!identities.is_empty(), RequestVcErrorDetail::NoEligibleIdentity);
 
 		let signer_account =
-			signer.to_account_id().ok_or(RequestVcErrorDetail::InvalidSignerAccount)?;
+			signer.to_native_account().ok_or(RequestVcErrorDetail::InvalidSignerAccount)?;
 
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
