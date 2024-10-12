@@ -76,4 +76,3 @@ impl GetAccountStoreHash for Vec<MemberAccount> {
         hashes.using_encoded(blake2_256).into()
     }
 }
-
