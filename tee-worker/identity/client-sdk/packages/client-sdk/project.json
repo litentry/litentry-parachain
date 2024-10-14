@@ -1,7 +1,7 @@
 {
-  "name": "enclave",
+  "name": "client-sdk",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/enclave/src",
+  "sourceRoot": "packages/client-sdk/src",
   "projectType": "library",
   "targets": {
     "publish": {
@@ -16,19 +16,19 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/enclave",
-        "main": "packages/enclave/src/index.ts",
-        "tsConfig": "packages/enclave/tsconfig.lib.json",
+        "outputPath": "dist/packages/client-sdk",
+        "main": "packages/client-sdk/src/index.ts",
+        "tsConfig": "packages/client-sdk/tsconfig.lib.json",
         "assets": [
-          "packages/enclave/*.md",
-          "packages/enclave/LICENSE"
+          "packages/client-sdk/*.md",
+          "packages/client-sdk/LICENSE"
         ]
       }
     },
     "generate-doc": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "./packages/enclave",
+        "cwd": "./packages/client-sdk",
         "command": "typedoc --options ./typedoc.json"
       }
     },
@@ -39,8 +39,8 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/enclave/src/**/*.ts",
-          "packages/enclave/package.json"
+          "packages/client-sdk/src/**/*.ts",
+          "packages/client-sdk/package.json"
         ]
       }
     },
@@ -50,7 +50,7 @@
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
       "options": {
-        "jestConfig": "packages/enclave/jest.config.ts",
+        "jestConfig": "packages/client-sdk/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {

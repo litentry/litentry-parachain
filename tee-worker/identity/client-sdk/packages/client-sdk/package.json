@@ -1,6 +1,6 @@
 {
-  "name": "@litentry/enclave",
-  "description": "This package provides helpers for dApps to interact with the Litentry Protocol Enclave.",
+  "name": "@litentry/client-sdk",
+  "description": "This package provides helpers for dApps to interact with the Litentry Protocol.",
   "version": "4.3.0",
   "license": "GPL-3.0-or-later",
   "dependencies": {},

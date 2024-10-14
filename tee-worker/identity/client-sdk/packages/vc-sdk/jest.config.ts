@@ -9,7 +9,5 @@ export default {
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/package/vc-sdk',
   transformIgnorePatterns: ['node_modules/(?!(@litentry/|.pnpm/@litentry)).*'],
-  moduleNameMapper: {
-    // '@litentry/enclave': '<rootDir>/../enclave/src',
-  },
+  moduleNameMapper: {},
 };

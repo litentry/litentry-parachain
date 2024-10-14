@@ -6,7 +6,7 @@ import type { U8aLike } from '@polkadot/util/types';
 import type { Index } from '@polkadot/types/interfaces';
 
 /**
- * Construct the message users have to sign to authorize enclave's requests
+ * Construct the message users have to sign to authorize Enclave's requests
  */
 export function createPayloadToSign(args: {
   who: LitentryIdentity;

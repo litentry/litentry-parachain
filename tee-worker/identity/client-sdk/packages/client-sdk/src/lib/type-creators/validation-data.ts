@@ -80,8 +80,8 @@ export type EmailProof = {
  *
  * @example Web3
  * ```ts
- * import { createLitentryValidationDataType } from '@litentry/enclave';
- * import type { Web3Proof } from '@litentry/enclave';
+ * import { createLitentryValidationDataType } from '@litentry/client-sdk';
+ * import type { Web3Proof } from '@litentry/client-sdk';
  *
  * const userAddress = '0x123';
  *
@@ -102,8 +102,8 @@ export type EmailProof = {
  *
  * @example Twitter
  * ```ts
- * import { createLitentryValidationDataType } from '@litentry/enclave';
- * import type { TwitterProof } from '@litentry/enclave';
+ * import { createLitentryValidationDataType } from '@litentry/client-sdk';
+ * import type { TwitterProof } from '@litentry/client-sdk';
  *
  * const userHandle = '@litentry';
  *

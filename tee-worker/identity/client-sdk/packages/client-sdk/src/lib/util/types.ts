@@ -5,9 +5,8 @@ export type JsonRpcRequest = {
   method: string;
   params: Array<string>;
   /**
-   * Heads-up: it should work with string and any number but we found out
-   * that responses are not coming back if the number is too big or a string :sad-panda:
-   * @see Enclave Reverse Proxy `/apps/identity-hub/pages/api/enclave.ts`
+   * Use sequential numbers starting from 1 for consecutive requests.
+   * For one-time request that closes connections right away, using `1` is ok.
    */
   id?: number;
 };
