@@ -26,8 +26,6 @@ itp-stf-interface = { workspace = true }
 itp-storage = { workspace = true }
 itp-types = { workspace = true }
 
-pallet-teebag = { workspace = true }
-
 [features]
 default = []
 implement-ffi = [
