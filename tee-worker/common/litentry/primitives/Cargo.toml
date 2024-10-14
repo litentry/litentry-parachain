@@ -25,7 +25,6 @@ sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 itp-sgx-crypto = { workspace = true }
 itp-sgx-runtime-primitives = { workspace = true }
-pallet-teebag = { workspace = true }
 parentchain-primitives = { workspace = true }
 
 [dev-dependencies]
@@ -54,7 +53,6 @@ std = [
     "sp-runtime/std",
     "ring/std",
     "parentchain-primitives/std",
-    "pallet-teebag/std",
     "rand",
     "log/std",
     "bitcoin/std",

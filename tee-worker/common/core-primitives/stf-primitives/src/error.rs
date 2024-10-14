@@ -74,6 +74,9 @@ pub enum StfError {
 	InvalidStorageDiff,
 	#[codec(index = 27)]
 	InvalidMetadata,
+	#[codec(index = 28)]
+	#[display(fmt = "CleaningIDGraphsFailed: {:?}", _0)]
+	CleanIDGraphsFailed(ErrorDetail),
 }
 
 impl From<IMPError> for StfError {

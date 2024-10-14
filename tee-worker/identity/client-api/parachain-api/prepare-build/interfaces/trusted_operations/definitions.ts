@@ -58,6 +58,13 @@ export default {
                 // this trusted call can only be requested directly by root or enclave_signer_account
                 link_identity_callback:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
+
+                __Unused_21: "Null",
+                __Unused_22: "Null",
+                __Unused_23: "Null",
+                __Unused_24: "Null",
+
+                clean_id_graphs: "(LitentryIdentity)",
             },
         },
         TrustedOperationStatus: {
