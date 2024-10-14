@@ -1,6 +1,6 @@
-# @litentry/enclave
+# @litentry/client-sdk
 
-This package provides helpers for dApps to interact with the Litentry Protocol's Enclave.
+This package provides helpers for dApps to interact with the Litentry Protocol.
 
 The Enclave is the Litentry's Trusted Execution Environment (TEE), that provides the hightest security and privacy for users to store their identity.
 
@@ -10,22 +10,22 @@ This is a browser package, it may not work as-is on Node.js due to Crypto Subtle
 
 1. Install from NPM
 
-   ```
-   npm install @litentry/parachain-api @litentry/sidechain-api @litentry/enclave
-   ```
+    ```
+    npm install @litentry/parachain-api @litentry/sidechain-api @litentry/client-sdk
+    ```
 
 2. Set the right environment
 
-   Litentry's Protocol is currently available in three main stages: local (development), `tee-dev` (staging), and `tee-prod` (production).
+    Litentry's Protocol is currently available in three main stages: local (development), `tee-dev` (staging), and `tee-prod` (production).
 
-   You can set what stage to use by setting the `LITENTRY_NETWORK` environment variable. Valid values are:
+    You can set what stage to use by setting the `LITENTRY_NETWORK` environment variable. Valid values are:
 
-   - `litentry-local`: will point to a local enclave `ws://localhost:2000`
-   - `litentry-dev` (default): will point to `tee-dev`'s Enclave.
-   - `litentry-staging`: will point to `tee-staging`'s Enclave.
-   - `litentry-prod`: will point to `tee-prod`'s Enclave.
+    - `litentry-local`: will point to a local enclave `ws://localhost:2000`
+    - `litentry-dev` (default): will point to `tee-dev`'s Enclave.
+    - `litentry-staging`: will point to `tee-staging`'s Enclave.
+    - `litentry-prod`: will point to `tee-prod`'s Enclave.
 
-   `NX_*` prefixed env variables (NX projects) will work too.
+    `NX_*` prefixed env variables (NX projects) will work too.
 
 ### Versions
 
@@ -43,29 +43,29 @@ Please refer to the `examples` folder in this repository to learn more about all
 
 1. Install dependencies
 
-   ```
-   pnpm install
-   ```
+    ```
+    pnpm install
+    ```
 
 2. Spin up an local NPM registry
 
-   ```
-   pnpm nx local-registry
-   ```
+    ```
+    pnpm nx local-registry
+    ```
 
 3. Publish locally
 
-   Follow the steps of [Publish new versions](#publish-new-versions). The step 1 can be skipped.
+    Follow the steps of [Publish new versions](#publish-new-versions). The step 1 can be skipped.
 
-   As long as the local registry is up, any publishing will happen locally.
+    As long as the local registry is up, any publishing will happen locally.
 
 4. Run test and lint checks
 
-   ```
-   pnpm nx run enclave:lint
+    ```
+    pnpm nx run client-sdk:lint
 
-   pnpm nx run enclave:test
-   ```
+    pnpm nx run client-sdk:test
+    ```
 
 ### Publish new versions
 
@@ -73,18 +73,18 @@ Please refer to the `examples` folder in this repository to learn more about all
 
 2. Update the latest documentation
 
-   ```
-   pnpm nx run enclave:generate-doc
-   ```
+    ```
+    pnpm nx run client-sdk:generate-doc
+    ```
 
 3. Build the project
 
-   ```
-   pnpm nx run enclave:build
-   ```
+    ```
+    pnpm nx run client-sdk:build
+    ```
 
 4. Publish the distribution files
 
-   ```
-   pnpm nx run enclave:publish --ver 1.0.0 --tag latest
-   ```
+    ```
+    pnpm nx run client-sdk:publish --ver 1.0.0 --tag latest
+    ```
