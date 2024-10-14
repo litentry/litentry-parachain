@@ -5,7 +5,6 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub const CALL_ETHEREUM_INPUT_LEN: u32 = 10 * 1024;
 
-//todo: this should be versioned ?
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum Intention {
     #[codec(index = 0)]
