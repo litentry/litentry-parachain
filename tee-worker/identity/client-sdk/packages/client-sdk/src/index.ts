@@ -16,6 +16,16 @@ export * from './lib/type-creators/validation-data';
 export type { IdGraph } from './lib/type-creators/id-graph';
 export { ID_GRAPH_STRUCT } from './lib/type-creators/id-graph';
 
+// vc
+export {
+  validateVc,
+  VerifiableCredentialLike,
+} from './lib/vc-validator/validator';
+export {
+  ValidationResultDetail,
+  ValidationResult,
+} from './lib/vc-validator/validator.types';
+
 // exposed utils
 export { calculateIdGraphHash } from './lib/util/calculate-id-graph-hash';
 export { getIdGraphHash } from './lib/requests';
