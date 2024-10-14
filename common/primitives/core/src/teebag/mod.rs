@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(feature = "development")]
-pub mod clean_id_graphs;
-pub mod get_storage;
-pub mod id_graph;
-pub mod link_identity;
-#[cfg(feature = "development")]
-pub mod remove_identity;
-pub mod request_vc;
-pub mod request_vc_subcommands;
-pub mod send_erroneous_parentchain_call;
+mod types;
+pub use types::*;
+
+mod tcb;
+pub use tcb::*;
+
+mod sgx_verify;
+pub use sgx_verify::*;
+
+mod quoting_enclave;
+pub use quoting_enclave::*;

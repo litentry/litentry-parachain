@@ -109,8 +109,8 @@ where
 
 	pub fn signed_caller_account(&self) -> Option<AccountId> {
 		match self {
-			TrustedOperation::direct_call(c) => c.sender_identity().to_account_id(),
-			TrustedOperation::indirect_call(c) => c.sender_identity().to_account_id(),
+			TrustedOperation::direct_call(c) => c.sender_identity().to_native_account(),
+			TrustedOperation::indirect_call(c) => c.sender_identity().to_native_account(),
 			_ => None,
 		}
 	}

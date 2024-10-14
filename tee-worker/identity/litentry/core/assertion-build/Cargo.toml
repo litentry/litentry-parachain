@@ -39,7 +39,6 @@ lc-data-providers = { workspace = true }
 lc-dynamic-assertion = { workspace = true }
 lc-evm-dynamic-assertions = { workspace = true }
 litentry-primitives = { workspace = true }
-pallet-parachain-staking = { workspace = true }
 
 [dev-dependencies]
 chrono = { workspace = true, features = ["std", "alloc"] }

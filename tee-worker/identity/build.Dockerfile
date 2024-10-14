@@ -85,7 +85,7 @@ RUN cargo test --release
 ##################################################
 FROM node:18-bookworm-slim AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2 jq curl protobuf-compiler
+RUN apt update && apt install -y libssl-dev iproute2 jq curl protobuf-compiler python3 python-is-python3 build-essential
 RUN corepack enable && corepack prepare pnpm@8.7.6 --activate && corepack enable pnpm
 
 
