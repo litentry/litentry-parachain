@@ -31,11 +31,15 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use sp_runtime::traits::{CheckedDiv, CheckedMul};
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	pub(crate) type InspectFungibles<T> = pallet_assets::Pallet<T>;
+	pub type InspectFungibles<T> = pallet_assets::Pallet<T>;
 	/// Balance type alias for balances of assets that implement the `fungibles` trait.
 	pub type AssetBalanceOf<T> =
 		<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::Balance;
@@ -139,19 +143,19 @@ pub mod pallet {
 					<InspectFungibles<T>>::mint_into(aiusd_id, &beneficiary, aiusd_amount)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
-				let aiusd_deciaml_unit_expression: T::Balance =
+				let aiusd_decimal_unit_expression: T::Balance =
 					10u128.pow(18).try_into().or(Err(Error::<T>::Overflow))?;
-				let aseet_target_transfer_amount = aiusd_minted_amount
+				let asset_target_transfer_amount = aiusd_minted_amount
 					.checked_mul(&ratio)
 					.ok_or(Error::<T>::Overflow)?
-					.checked_div(&aiusd_deciaml_unit_expression)
+					.checked_div(&aiusd_decimal_unit_expression)
 					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 						target_asset_id.clone(),
 						&beneficiary,
 						&T::ConvertingFeeAccount::get(),
-						aseet_target_transfer_amount,
+						asset_target_transfer_amount,
 						Preservation::Expendable,
 					)?;
 
@@ -196,19 +200,19 @@ pub mod pallet {
 				)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
-				let aiusd_deciaml_unit_expression: T::Balance =
+				let aiusd_decimal_unit_expression: T::Balance =
 					10u128.pow(18).try_into().or(Err(Error::<T>::Overflow))?;
-				let aseet_target_transfer_amount = aiusd_destroyed_amount
+				let asset_target_transfer_amount = aiusd_destroyed_amount
 					.checked_mul(&ratio)
 					.ok_or(Error::<T>::Overflow)?
-					.checked_div(&aiusd_deciaml_unit_expression)
+					.checked_div(&aiusd_decimal_unit_expression)
 					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 						target_asset_id.clone(),
 						&T::ConvertingFeeAccount::get(),
 						&beneficiary,
-						aseet_target_transfer_amount,
+						asset_target_transfer_amount,
 						Preservation::Expendable,
 					)?;
 

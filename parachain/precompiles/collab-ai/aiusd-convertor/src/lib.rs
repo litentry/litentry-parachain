@@ -12,6 +12,11 @@ use sp_std::marker::PhantomData;
 
 use pallet_aiusd_convertor::{AssetBalanceOf, AssetIdOf};
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 pub struct AIUSDConvertorPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]

@@ -7373,6 +7373,8 @@ dependencies = [
  "hex-literal",
  "libsecp256k1",
  "pallet-aiusd-convertor",
+ "pallet-assets",
+ "pallet-balances",
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7381,6 +7383,7 @@ dependencies = [
  "serde",
  "sha3",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
