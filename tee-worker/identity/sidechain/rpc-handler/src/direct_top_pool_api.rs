@@ -121,8 +121,8 @@ pub fn add_top_pool_direct_rpc_methods<R, TCS, G>(
 		Ok(json!(json_value))
 	});
 
-	io_handler.add_sync_method("author_SubmitDirectCallRequest", move |params: Params| {
-		debug!("worker_api_direct rpc was called: author_SubmitDirectCallRequest");
+	io_handler.add_sync_method("author_submitDirectCallRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_submitDirectCallRequest");
 		let json_value = match author_submit_direct_call_request_inner(params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: true,
