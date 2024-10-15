@@ -335,10 +335,8 @@ fn run_vc_issuance() -> Result<(), Error> {
 
 fn run_direct_call_requests_handler() -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
-	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
-	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
