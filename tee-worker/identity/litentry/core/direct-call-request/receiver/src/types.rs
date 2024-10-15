@@ -123,6 +123,6 @@ pub struct DirectCallRequestResult {
 	pub result: Result<DirectCallResult, DirectCallErrorDetail>,
 }
 
-pub enum DirectCallTask {
+pub enum NativeRequest {
 	// TODO: Define the tasks
 }

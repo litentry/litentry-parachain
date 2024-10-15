@@ -97,14 +97,14 @@ pub fn run_direct_call_request_receiver<
 		.create()
 		.expect("Failed to create thread pool");
 
-	let (task_sender, task_receiver) = channel::<DirectCallTask>();
+	let (native_req_sender, native_req_receiver) = channel::<NativeRequest>();
 	let t_pool = thread_pool.clone();
 
 	thread::spawn(move || {
-		if let Ok(task) = task_receiver.recv() {
+		if let Ok(native_request) = native_req_receiver.recv() {
 			t_pool.spawn_ok(async move {
-				match task {
-					// TODO: handle the task: e.g: Identity verification
+				match native_request {
+					// TODO: handle native_request: e.g: Identity verification
 				}
 			});
 		}
@@ -112,7 +112,7 @@ pub fn run_direct_call_request_receiver<
 
 	while let Ok(mut req) = request_receiver.recv() {
 		let context_pool = context.clone();
-		let task_sender_pool = task_sender.clone();
+		let task_sender_pool = native_req_sender.clone();
 
 		thread_pool.spawn_ok(async move {
 			let request = &mut req.request;
@@ -139,7 +139,7 @@ pub fn run_direct_call_request_receiver<
 fn process_trusted_call(
 	call: TrustedCall,
 	_connection_hash: H256,
-	_tc_sender: Sender<DirectCallTask>,
+	_tc_sender: Sender<NativeRequest>,
 ) -> Result<DirectCallResult, DirectCallErrorDetail> {
 	match call {
 		// TODO: handle AccountStore related calls
