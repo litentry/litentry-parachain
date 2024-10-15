@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{AccountId, Error, Header, OmniAccountMembers, OmniAccounts, ParentchainId};
+use crate::{AccountId, Error, Header, MemberAccount, OmniAccounts, ParentchainId};
 use alloc::vec::Vec;
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_storage::{
 	decode_storage_key, extract_blake2_128concat_key, storage_map_key, StorageHasher,
 };
-use litentry_primitives::{GetAccountStoreHash, MemberAccount};
 
 pub trait GetAccountStoresRepository {
 	fn get_by_account_id(&self, account_id: AccountId) -> Result<Vec<MemberAccount>, Error>;

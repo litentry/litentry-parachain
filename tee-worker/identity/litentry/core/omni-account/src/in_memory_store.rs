@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{AccountId, BTreeMap, Error, OmniAccountMembers, OmniAccounts, Vec};
+use crate::{AccountId, BTreeMap, Error, MemberAccount, OmniAccounts, Vec};
 use lazy_static::lazy_static;
 
 #[cfg(feature = "std")]
@@ -29,7 +29,7 @@ lazy_static! {
 pub struct InMemoryStore;
 
 impl InMemoryStore {
-	pub fn get(&self, owner: AccountId) -> Result<OmniAccountMembers, Error> {
+	pub fn get(&self, owner: AccountId) -> Result<Vec<MemberAccount>, Error> {
 		let omni_account_members = STORE
 			.read()
 			.map_err(|_| {
