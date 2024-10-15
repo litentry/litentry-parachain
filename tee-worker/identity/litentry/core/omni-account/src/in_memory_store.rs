@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{AccountId, BTreeMap, Error, OmniAccountMembers, OmniAccounts};
+use crate::{AccountId, BTreeMap, Error, OmniAccountMembers, OmniAccounts, Vec};
 use lazy_static::lazy_static;
 
 #[cfg(feature = "std")]
@@ -42,39 +42,35 @@ impl InMemoryStore {
 		omni_account_members.ok_or(Error::NotFound)
 	}
 
-	pub fn insert(
-		&self,
-		owner: AccountId,
-		omni_account_members: OmniAccountMembers,
-	) -> Result<(), Error> {
+	pub fn insert(&self, account_id: AccountId, members: Vec<MemberAccount>) -> Result<(), Error> {
 		STORE
 			.write()
 			.map_err(|_| {
 				log::error!("[InMemoryStore] Lock poisoning");
 				Error::LockPoisoning
 			})?
-			.insert(owner, omni_account_members);
+			.insert(account_id, members);
 
 		Ok(())
 	}
 
-	pub fn remove(&self, owner: AccountId) -> Result<(), Error> {
+	pub fn remove(&self, account_id: AccountId) -> Result<(), Error> {
 		STORE
 			.write()
 			.map_err(|_| {
 				log::error!("[InMemoryStore] Lock poisoning");
 				Error::LockPoisoning
 			})?
-			.remove(&owner);
+			.remove(&account_id);
 
 		Ok(())
 	}
 
-	pub fn load(&self, omni_accounts: OmniAccounts) -> Result<(), Error> {
+	pub fn load(&self, accounts: OmniAccounts) -> Result<(), Error> {
 		*STORE.write().map_err(|_| {
 			log::error!("[InMemoryStore] Lock poisoning");
 			Error::LockPoisoning
-		})? = omni_accounts;
+		})? = accounts;
 
 		Ok(())
 	}

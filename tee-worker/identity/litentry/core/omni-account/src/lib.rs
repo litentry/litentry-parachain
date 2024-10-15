@@ -34,13 +34,7 @@ use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use itp_types::parentchain::{AccountId, Hash, Header, ParentchainId};
 use litentry_primitives::MemberAccount;
 
-pub type OmniAccounts = BTreeMap<AccountId, OmniAccountMembers>;
-
-#[derive(Debug, Clone)]
-pub struct OmniAccountMembers {
-	pub member_accounts: Vec<MemberAccount>,
-	pub hash: Hash,
-}
+pub type OmniAccounts = BTreeMap<AccountId, Vec<MemberAccount>>;
 
 #[derive(Debug)]
 pub enum Error {

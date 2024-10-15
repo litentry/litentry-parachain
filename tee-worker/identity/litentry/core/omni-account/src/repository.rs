@@ -24,8 +24,8 @@ use itp_storage::{
 use litentry_primitives::{GetAccountStoreHash, MemberAccount};
 
 pub trait GetAccountStoresRepository {
-	fn get_by_owner(&self, owner: AccountId) -> Result<OmniAccountMembers, Error>;
-	fn get(&self) -> Result<OmniAccounts, Error>;
+	fn get_by_account_id(&self, account_id: AccountId) -> Result<Vec<MemberAccount>, Error>;
+	fn get_all(&self) -> Result<OmniAccounts, Error>;
 }
 
 pub struct OmniAccountRepository<OCallApi: EnclaveOnChainOCallApi> {
@@ -46,7 +46,7 @@ impl<OCallApi: EnclaveOnChainOCallApi> OmniAccountRepository<OCallApi> {
 impl<OCallApi: EnclaveOnChainOCallApi> GetAccountStoresRepository
 	for OmniAccountRepository<OCallApi>
 {
-	fn get_by_owner(&self, owner: AccountId) -> Result<OmniAccountMembers, Error> {
+	fn get_by_account_id(&self, owner: AccountId) -> Result<Vec<MemberAccount>, Error> {
 		let storage_key = storage_map_key(
 			"OmniAccount",
 			"AccountStore",
@@ -59,12 +59,11 @@ impl<OCallApi: EnclaveOnChainOCallApi> GetAccountStoresRepository
 			.map_err(|_| Error::OCallApiError("Failed to get storage"))?;
 		let member_accounts: Vec<MemberAccount> =
 			storage_entry.value().to_owned().ok_or(Error::NotFound)?;
-		let account_store_hash = member_accounts.hash();
 
-		Ok(OmniAccountMembers { member_accounts, hash: account_store_hash })
+		Ok(member_accounts)
 	}
 
-	fn get(&self) -> Result<OmniAccounts, Error> {
+	fn get_all(&self) -> Result<OmniAccounts, Error> {
 		let account_store_key_prefix = storage_prefix(b"OmniAccount", b"AccountStore");
 		let account_store_storage_keys_response = self
 			.ocall_api
@@ -88,10 +87,7 @@ impl<OCallApi: EnclaveOnChainOCallApi> GetAccountStoresRepository
 				let storage_key = decode_storage_key(entry.key)?;
 				let account_id: AccountId = extract_blake2_128concat_key(&storage_key)?;
 				let member_accounts: Vec<MemberAccount> = entry.value?;
-				let account_store_hash = member_accounts.hash();
-				let omni_account_members =
-					OmniAccountMembers { member_accounts, hash: account_store_hash };
-				Some((account_id, omni_account_members))
+				Some((account_id, member_accounts))
 			})
 			.collect();
 
