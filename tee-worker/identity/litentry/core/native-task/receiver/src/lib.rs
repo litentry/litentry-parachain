@@ -32,7 +32,7 @@ pub mod sgx_reexport_prelude {
 pub use crate::sgx_reexport_prelude::*;
 
 mod types;
-pub use types::DirectCallRequestContext;
+pub use types::NativeTaskContext;
 use types::*;
 
 use codec::{Decode, Encode};
@@ -46,7 +46,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning as StfEnclaveSigningTrait;
 use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
 use itp_top_pool_author::traits::AuthorApi as AuthorApiTrait;
-use lc_direct_call_request_sender::init_direct_call_request_sender;
+use lc_native_task_sender::init_native_task_sender;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use sp_core::{blake2_256, H256};
 use std::{
@@ -62,7 +62,7 @@ use std::{
 // TODO: move to config
 const THREAD_POOL_SIZE: usize = 10;
 
-pub fn run_direct_call_request_receiver<
+pub fn run_native_task_receiver<
 	ShieldingKeyRepository,
 	AuthorApi,
 	StfEnclaveSigning,
@@ -71,7 +71,7 @@ pub fn run_direct_call_request_receiver<
 	NodeMetadataRepo,
 >(
 	context: Arc<
-		DirectCallRequestContext<
+		NativeTaskContext<
 			ShieldingKeyRepository,
 			AuthorApi,
 			StfEnclaveSigning,
@@ -91,7 +91,7 @@ pub fn run_direct_call_request_receiver<
 	NodeMetadataRepo: AccessNodeMetadata + Send + Sync + 'static,
 	NodeMetadataRepo::MetadataType: NodeMetadataTrait,
 {
-	let request_receiver = init_direct_call_request_sender();
+	let request_receiver = init_native_task_sender();
 	let thread_pool = ThreadPoolBuilder::new()
 		.pool_size(THREAD_POOL_SIZE)
 		.create()
@@ -118,34 +118,62 @@ pub fn run_direct_call_request_receiver<
 			let request = &mut req.request;
 			let connection_hash = request.using_encoded(|x| H256::from(blake2_256(x)));
 			match get_trusted_call_from_request(request, context_pool.clone()) {
-				Ok(call) => {
-					if let Err(e) = process_trusted_call(call, connection_hash, task_sender_pool) {
-						let res = DirectCallRequestResult { result: Err(e) };
-						context_pool.author_api.send_rpc_response(
-							connection_hash,
-							res.encode(),
-							false,
-						);
-					}
-				},
-				Err(_) => {
-					log::error!("Failed to get trusted call from request");
+				Ok(call) => process_trusted_call(
+					context_pool.clone(),
+					call,
+					connection_hash,
+					task_sender_pool,
+				),
+				Err(e) => {
+					log::error!("Failed to get trusted call from request: {:?}", e);
 				},
 			};
 		});
 	}
+	log::warn!("Native task receiver stopped");
 }
 
-fn process_trusted_call(
+fn process_trusted_call<
+	ShieldingKeyRepository,
+	AuthorApi,
+	StfEnclaveSigning,
+	OCallApi,
+	ExtrinsicFactory,
+	NodeMetadataRepo,
+>(
+	context: Arc<
+		NativeTaskContext<
+			ShieldingKeyRepository,
+			AuthorApi,
+			StfEnclaveSigning,
+			OCallApi,
+			ExtrinsicFactory,
+			NodeMetadataRepo,
+		>,
+	>,
 	call: TrustedCall,
-	_connection_hash: H256,
+	connection_hash: H256,
 	_tc_sender: Sender<NativeRequest>,
-) -> Result<DirectCallResult, DirectCallErrorDetail> {
+) where
+	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt,
+	AuthorApi: AuthorApiTrait<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	StfEnclaveSigning: StfEnclaveSigningTrait<TrustedCallSigned> + Send + Sync + 'static,
+	OCallApi:
+		EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	ExtrinsicFactory: CreateExtrinsics + Send + Sync + 'static,
+	NodeMetadataRepo: AccessNodeMetadata + Send + Sync + 'static,
+	NodeMetadataRepo::MetadataType: NodeMetadataTrait,
+{
 	match call {
 		// TODO: handle AccountStore related calls
-		TrustedCall::noop(_) =>
-			Err(DirectCallErrorDetail::UnexpectedCall(format!("Unexpected call: {:?}", call))),
-		_ => Err(DirectCallErrorDetail::UnexpectedCall(format!("Unexpected call: {:?}", call))),
+		TrustedCall::noop(_) => log::info!("Received noop call"),
+		_ => {
+			log::warn!("Received unsupported call: {:?}", call);
+			let res: Result<(), NativeTaskError> =
+				Err(NativeTaskError::UnexpectedCall(format!("Unexpected call: {:?}", call)));
+			context.author_api.send_rpc_response(connection_hash, res.encode(), false);
+		},
 	}
 }
 
@@ -159,7 +187,7 @@ fn get_trusted_call_from_request<
 >(
 	request: &mut AesRequest,
 	context: Arc<
-		DirectCallRequestContext<
+		NativeTaskContext<
 			ShieldingKeyRepository,
 			AuthorApi,
 			StfEnclaveSigning,
@@ -184,9 +212,8 @@ where
 	let enclave_shielding_key = match context.shielding_key.retrieve_key() {
 		Ok(value) => value,
 		Err(e) => {
-			let res = DirectCallRequestResult {
-				result: Err(DirectCallErrorDetail::ShieldingKeyRetrievalFailed(format!("{}", e))),
-			};
+			let res: Result<(), NativeTaskError> =
+				Err(NativeTaskError::ShieldingKeyRetrievalFailed(format!("{}", e)));
 			context.author_api.send_rpc_response(connection_hash, res.encode(), false);
 			return Err("Shielding key retrieval failed")
 		},
@@ -199,9 +226,8 @@ where
 	{
 		Some(tcs) => tcs,
 		None => {
-			let res = DirectCallRequestResult {
-				result: Err(DirectCallErrorDetail::RequestPayloadDecodingFailed),
-			};
+			let res: Result<(), NativeTaskError> =
+				Err(NativeTaskError::RequestPayloadDecodingFailed);
 			context.author_api.send_rpc_response(connection_hash, res.encode(), false);
 			return Err("Request payload decoding failed")
 		},
@@ -209,17 +235,13 @@ where
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
 		Err(_) => {
-			let res = DirectCallRequestResult {
-				result: Err(DirectCallErrorDetail::MrEnclaveRetrievalFailed),
-			};
+			let res: Result<(), NativeTaskError> = Err(NativeTaskError::MrEnclaveRetrievalFailed);
 			context.author_api.send_rpc_response(connection_hash, res.encode(), false);
 			return Err("MrEnclave retrieval failed")
 		},
 	};
 	if !tcs.verify_signature(&mrenclave, &request.shard) {
-		let res = DirectCallRequestResult {
-			result: Err(DirectCallErrorDetail::SignatureVerificationFailed),
-		};
+		let res: Result<(), NativeTaskError> = Err(NativeTaskError::SignatureVerificationFailed);
 		context.author_api.send_rpc_response(connection_hash, res.encode(), false);
 		return Err("Signature verification failed")
 	}

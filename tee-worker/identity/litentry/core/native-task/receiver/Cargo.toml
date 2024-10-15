@@ -1,5 +1,5 @@
 [package]
-name = "lc-direct-call-request-receiver"
+name = "lc-native-task-receiver"
 version = "0.1.0"
 edition = "2021"
 
@@ -29,7 +29,7 @@ itp-types = { workspace = true }
 
 frame-support = { workspace = true }
 lc-data-providers = { workspace = true }
-lc-direct-call-request-sender = { workspace = true }
+lc-native-task-sender = { workspace = true }
 lc-dynamic-assertion = { workspace = true }
 litentry-macros = { workspace = true }
 litentry-primitives = { workspace = true }
@@ -45,7 +45,7 @@ sgx = [
     "litentry-primitives/sgx",
     "itp-node-api/sgx",
     "itp-extrinsics-factory/sgx",
-    "lc-direct-call-request-sender/sgx",
+    "lc-native-task-sender/sgx",
 ]
 std = [
     "futures",
@@ -60,7 +60,7 @@ std = [
     "ita-sgx-runtime/std",
     "frame-support/std",
     "itp-node-api/std",
-    "lc-direct-call-request-sender/std",
+    "lc-native-task-sender/std",
 ]
 development = [
     "litentry-macros/development",

@@ -40,51 +40,48 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct DirectCallRequest {
+pub struct NativeTask {
 	pub request: AesRequest,
 }
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {
-	static ref GLOBAL_DIRECT_CALL_REQUEST_SENDER: Arc<Mutex<Option<Sender<DirectCallRequest>>>> =
+	static ref GLOBAL_NATIVE_TASK_SENDER: Arc<Mutex<Option<Sender<NativeTask>>>> =
 		Arc::new(Mutex::new(Default::default()));
 }
 
-pub struct DirectCallRequestSender {}
+pub struct NativeTaskSender {}
 
-impl DirectCallRequestSender {
+impl NativeTaskSender {
 	pub fn new() -> Self {
 		Self {}
 	}
 }
 
-impl Default for DirectCallRequestSender {
+impl Default for NativeTaskSender {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-impl DirectCallRequestSender {
-	pub fn send(&self, request: DirectCallRequest) -> Result<(), String> {
-		log::debug!("send direct call request: {:?}", request);
-		let mutex_guard =
-			GLOBAL_DIRECT_CALL_REQUEST_SENDER.lock().map_err(|_| "Mutex lock failed")?;
-		let request_sender: Sender<DirectCallRequest> =
-			mutex_guard.clone().ok_or("direct call task sender was not initialized")?;
+impl NativeTaskSender {
+	pub fn send(&self, task: NativeTask) -> Result<(), String> {
+		log::debug!("send native task: {:?}", task);
+		let mutex_guard = GLOBAL_NATIVE_TASK_SENDER.lock().map_err(|_| "Mutex lock failed")?;
+		let task_sender: Sender<NativeTask> =
+			mutex_guard.clone().ok_or("native task sender was not initialized")?;
 		// Release mutex lock, so we don't block the lock longer than necessary.
 		drop(mutex_guard);
 
-		request_sender
-			.send(request)
-			.map_err(|e| format!("Unable to send request: {:?}", e))?;
+		task_sender.send(task).map_err(|e| format!("Unable to send task: {:?}", e))?;
 
 		Ok(())
 	}
 }
 
-pub fn init_direct_call_request_sender() -> Receiver<DirectCallRequest> {
+pub fn init_native_task_sender() -> Receiver<NativeTask> {
 	let (sender, receiver) = channel();
-	let mut task_sender = GLOBAL_DIRECT_CALL_REQUEST_SENDER.lock().expect("Mutex lock failed");
+	let mut task_sender = GLOBAL_NATIVE_TASK_SENDER.lock().expect("Mutex lock failed");
 	*task_sender = Some(sender);
 
 	receiver

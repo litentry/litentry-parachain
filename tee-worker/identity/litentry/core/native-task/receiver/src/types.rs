@@ -8,11 +8,10 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning as StfEnclaveSigningTrait;
 use itp_top_pool_author::traits::AuthorApi as AuthorApiTrait;
 use lc_data_providers::DataProviderConfig;
-use litentry_primitives::AesOutput;
-use sp_core::{ed25519::Pair as Ed25519Pair, H256};
+use sp_core::ed25519::Pair as Ed25519Pair;
 use std::{string::String, sync::Arc};
 
-pub struct DirectCallRequestContext<
+pub struct NativeTaskContext<
 	ShieldingKeyRepository,
 	AuthorApi,
 	StfEnclaveSigning,
@@ -48,7 +47,7 @@ impl<
 		ExtrinsicFactory,
 		NodeMetadataRepo,
 	>
-	DirectCallRequestContext<
+	NativeTaskContext<
 		ShieldingKeyRepository,
 		AuthorApi,
 		StfEnclaveSigning,
@@ -91,7 +90,7 @@ impl<
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub enum DirectCallErrorDetail {
+pub enum NativeTaskError {
 	UnexpectedCall(String),
 	ShieldingKeyRetrievalFailed(String), // Stringified itp_sgx_crypto::Error
 	RequestPayloadDecodingFailed,
@@ -109,18 +108,6 @@ pub enum DirectCallErrorDetail {
 	CallSendingFailed(String),
 	ExtrinsicConstructionFailed(String), // Stringified itp_extrinsics_factory::Error
 	ExtrinsicSendingFailed(String),      // Stringified sgx_status_t
-}
-
-// split this type and move it to the right place once we have the new architecture
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct DirectCallResult {
-	pub account_store_hash: H256,
-	pub mutated_account_store: AesOutput,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct DirectCallRequestResult {
-	pub result: Result<DirectCallResult, DirectCallErrorDetail>,
 }
 
 pub enum NativeRequest {

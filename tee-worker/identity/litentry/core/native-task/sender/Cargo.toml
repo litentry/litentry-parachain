@@ -1,5 +1,5 @@
 [package]
-name = "lc-direct-call-request-sender"
+name = "lc-native-task-sender"
 version = "0.1.0"
 edition = "2021"
 

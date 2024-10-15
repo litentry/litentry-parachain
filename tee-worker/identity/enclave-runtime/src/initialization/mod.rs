@@ -87,8 +87,8 @@ use its_sidechain::{
 };
 use jsonrpc_core::IoHandler;
 use lc_data_providers::DataProviderConfig;
-use lc_direct_call_request_receiver::{run_direct_call_request_receiver, DirectCallRequestContext};
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_native_task_receiver::{run_native_task_receiver, NativeTaskContext};
 use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
@@ -333,26 +333,22 @@ fn run_vc_issuance() -> Result<(), Error> {
 	Ok(())
 }
 
-fn run_direct_call_requests_handler() -> Result<(), Error> {
+fn run_native_task_handler() -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
-	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
-
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
-	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
-		state_observer,
+		GLOBAL_STATE_OBSERVER_COMPONENT.get()?,
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
 		author_api.clone(),
 	));
-
 	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
-	let context = DirectCallRequestContext::new(
+	let context = NativeTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
@@ -363,7 +359,7 @@ fn run_direct_call_requests_handler() -> Result<(), Error> {
 		node_metadata_repo,
 	);
 
-	run_direct_call_request_receiver(Arc::new(context));
+	run_native_task_receiver(Arc::new(context));
 
 	Ok(())
 }
@@ -450,9 +446,9 @@ pub(crate) fn init_enclave_sidechain_components(
 	});
 
 	std::thread::spawn(move || {
-		println!("running direct call requets handler");
+		println!("running native task handler");
 		#[allow(clippy::unwrap_used)]
-		run_direct_call_requests_handler().unwrap();
+		run_native_task_handler().unwrap();
 	});
 
 	std::thread::spawn(move || {
