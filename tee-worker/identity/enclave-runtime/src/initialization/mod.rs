@@ -435,26 +435,22 @@ pub(crate) fn init_enclave_sidechain_components(
 
 	std::thread::spawn(move || {
 		println!("running stf task handler");
-		#[allow(clippy::unwrap_used)]
-		run_stf_task_handler().unwrap();
+		run_stf_task_handler().expect("Failed to run stf task handler");
 	});
 
 	std::thread::spawn(move || {
 		println!("running vc issuance");
-		#[allow(clippy::unwrap_used)]
-		run_vc_issuance().unwrap();
+		run_vc_issuance().expect("Failed to run vc issuance");
 	});
 
 	std::thread::spawn(move || {
 		println!("running native task handler");
-		#[allow(clippy::unwrap_used)]
-		run_native_task_handler().unwrap();
+		run_native_task_handler().expect("Failed to run native task handler");
 	});
 
 	std::thread::spawn(move || {
 		println!("running parentchain extrinsic sender");
-		#[allow(clippy::unwrap_used)]
-		run_parachain_extrinsic_sender().unwrap();
+		run_parachain_extrinsic_sender().expect("Failed to run parentchain extrinsic sender");
 	});
 
 	Ok(())
