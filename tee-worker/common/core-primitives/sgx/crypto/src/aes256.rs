@@ -223,7 +223,7 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::{sgx::*, *};
+	use super::sgx::*;
 	use crate::key_repository::AccessKey;
 	use itp_sgx_temp_dir::TempDir;
 

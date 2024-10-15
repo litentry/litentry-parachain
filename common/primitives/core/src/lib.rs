@@ -32,7 +32,7 @@ pub use assertion::Assertion;
 pub mod identity;
 pub use identity::*;
 
-mod omni_account;
+pub mod omni_account;
 pub use omni_account::*;
 
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};

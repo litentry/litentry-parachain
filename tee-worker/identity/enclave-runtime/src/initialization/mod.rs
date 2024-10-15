@@ -26,9 +26,9 @@ use crate::{
 		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
 		EnclaveStateInitializer, EnclaveStateObserver, EnclaveStateSnapshotRepository,
 		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
-		DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
-		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_IDGRAPH_KEY_REPOSITORY_COMPONENT,
+		DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_ASSERTION_REPOSITORY, GLOBAL_ATTESTATION_HANDLER_COMPONENT,
+		GLOBAL_DATA_PROVIDER_CONFIG, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
 		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
@@ -115,9 +115,9 @@ pub(crate) fn init_enclave(
 	let state_key_repository = Arc::new(get_aes_repository(base_dir.clone())?);
 	GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.initialize(state_key_repository.clone());
 
-	let idgraph_key_repository =
-		Arc::new(create_aes256_repository(base_dir.clone(), "idgraph", None)?);
-	GLOBAL_IDGRAPH_KEY_REPOSITORY_COMPONENT.initialize(idgraph_key_repository.clone());
+	let account_store_key_repository =
+		Arc::new(create_aes256_repository(base_dir.clone(), "account_store", None)?);
+	GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT.initialize(account_store_key_repository.clone());
 
 	let integritee_light_client_seal = Arc::new(EnclaveLightClientSeal::new(
 		base_dir.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),

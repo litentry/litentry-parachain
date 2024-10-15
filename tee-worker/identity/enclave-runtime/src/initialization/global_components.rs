@@ -376,9 +376,9 @@ pub static GLOBAL_STATE_KEY_REPOSITORY_COMPONENT: ComponentContainer<EnclaveStat
 	ComponentContainer::new("State key repository");
 
 /// IDGraph key repository
-pub static GLOBAL_IDGRAPH_KEY_REPOSITORY_COMPONENT: ComponentContainer<
+pub static GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveIDGraphKeyRepository,
-> = ComponentContainer::new("IDGraph key repository");
+> = ComponentContainer::new("StoreAccount key repository");
 
 /// Shielding key repository
 pub static GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
