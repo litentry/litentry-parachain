@@ -17,8 +17,14 @@
 use crate::{mock::*, AccountStore, MemberAccountHash, *};
 use core_primitives::Identity;
 use frame_support::{assert_noop, assert_ok};
+use sp_core::hashing::blake2_256;
 use sp_runtime::{traits::BadOrigin, ModuleError};
 use sp_std::vec;
+
+fn add_account_call(account: MemberAccount) -> Box<RuntimeCall> {
+	let call = RuntimeCall::OmniAccount(crate::Call::add_account { member_account: account });
+	Box::new(call)
+}
 
 fn remove_accounts_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
 	let call =
@@ -26,11 +32,8 @@ fn remove_accounts_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
 	Box::new(call)
 }
 
-fn publicize_account_call(hash: H256, id: MemberIdentity) -> Box<RuntimeCall> {
-	let call = RuntimeCall::OmniAccount(crate::Call::publicize_account {
-		member_account_hash: hash,
-		public_identity: id,
-	});
+fn publicize_account_call(id: Identity) -> Box<RuntimeCall> {
+	let call = RuntimeCall::OmniAccount(crate::Call::publicize_account { member_account: id });
 	Box::new(call)
 }
 
@@ -40,193 +43,245 @@ fn make_balance_transfer_call(dest: AccountId, value: Balance) -> Box<RuntimeCal
 }
 
 #[test]
+fn create_account_store_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_omni_account = who_identity.to_omni_account();
+
+		assert_ok!(OmniAccount::create_account_store(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.clone(),
+		));
+
+		let member_accounts: MemberAccounts<TestRuntime> =
+			vec![MemberAccount::Public(who_identity.clone())].try_into().unwrap();
+
+		System::assert_last_event(
+			Event::AccountStoreCreated {
+				who: who_omni_account,
+				account_store_hash: member_accounts.hash(),
+			}
+			.into(),
+		);
+
+		// create it the second time will fail
+		assert_noop!(
+			OmniAccount::create_account_store(RuntimeOrigin::signed(tee_signer), who_identity,),
+			Error::<TestRuntime>::AccountAlreadyAdded
+		);
+	});
+}
+
+#[test]
+fn add_account_without_creating_store_fails() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+
+		let bob_member_account =
+			MemberAccount::Private(bob().encode(), Identity::from(bob()).hash());
+
+		let call = add_account_call(bob_member_account.clone());
+		assert_noop!(
+			OmniAccount::dispatch_as_omni_account(
+				RuntimeOrigin::signed(tee_signer.clone()),
+				who_identity.hash(),
+				call
+			),
+			Error::<TestRuntime>::AccountNotFound
+		);
+	});
+}
+
+#[test]
 fn add_account_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		let bob_member_account = MemberAccount {
-			id: MemberIdentity::Private(bob().encode()),
-			hash: Identity::from(bob()).hash(),
-		};
-		let charlie_member_account = MemberAccount {
-			id: MemberIdentity::Public(Identity::from(charlie())),
-			hash: Identity::from(charlie()).hash(),
-		};
+		let bob_member_account =
+			MemberAccount::Private(bob().encode(), Identity::from(bob()).hash());
+		let charlie_member_account = MemberAccount::Public(Identity::from(charlie()));
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
-				MemberAccount {
-					id: MemberIdentity::from(who_identity.clone()),
-					hash: who_identity_hash,
-				},
+				MemberAccount::Public(who_identity.clone()),
 				bob_member_account.clone(),
 			]);
 		let expected_account_store_hash = H256::from(blake2_256(
 			&expected_member_accounts
 				.iter()
-				.map(|member| member.hash)
+				.map(|member| member.hash())
 				.collect::<Vec<H256>>()
 				.encode(),
 		));
 
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity.clone(),
-			bob_member_account.clone(),
-			None
 		));
-		System::assert_last_event(
-			Event::AccountAdded { who: who.clone(), member_account_hash: bob_member_account.hash }
-				.into(),
+
+		let call = add_account_call(bob_member_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
+		));
+
+		System::assert_has_event(
+			Event::AccountAdded {
+				who: who_omni_account.clone(),
+				member_account_hash: bob_member_account.hash(),
+			}
+			.into(),
 		);
 
-		assert!(AccountStore::<TestRuntime>::contains_key(&who));
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
 		assert_eq!(
-			AccountStoreHash::<TestRuntime>::get(&who).unwrap(),
+			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
+			expected_member_accounts
+		);
+		assert_eq!(
+			AccountStoreHash::<TestRuntime>::get(&who_omni_account).unwrap(),
 			expected_account_store_hash
 		);
 
-		assert_ok!(OmniAccount::add_account(
-			RuntimeOrigin::signed(tee_signer),
-			who_identity.clone(),
-			charlie_member_account.clone(),
-			Some(expected_account_store_hash),
+		let call = add_account_call(charlie_member_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
 		));
-		System::assert_last_event(
+
+		System::assert_has_event(
 			Event::AccountAdded {
-				who: who.clone(),
-				member_account_hash: charlie_member_account.hash,
+				who: who_identity.to_omni_account(),
+				member_account_hash: charlie_member_account.hash(),
 			}
 			.into(),
 		);
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
-				MemberAccount {
-					id: MemberIdentity::from(who_identity.clone()),
-					hash: who_identity_hash,
-				},
+				MemberAccount::Public(who_identity.clone()),
 				bob_member_account.clone(),
 				charlie_member_account.clone(),
 			]);
 		let expected_account_store_hash = H256::from(blake2_256(
 			&expected_member_accounts
 				.iter()
-				.map(|member| member.hash)
+				.map(|member| member.hash())
 				.collect::<Vec<H256>>()
 				.encode(),
 		));
 
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
 		assert_eq!(
-			AccountStoreHash::<TestRuntime>::get(&who).unwrap(),
+			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
+			expected_member_accounts
+		);
+		assert_eq!(
+			AccountStoreHash::<TestRuntime>::get(&who_omni_account).unwrap(),
 			expected_account_store_hash
 		);
 
-		assert!(MemberAccountHash::<TestRuntime>::contains_key(bob_member_account.hash));
-		assert!(MemberAccountHash::<TestRuntime>::contains_key(charlie_member_account.hash));
-	});
-}
-
-#[test]
-fn add_account_hash_checking_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who_identity = Identity::from(alice());
-
-		let bob_member_account = MemberAccount {
-			id: MemberIdentity::Private(bob().encode()),
-			hash: Identity::from(bob()).hash(),
-		};
-		let charlie_member_account = MemberAccount {
-			id: MemberIdentity::Public(Identity::from(charlie())),
-			hash: Identity::from(charlie()).hash(),
-		};
-
-		// AccountStore gets created with the first account
-		assert_ok!(OmniAccount::add_account(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity.clone(),
-			bob_member_account,
-			None
-		));
-
-		// to mutate AccountStore with a new account, the current account_store_hash must be provided
-		assert_noop!(
-			OmniAccount::add_account(
-				RuntimeOrigin::signed(tee_signer),
-				who_identity,
-				charlie_member_account,
-				None
-			),
-			Error::<TestRuntime>::AccountStoreHashMissing
-		);
+		assert!(MemberAccountHash::<TestRuntime>::contains_key(bob_member_account.hash()));
+		assert!(MemberAccountHash::<TestRuntime>::contains_key(charlie_member_account.hash()));
 	});
 }
 
 #[test]
 fn add_account_origin_check_works() {
 	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
 		let who = Identity::from(alice());
-		let member_account = MemberAccount {
-			id: MemberIdentity::Private(vec![1, 2, 3]),
-			hash: H256::from(blake2_256(&[1, 2, 3])),
-		};
+		let member_account =
+			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3])));
 
 		assert_noop!(
-			OmniAccount::add_account(RuntimeOrigin::signed(bob()), who, member_account, None),
+			OmniAccount::add_account(RuntimeOrigin::signed(tee_signer), member_account.clone()),
+			BadOrigin
+		);
+
+		assert_noop!(
+			OmniAccount::add_account(RuntimeOrigin::signed(who.to_omni_account()), member_account),
 			BadOrigin
 		);
 	});
 }
 
 #[test]
-fn add_account_already_linked_works() {
+fn add_account_with_already_linked_account_fails() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
+		let who_omni_account = who_identity.to_omni_account();
 
-		let member_account = MemberAccount {
-			id: MemberIdentity::Public(Identity::from(bob())),
-			hash: Identity::from(bob()).hash(),
-		};
+		let member_account = MemberAccount::Public(Identity::from(bob()));
 
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity.clone(),
-			member_account.clone(),
-			None
 		));
-		assert_noop!(
-			OmniAccount::add_account(
-				RuntimeOrigin::signed(tee_signer.clone()),
-				who_identity.clone(),
-				member_account,
-				None
-			),
-			Error::<TestRuntime>::AccountAlreadyAdded
+
+		let call = add_account_call(member_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call.clone()
+		));
+
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
+		));
+
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
+				who: who_omni_account,
+				result: Err(DispatchError::Module(ModuleError {
+					index: 5,
+					error: [0, 0, 0, 0],
+					message: Some("AccountAlreadyAdded"),
+				})),
+			}
+			.into(),
 		);
 
 		// intent to create a new AccountStore with an account that is already added
-		let who = Identity::from(bob());
-		let alice_member_account = MemberAccount {
-			id: MemberIdentity::Public(Identity::from(alice())),
-			hash: Identity::from(alice()).hash(),
-		};
-		assert_noop!(
-			OmniAccount::add_account(
-				RuntimeOrigin::signed(tee_signer),
-				who.clone(),
-				alice_member_account,
-				None
-			),
-			Error::<TestRuntime>::AccountAlreadyAdded
+		let who = Identity::from(charlie());
+		let alice_member_account = MemberAccount::Public(Identity::from(alice()));
+
+		assert_ok!(OmniAccount::create_account_store(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who.clone(),
+		));
+
+		let call = add_account_call(alice_member_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who.hash(),
+			call
+		));
+
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
+				who: who.to_omni_account(),
+				result: Err(DispatchError::Module(ModuleError {
+					index: 5,
+					error: [0, 0, 0, 0],
+					message: Some("AccountAlreadyAdded"),
+				})),
+			}
+			.into(),
 		);
 	});
 }
@@ -238,116 +293,46 @@ fn add_account_store_len_limit_reached_works() {
 
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		let member_account_2 = MemberAccount {
-			id: MemberIdentity::Private(vec![1, 2, 3]),
-			hash: H256::from(blake2_256(&[1, 2, 3])),
-		};
-		let member_account_3 = MemberAccount {
-			id: MemberIdentity::Private(vec![4, 5, 6]),
-			hash: H256::from(blake2_256(&[4, 5, 6])),
-		};
+		assert_ok!(OmniAccount::create_account_store(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.clone(),
+		));
+
+		let member_account_2 =
+			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3])));
+		let member_account_3 =
+			MemberAccount::Private(vec![4, 5, 6], H256::from(blake2_256(&[4, 5, 6])));
 
 		let member_accounts: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::from(who_identity.clone()),
-				hash: who_identity_hash,
-			},
+			MemberAccount::Public(who_identity.clone()),
 			member_account_2.clone(),
 			member_account_3.clone(),
 		]);
-		let account_store_hash = H256::from(blake2_256(&member_accounts.encode()));
 
-		AccountStore::<TestRuntime>::insert(who.clone(), member_accounts.clone());
-		AccountStoreHash::<TestRuntime>::insert(who.clone(), account_store_hash);
+		AccountStore::<TestRuntime>::insert(who_omni_account.clone(), member_accounts);
 
-		assert_noop!(
-			OmniAccount::add_account(
-				RuntimeOrigin::signed(tee_signer),
-				who_identity,
-				MemberAccount {
-					id: MemberIdentity::Private(vec![7, 8, 9]),
-					hash: H256::from(blake2_256(&[7, 8, 9])),
-				},
-				Some(account_store_hash),
-			),
-			Error::<TestRuntime>::AccountStoreLenLimitReached
-		);
-	});
-}
-
-#[test]
-fn add_account_store_hash_mismatch_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-
-		let who = alice();
-		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash();
-
-		let member_account = MemberAccount {
-			id: MemberIdentity::Private(vec![1, 2, 3]),
-			hash: H256::from(blake2_256(&[1, 2, 3])),
-		};
-
-		let member_accounts: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::from(who_identity.clone()),
-				hash: who_identity_hash,
-			},
-			member_account.clone(),
-		]);
-		let account_store_hash = H256::from(blake2_256(
-			&member_accounts.iter().map(|member| member.hash).collect::<Vec<H256>>().encode(),
+		let call = add_account_call(MemberAccount::Private(
+			vec![7, 8, 9],
+			H256::from(blake2_256(&[7, 8, 9])),
 		));
-
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity.clone(),
-			member_account.clone(),
-			None
+			who_identity.hash(),
+			call
 		));
 
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), member_accounts);
-		assert_eq!(AccountStoreHash::<TestRuntime>::get(&who).unwrap(), account_store_hash);
-
-		// add another account to the store with the correct AccountStoreHash
-		assert_ok!(OmniAccount::add_account(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity.clone(),
-			MemberAccount {
-				id: MemberIdentity::Private(vec![4, 5, 6]),
-				hash: H256::from(blake2_256(&[4, 5, 6])),
-			},
-			Some(account_store_hash),
-		));
-
-		let member_accounts: MemberAccounts<TestRuntime> = BoundedVec::truncate_from(vec![
-			MemberAccount {
-				id: MemberIdentity::from(who_identity.clone()),
-				hash: who_identity_hash,
-			},
-			member_account.clone(),
-			MemberAccount {
-				id: MemberIdentity::Private(vec![4, 5, 6]),
-				hash: H256::from(blake2_256(&[4, 5, 6])),
-			},
-		]);
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), member_accounts);
-
-		// attempt to add an account with an old AccountStoreHash
-		assert_noop!(
-			OmniAccount::add_account(
-				RuntimeOrigin::signed(tee_signer),
-				who_identity,
-				MemberAccount {
-					id: MemberIdentity::Private(vec![7, 8, 9]),
-					hash: H256::from(blake2_256(&[7, 8, 9])),
-				},
-				Some(account_store_hash),
-			),
-			Error::<TestRuntime>::AccountStoreHashMismatch
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
+				who: who_omni_account,
+				result: Err(DispatchError::Module(ModuleError {
+					index: 5,
+					error: [1, 0, 0, 0],
+					message: Some("AccountStoreLenLimitReached"),
+				})),
+			}
+			.into(),
 		);
 	});
 }
@@ -359,19 +344,23 @@ fn remove_account_works() {
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
 		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		let member_account = MemberAccount {
-			id: MemberIdentity::Private(vec![1, 2, 3]),
-			hash: H256::from(blake2_256(&[1, 2, 3])),
-		};
-		let identity_hash = member_account.hash;
+		let member_account =
+			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3])));
+		let identity_hash = member_account.hash();
 		let hashes = vec![identity_hash];
 
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity.clone(),
-			member_account.clone(),
-			None
+		));
+
+		let call = add_account_call(member_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
 		));
 
 		// normal signed origin should give `BadOrigin`, no matter
@@ -382,7 +371,10 @@ fn remove_account_works() {
 		);
 
 		assert_noop!(
-			OmniAccount::remove_accounts(RuntimeOrigin::signed(who.clone()), hashes.clone()),
+			OmniAccount::remove_accounts(
+				RuntimeOrigin::signed(who_omni_account.clone()),
+				hashes.clone()
+			),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
@@ -394,21 +386,25 @@ fn remove_account_works() {
 		));
 
 		System::assert_has_event(
-			Event::DispatchedAsOmniAccount { who: who.clone(), result: DispatchResult::Ok(()) }
-				.into(),
+			Event::DispatchedAsOmniAccount {
+				who: who_omni_account.clone(),
+				result: DispatchResult::Ok(()),
+			}
+			.into(),
 		);
 
 		System::assert_has_event(
-			Event::AccountRemoved { who: who.clone(), member_account_hashes: hashes }.into(),
+			Event::AccountRemoved { who: who_omni_account.clone(), member_account_hashes: hashes }
+				.into(),
 		);
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
-			BoundedVec::truncate_from(vec![MemberAccount {
-				id: MemberIdentity::Public(who_identity.clone()),
-				hash: who_identity_hash,
-			}]);
+			BoundedVec::truncate_from(vec![MemberAccount::Public(who_identity.clone())]);
 
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
+		assert_eq!(
+			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
+			expected_member_accounts
+		);
 		assert!(!MemberAccountHash::<TestRuntime>::contains_key(identity_hash));
 
 		let call = remove_accounts_call(vec![who_identity_hash]);
@@ -418,7 +414,7 @@ fn remove_account_works() {
 			call
 		));
 
-		assert!(!AccountStore::<TestRuntime>::contains_key(&who));
+		assert!(!AccountStore::<TestRuntime>::contains_key(&who_omni_account));
 	});
 }
 
@@ -429,15 +425,21 @@ fn remove_account_empty_account_check_works() {
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
 		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity,
-			MemberAccount {
-				id: MemberIdentity::Private(vec![1, 2, 3]),
-				hash: H256::from(blake2_256(&[1, 2, 3])),
-			},
-			None
+			who_identity.clone(),
+		));
+
+		let call = add_account_call(MemberAccount::Private(
+			vec![1, 2, 3],
+			H256::from(blake2_256(&[1, 2, 3])),
+		));
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
 		));
 
 		let call = remove_accounts_call(vec![]);
@@ -449,10 +451,10 @@ fn remove_account_empty_account_check_works() {
 		));
 		System::assert_has_event(
 			Event::DispatchedAsOmniAccount {
-				who,
+				who: who_omni_account,
 				result: Err(DispatchError::Module(ModuleError {
 					index: 5,
-					error: [6, 0, 0, 0],
+					error: [5, 0, 0, 0],
 					message: Some("EmptyAccount"),
 				})),
 			}
@@ -468,30 +470,35 @@ fn publicize_account_works() {
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
 		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
-		let public_identity = MemberIdentity::Public(Identity::from(bob()));
-		let identity_hash =
-			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
+		let private_account = MemberAccount::Private(vec![1, 2, 3], Identity::from(bob()).hash());
+		let public_account = MemberAccount::Public(Identity::from(bob()));
+		let public_account_hash = public_account.hash();
 
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity.clone(),
-			MemberAccount { id: private_identity.clone(), hash: identity_hash },
-			None
+		));
+
+		let call = add_account_call(private_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
 		));
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
-				MemberAccount {
-					id: MemberIdentity::Public(who_identity.clone()),
-					hash: who_identity.hash(),
-				},
-				MemberAccount { id: private_identity.clone(), hash: identity_hash },
+				MemberAccount::Public(who_identity.clone()),
+				private_account.clone(),
 			]);
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
+		assert_eq!(
+			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
+			expected_member_accounts
+		);
 
-		let call = publicize_account_call(identity_hash, public_identity.clone());
+		let call = publicize_account_call(Identity::from(bob()));
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity_hash,
@@ -499,24 +506,30 @@ fn publicize_account_works() {
 		));
 
 		System::assert_has_event(
-			Event::DispatchedAsOmniAccount { who: who.clone(), result: DispatchResult::Ok(()) }
-				.into(),
+			Event::DispatchedAsOmniAccount {
+				who: who_omni_account.clone(),
+				result: DispatchResult::Ok(()),
+			}
+			.into(),
 		);
 
 		System::assert_has_event(
-			Event::AccountMadePublic { who: who.clone(), member_account_hash: identity_hash }
-				.into(),
+			Event::AccountMadePublic {
+				who: who_omni_account.clone(),
+				member_account_hash: public_account_hash,
+			}
+			.into(),
 		);
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
-				MemberAccount {
-					id: MemberIdentity::Public(who_identity.clone()),
-					hash: who_identity.hash(),
-				},
-				MemberAccount { id: public_identity.clone(), hash: identity_hash },
+				MemberAccount::Public(who_identity.clone()),
+				MemberAccount::Public(Identity::from(bob())),
 			]);
-		assert_eq!(AccountStore::<TestRuntime>::get(&who).unwrap(), expected_member_accounts);
+		assert_eq!(
+			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
+			expected_member_accounts
+		);
 	});
 }
 
@@ -527,14 +540,12 @@ fn publicize_account_identity_not_found_works() {
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
 		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
-		let identity = Identity::from(bob());
-		let public_identity = MemberIdentity::Public(identity.clone());
-		let identity_hash =
-			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
+		let private_account =
+			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3])));
 
-		let call = publicize_account_call(identity_hash, public_identity.clone());
+		let call = publicize_account_call(Identity::from(bob()));
 		assert_noop!(
 			OmniAccount::dispatch_as_omni_account(
 				RuntimeOrigin::signed(tee_signer.clone()),
@@ -544,19 +555,21 @@ fn publicize_account_identity_not_found_works() {
 			Error::<TestRuntime>::AccountNotFound
 		);
 
-		assert_ok!(OmniAccount::add_account(
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity,
-			MemberAccount { id: private_identity.clone(), hash: identity_hash },
-			None
+			who_identity.clone(),
+		));
+
+		let call = add_account_call(private_account.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
 		));
 
 		let charlie_identity = Identity::from(charlie());
-		let other_identity = MemberIdentity::Public(charlie_identity.clone());
-		let other_identity_hash =
-			H256::from(blake2_256(&charlie_identity.to_did().unwrap().encode()));
 
-		let call = publicize_account_call(other_identity_hash, other_identity);
+		let call = publicize_account_call(charlie_identity.clone());
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who_identity_hash,
@@ -564,49 +577,11 @@ fn publicize_account_identity_not_found_works() {
 		));
 		System::assert_has_event(
 			Event::DispatchedAsOmniAccount {
-				who,
+				who: who_omni_account,
 				result: Err(DispatchError::Module(ModuleError {
 					index: 5,
 					error: [2, 0, 0, 0],
 					message: Some("AccountNotFound"),
-				})),
-			}
-			.into(),
-		);
-	});
-}
-
-#[test]
-fn publicize_account_identity_is_private_check_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = alice();
-		let who_identity = Identity::from(who.clone());
-		let who_identity_hash = who_identity.hash();
-
-		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = Identity::from(bob()).hash();
-
-		assert_ok!(OmniAccount::add_account(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity,
-			MemberAccount { id: private_identity.clone(), hash: identity_hash },
-			None
-		));
-
-		let call = publicize_account_call(identity_hash, private_identity);
-		assert_ok!(OmniAccount::dispatch_as_omni_account(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity_hash,
-			call
-		));
-		System::assert_has_event(
-			Event::DispatchedAsOmniAccount {
-				who,
-				result: Err(DispatchError::Module(ModuleError {
-					index: 5,
-					error: [5, 0, 0, 0],
-					message: Some("AccountIsPrivate"),
 				})),
 			}
 			.into(),
@@ -621,15 +596,22 @@ fn dispatch_as_signed_works() {
 		let who = alice();
 		let who_identity = Identity::from(who.clone());
 		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
 
-		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = Identity::from(bob()).hash();
+		assert_ok!(Balances::transfer(RuntimeOrigin::signed(who.clone()), who_omni_account, 6));
 
-		assert_ok!(OmniAccount::add_account(
+		let private_account = MemberAccount::Private(vec![1, 2, 3], Identity::from(bob()).hash());
+
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity,
-			MemberAccount { id: private_identity.clone(), hash: identity_hash },
-			None
+			who_identity.clone(),
+		));
+
+		let call = add_account_call(private_account);
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
 		));
 
 		let call = make_balance_transfer_call(bob(), 5);
@@ -639,7 +621,11 @@ fn dispatch_as_signed_works() {
 			call
 		));
 		System::assert_has_event(
-			Event::DispatchedAsSigned { who, result: DispatchResult::Ok(()) }.into(),
+			Event::DispatchedAsSigned {
+				who: who_identity.to_omni_account(),
+				result: DispatchResult::Ok(()),
+			}
+			.into(),
 		);
 
 		assert_eq!(Balances::free_balance(bob()), 5);

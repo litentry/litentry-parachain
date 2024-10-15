@@ -1,7 +1,7 @@
 services:
-    lit-di-solana-identity-multiworker-test:
+    lit-di-identity-multiworker-test:
         image: litentry/identity-cli:latest
-        container_name: litentry-di-solana-identity-test
+        container_name: litentry-di-identity-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
@@ -15,7 +15,7 @@ services:
                 condition: service_healthy
         networks:
             - litentry-test-network
-        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_integration_test.sh di_solana_identity.test.ts 2>&1' "
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_integration_test.sh di_identity.test.ts 2>&1' "
         restart: "no"
 networks:
     litentry-test-network:

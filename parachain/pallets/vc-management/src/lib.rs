@@ -36,7 +36,6 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
-use pallet_teebag::ShardIdentifier;
 use sp_core::H256;
 use sp_std::vec::Vec;
 
@@ -49,7 +48,8 @@ pub type VCIndex = H256;
 pub mod pallet {
 	use super::*;
 	use core_primitives::{
-		Assertion, ErrorDetail, Identity, SchemaIndex, VCMPError, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+		Assertion, ErrorDetail, Identity, SchemaIndex, ShardIdentifier, VCMPError,
+		SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
 	};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;

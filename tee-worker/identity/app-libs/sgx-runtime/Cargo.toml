@@ -26,7 +26,7 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 sp-version = { workspace = true }
 
-pallet-evm = { git = "https://github.com/integritee-network/frontier", branch = "bar/polkadot-v0.9.42", default-features = false, optional = true }
+pallet-evm = { workspace = true, optional = true }
 pallet-identity-management-tee = { workspace = true }
 pallet-parentchain = { workspace = true }
 

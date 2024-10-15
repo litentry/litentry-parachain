@@ -40,7 +40,7 @@ dependencies = [
  "scale-encode",
  "scale-info",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sp-application-crypto",
  "sp-core",
  "sp-runtime",
@@ -57,7 +57,7 @@ dependencies = [
  "primitive-types",
  "scale-info",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sp-application-crypto",
  "sp-core",
  "sp-core-hashing",
@@ -612,22 +612,31 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 [[package]]
 name = "core-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "base58",
+ "base64 0.13.1",
+ "chrono 0.4.31",
+ "der 0.6.1",
  "frame-support",
- "litentry-hex-utils 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
- "litentry-macros 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
- "litentry-proc-macros 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
- "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
+ "hex",
+ "hex-literal",
+ "litentry-hex-utils",
+ "litentry-macros",
+ "litentry-proc-macros",
+ "pallet-evm",
  "parity-scale-codec",
+ "ring 0.16.20",
+ "rustls-webpki",
  "scale-info",
+ "serde 1.0.204",
+ "serde_json 1.0.120",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
  "strum",
  "strum_macros",
+ "x509-cert",
 ]
 
 [[package]]
@@ -946,10 +955,10 @@ dependencies = [
  "lc-parachain-extrinsic-task-receiver",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
- "litentry-hex-utils 0.1.0",
- "litentry-macros 0.1.0",
+ "litentry-hex-utils",
+ "litentry-macros",
  "litentry-primitives",
- "litentry-proc-macros 0.1.0",
+ "litentry-proc-macros",
  "log",
  "multibase",
  "once_cell 1.4.0",
@@ -1088,27 +1097,9 @@ checksum = "a49a4e11987c51220aa89dbe1a5cc877f5079fa6864c0a5b4533331db44e9365"
 dependencies = [
  "auto_impl",
  "ethereum 0.14.0",
- "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "evm-gasometer 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "log",
- "parity-scale-codec",
- "primitive-types",
- "rlp",
- "scale-info",
- "sha3 0.10.8",
-]
-
-[[package]]
-name = "evm"
-version = "0.39.1"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
-dependencies = [
- "auto_impl",
- "ethereum 0.14.0",
- "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
- "evm-gasometer 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
- "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm-core 0.39.0",
+ "evm-gasometer 0.39.0",
+ "evm-runtime 0.39.0",
  "log",
  "parity-scale-codec",
  "primitive-types",
@@ -1149,16 +1140,6 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.39.0"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
-dependencies = [
- "parity-scale-codec",
- "primitive-types",
- "scale-info",
-]
-
-[[package]]
-name = "evm-core"
 version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d1da6cedc5cedb4208e59467106db0d1f50db01b920920589f8e672c02fdc04f"
@@ -1174,18 +1155,8 @@ version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d43eadc395bd1a52990787ca1495c26b0248165444912be075c28909a853b8c"
 dependencies = [
- "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "primitive-types",
-]
-
-[[package]]
-name = "evm-gasometer"
-version = "0.39.0"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
-dependencies = [
- "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
- "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm-core 0.39.0",
+ "evm-runtime 0.39.0",
  "primitive-types",
 ]
 
@@ -1207,18 +1178,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2aa5b32f59ec582a5651978004e5c784920291263b7dcb6de418047438e37f4f"
 dependencies = [
  "auto_impl",
- "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "primitive-types",
- "sha3 0.10.8",
-]
-
-[[package]]
-name = "evm-runtime"
-version = "0.39.0"
-source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
-dependencies = [
- "auto_impl",
- "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm-core 0.39.0",
  "primitive-types",
  "sha3 0.10.8",
 ]
@@ -1290,9 +1250,9 @@ dependencies = [
 
 [[package]]
 name = "flagset"
-version = "0.4.4"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d52a7e408202050813e6f1d9addadcaafef3dca7530c7ddfb005d4081cce6779"
+checksum = "b3ea1ec5f8307826a5b71094dd91fc04d4ae75d5709b20ad351c7fb4815c86ec"
 
 [[package]]
 name = "fnv"
@@ -1319,7 +1279,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/integritee-network/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
+source = "git+https://github.com/polkadot-evm/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
  "hex",
  "libsecp256k1",
@@ -1333,42 +1293,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "fp-account"
-version = "1.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
-dependencies = [
- "hex",
- "libsecp256k1",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-runtime-interface",
- "sp-std",
-]
-
-[[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/integritee-network/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
+source = "git+https://github.com/polkadot-evm/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
- "evm 0.39.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "fp-evm"
-version = "3.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
-dependencies = [
- "evm 0.39.1 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm 0.39.1",
  "frame-support",
  "parity-scale-codec",
  "scale-info",
@@ -1896,7 +1825,7 @@ dependencies = [
  "frame-system",
  "itp-sgx-runtime-primitives",
  "pallet-balances",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier?branch=bar/polkadot-v0.9.42)",
+ "pallet-evm",
  "pallet-identity-management-tee",
  "pallet-parentchain",
  "pallet-sudo",
@@ -1931,8 +1860,8 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "litentry-hex-utils 0.1.0",
- "litentry-macros 0.1.0",
+ "litentry-hex-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -1957,7 +1886,7 @@ dependencies = [
  "itp-utils",
  "log",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?tag=sgx_1.1.3)",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
  "tungstenite",
  "url 2.5.0",
@@ -1975,7 +1904,7 @@ dependencies = [
  "jsonrpc-core",
  "log",
  "parity-scale-codec",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
  "sp-runtime",
  "thiserror",
@@ -2311,7 +2240,7 @@ dependencies = [
  "http_req",
  "log",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
  "thiserror",
  "url 2.5.0",
@@ -2528,7 +2457,7 @@ dependencies = [
  "itp-types",
  "parity-scale-codec",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
 ]
 
@@ -2741,7 +2670,7 @@ name = "itp-utils"
 version = "0.1.0"
 dependencies = [
  "hex",
- "litentry-hex-utils 0.1.0",
+ "litentry-hex-utils",
  "parity-scale-codec",
 ]
 
@@ -2811,7 +2740,7 @@ dependencies = [
  "its-primitives",
  "its-state",
  "its-validateer-fetch",
- "litentry-hex-utils 0.1.0",
+ "litentry-hex-utils",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2837,7 +2766,7 @@ dependencies = [
  "its-block-verification",
  "its-primitives",
  "its-state",
- "litentry-hex-utils 0.1.0",
+ "litentry-hex-utils",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -3015,12 +2944,11 @@ dependencies = [
  "lc-evm-dynamic-assertions",
  "litentry-primitives",
  "log",
- "pallet-parachain-staking",
  "parity-scale-codec",
  "primitive-types",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
  "sp-core",
  "ss58-registry",
@@ -3041,7 +2969,7 @@ dependencies = [
  "lc-common",
  "lc-credentials-v2",
  "lc-service",
- "litentry-hex-utils 0.1.0",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -3075,7 +3003,7 @@ dependencies = [
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "scale-info",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
  "sgx_tstd",
  "sp-core",
@@ -3107,7 +3035,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
  "thiserror",
  "url 2.5.0",
@@ -3143,7 +3071,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "rust_decimal",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_tstd",
  "ss58-registry",
  "thiserror",
@@ -3169,7 +3097,7 @@ dependencies = [
  "lru",
  "parity-scale-codec",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sgx_rand",
  "sgx_tstd",
  "sp-core",
@@ -3294,7 +3222,7 @@ dependencies = [
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
- "litentry-macros 0.1.0",
+ "litentry-macros",
  "litentry-primitives",
  "log",
  "pallet-identity-management-tee",
@@ -3380,21 +3308,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "litentry-hex-utils"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
-dependencies = [
- "hex",
-]
-
-[[package]]
 name = "litentry-macros"
 version = "0.1.0"
-
-[[package]]
-name = "litentry-macros"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 
 [[package]]
 name = "litentry-primitives"
@@ -3406,7 +3321,6 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "log",
- "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3",
  "ring 0.16.20",
@@ -3423,17 +3337,6 @@ dependencies = [
 [[package]]
 name = "litentry-proc-macros"
 version = "0.1.0"
-dependencies = [
- "cargo_toml",
- "proc-macro2",
- "quote 1.0.36",
- "syn 2.0.72",
-]
-
-[[package]]
-name = "litentry-proc-macros"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -3733,20 +3636,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
-name = "pallet-authorship"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -3763,38 +3652,14 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/integritee-network/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
+source = "git+https://github.com/polkadot-evm/frontier?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
- "evm 0.39.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "fp-account 1.0.0-dev (git+https://github.com/integritee-network/frontier?branch=bar/polkadot-v0.9.42)",
- "fp-evm 3.0.0-dev (git+https://github.com/integritee-network/frontier?branch=bar/polkadot-v0.9.42)",
+ "evm 0.39.1",
+ "fp-account",
+ "fp-evm",
  "frame-support",
  "frame-system",
  "hex",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "rlp",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-evm"
-version = "6.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
-dependencies = [
- "environmental 1.1.4",
- "evm 0.39.1 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
- "fp-account 1.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
- "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
- "frame-support",
- "frame-system",
- "hex",
- "hex-literal",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
@@ -3824,26 +3689,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-parachain-staking"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
-dependencies = [
- "core-primitives",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-balances",
- "pallet-session",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-staking",
- "sp-std",
- "substrate-fixed",
-]
-
-[[package]]
 name = "pallet-parentchain"
 version = "0.1.0"
 dependencies = [
@@ -3854,26 +3699,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
-]
-
-[[package]]
-name = "pallet-session"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-session",
- "sp-staking",
- "sp-std",
 ]
 
 [[package]]
@@ -3888,33 +3713,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-teebag"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
-dependencies = [
- "base64 0.13.1",
- "chrono 0.4.31",
- "der 0.6.1",
- "frame-support",
- "frame-system",
- "hex",
- "hex-literal",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "ring 0.16.20",
- "rustls-webpki",
- "scale-info",
- "serde 1.0.204",
- "serde_json 1.0.103",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "x509-cert",
 ]
 
 [[package]]
@@ -4761,9 +4559,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.103"
+version = "1.0.120"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d03b412469450d4404fe8499a268edd7f8b79fecb074b0d812ad64ca21f4031b"
+checksum = "4e0d21c9a8cae1235ad58a00c11cb40d4b1e5c784f1ef2c537876ed6ffd8b7c5"
 dependencies = [
  "itoa 1.0.9",
  "ryu",
@@ -5323,19 +5121,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-session"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-api",
- "sp-core",
- "sp-staking",
- "sp-std",
-]
-
-[[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -5483,7 +5268,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.36",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "unicode-xid 0.2.4",
 ]
 
@@ -5534,30 +5319,10 @@ dependencies = [
  "maybe-async",
  "parity-scale-codec",
  "serde 1.0.204",
- "serde_json 1.0.103",
+ "serde_json 1.0.120",
  "sp-core",
  "sp-runtime",
  "sp-runtime-interface",
-]
-
-[[package]]
-name = "substrate-fixed"
-version = "0.5.9"
-source = "git+https://github.com/encointer/substrate-fixed#a75f3ba3f7c7893fb420500639cc055f964b1b88"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "substrate-typenum",
-]
-
-[[package]]
-name = "substrate-typenum"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0f0091e93c2c75b233ae39424c52cb8a662c0811fb68add149e20e5d7e8a788"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
 ]
 
 [[package]]

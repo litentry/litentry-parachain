@@ -21,7 +21,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{Identity, MemberIdentity};
+pub use core_primitives::{GetAccountStoreHash, Identity, MemberAccount, OmniAccountConverter};
 pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
@@ -32,33 +32,11 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use sp_core::H256;
-use sp_core_hashing::blake2_256;
 use sp_runtime::traits::Dispatchable;
 use sp_std::boxed::Box;
 use sp_std::vec::Vec;
 
 pub type MemberCount = u32;
-
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct MemberAccount {
-	pub id: MemberIdentity,
-	pub hash: H256,
-}
-
-pub trait AccountIdConverter<T: Config> {
-	fn convert(identity: &Identity) -> Option<T::AccountId>;
-}
-
-pub trait GetAccountStoreHash {
-	fn hash(&self) -> H256;
-}
-
-impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {
-	fn hash(&self) -> H256 {
-		let hashes: Vec<H256> = self.iter().map(|member| member.hash).collect();
-		hashes.using_encoded(blake2_256).into()
-	}
-}
 
 // Customized origin for this pallet, to:
 // 1. to decouple `TEECallOrigin` and extrinsic that should be sent from `OmniAccount` origin only
@@ -112,14 +90,14 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxAccountStoreLength: Get<MemberCount>;
 
-		/// AccountId converter
-		type AccountIdConverter: AccountIdConverter<Self>;
-
 		/// The origin that represents the customised OmniAccount type
 		type OmniAccountOrigin: EnsureOrigin<
 			<Self as frame_system::Config>::RuntimeOrigin,
 			Success = Self::AccountId,
 		>;
+
+		/// Convert an `Identity` to OmniAccount type
+		type OmniAccountConverter: OmniAccountConverter<OmniAccount = Self::AccountId>;
 	}
 
 	pub type MemberAccounts<T> = BoundedVec<MemberAccount, <T as Config>::MaxAccountStoreLength>;
@@ -147,6 +125,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// An account store is created
+		AccountStoreCreated { who: T::AccountId, account_store_hash: H256 },
 		/// Some member account is added
 		AccountAdded { who: T::AccountId, member_account_hash: H256 },
 		/// Some member accounts are removed
@@ -166,10 +146,7 @@ pub mod pallet {
 		AccountNotFound,
 		InvalidAccount,
 		UnknownAccountStore,
-		AccountIsPrivate,
 		EmptyAccount,
-		AccountStoreHashMismatch,
-		AccountStoreHashMissing,
 	}
 
 	#[pallet::call]
@@ -179,12 +156,12 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn dispatch_as_omni_account(
 			origin: OriginFor<T>,
-			account_hash: H256,
+			member_account_hash: H256,
 			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			let omni_account =
-				MemberAccountHash::<T>::get(account_hash).ok_or(Error::<T>::AccountNotFound)?;
+			let omni_account = MemberAccountHash::<T>::get(member_account_hash)
+				.ok_or(Error::<T>::AccountNotFound)?;
 			let result = call.dispatch(RawOrigin::OmniAccount(omni_account.clone()).into());
 			Self::deposit_event(Event::DispatchedAsOmniAccount {
 				who: omni_account,
@@ -199,14 +176,16 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn dispatch_as_signed(
 			origin: OriginFor<T>,
-			account_hash: H256,
+			member_account_hash: H256,
 			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			let omni_account =
-				MemberAccountHash::<T>::get(account_hash).ok_or(Error::<T>::AccountNotFound)?;
-			let result =
-				call.dispatch(frame_system::RawOrigin::Signed(omni_account.clone()).into());
+			let omni_account = MemberAccountHash::<T>::get(member_account_hash)
+				.ok_or(Error::<T>::AccountNotFound)?;
+			let result: Result<
+				PostDispatchInfo,
+				sp_runtime::DispatchErrorWithPostInfo<PostDispatchInfo>,
+			> = call.dispatch(frame_system::RawOrigin::Signed(omni_account.clone()).into());
 			Self::deposit_event(Event::DispatchedAsSigned {
 				who: omni_account,
 				result: result.map(|_| ()).map_err(|e| e.error),
@@ -216,46 +195,62 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn add_account(
-			origin: OriginFor<T>,
-			who: Identity,
-			member_account: MemberAccount,
-			maybe_account_store_hash: Option<H256>,
-		) -> DispatchResult {
-			// We can't use `T::OmniAccountOrigin` here as the ownership of member account needs to
-			// be firstly validated by the TEE-worker before dispatching the extrinsic
+		pub fn create_account_store(origin: OriginFor<T>, identity: Identity) -> DispatchResult {
+			// initial creation request has to come from `TEECallOrigin`
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			ensure!(
-				!MemberAccountHash::<T>::contains_key(member_account.hash),
-				Error::<T>::AccountAlreadyAdded
-			);
-			let who_account_id = match T::AccountIdConverter::convert(&who) {
-				Some(account_id) => account_id,
-				None => return Err(Error::<T>::InvalidAccount.into()),
-			};
-			let hash = member_account.hash;
-			let mut account_store = Self::get_or_create_account_store(
-				who.clone(),
-				who_account_id.clone(),
-				maybe_account_store_hash,
-			)?;
-			account_store
-				.try_push(member_account)
+			let hash = identity.hash();
+			let omni_account = T::OmniAccountConverter::convert(&identity);
+
+			ensure!(!MemberAccountHash::<T>::contains_key(hash), Error::<T>::AccountAlreadyAdded);
+
+			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
+			member_accounts
+				.try_push(identity.into())
 				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 
-			MemberAccountHash::<T>::insert(hash, who_account_id.clone());
-			AccountStoreHash::<T>::insert(who_account_id.clone(), account_store.hash());
-			AccountStore::<T>::insert(who_account_id.clone(), account_store);
+			MemberAccountHash::<T>::insert(hash, omni_account.clone());
+			AccountStore::<T>::insert(omni_account.clone(), member_accounts.clone());
+			AccountStoreHash::<T>::insert(omni_account.clone(), member_accounts.hash());
 
-			Self::deposit_event(Event::AccountAdded {
-				who: who_account_id,
-				member_account_hash: hash,
+			Self::deposit_event(Event::AccountStoreCreated {
+				who: omni_account,
+				account_store_hash: member_accounts.hash(),
 			});
 
 			Ok(())
 		}
 
 		#[pallet::call_index(3)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn add_account(
+			origin: OriginFor<T>,
+			member_account: MemberAccount, // account to be added
+		) -> DispatchResult {
+			// mutation of AccountStore requires `OmniAccountOrigin`, same as "remove" and "publicize"
+			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
+			ensure!(
+				!MemberAccountHash::<T>::contains_key(member_account.hash()),
+				Error::<T>::AccountAlreadyAdded
+			);
+
+			let mut member_accounts =
+				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownAccountStore)?;
+
+			let hash = member_account.hash();
+			member_accounts
+				.try_push(member_account)
+				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
+
+			MemberAccountHash::<T>::insert(hash, who.clone());
+			AccountStore::<T>::insert(who.clone(), member_accounts.clone());
+			AccountStoreHash::<T>::insert(who.clone(), member_accounts.hash());
+
+			Self::deposit_event(Event::AccountAdded { who, member_account_hash: hash });
+
+			Ok(())
+		}
+
+		#[pallet::call_index(4)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_accounts(
 			origin: OriginFor<T>,
@@ -264,12 +259,14 @@ pub mod pallet {
 			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
 			ensure!(!member_account_hashes.is_empty(), Error::<T>::EmptyAccount);
 
+			// TODO: shall we verify if MemberAccountHash's value is actually `who`?
+
 			let mut member_accounts =
 				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownAccountStore)?;
 
 			member_accounts.retain(|member| {
-				if member_account_hashes.contains(&member.hash) {
-					MemberAccountHash::<T>::remove(member.hash);
+				if member_account_hashes.contains(&member.hash()) {
+					MemberAccountHash::<T>::remove(member.hash());
 					false
 				} else {
 					true
@@ -287,27 +284,25 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(4)]
+		/// make a member account public in the AccountStore
+		/// we force `Identity` type to avoid misuse and additional check
+		#[pallet::call_index(5)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn publicize_account(
-			origin: OriginFor<T>,
-			member_account_hash: H256,
-			public_identity: MemberIdentity,
-		) -> DispatchResult {
+		pub fn publicize_account(origin: OriginFor<T>, member_account: Identity) -> DispatchResult {
 			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
-			ensure!(public_identity.is_public(), Error::<T>::AccountIsPrivate);
 
+			let hash = member_account.hash();
 			let mut member_accounts =
 				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownAccountStore)?;
-			let member_account = member_accounts
+			let m = member_accounts
 				.iter_mut()
-				.find(|member| member.hash == member_account_hash)
+				.find(|member| member.hash() == hash)
 				.ok_or(Error::<T>::AccountNotFound)?;
-			member_account.id = public_identity;
+			*m = member_account.into();
 
 			AccountStore::<T>::insert(who.clone(), member_accounts);
 
-			Self::deposit_event(Event::AccountMadePublic { who, member_account_hash });
+			Self::deposit_event(Event::AccountMadePublic { who, member_account_hash: hash });
 
 			Ok(())
 		}
@@ -325,59 +320,6 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 
 			Ok(())
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		pub fn get_or_create_account_store(
-			who: Identity,
-			who_account_id: T::AccountId,
-			maybe_account_store_hash: Option<H256>,
-		) -> Result<MemberAccounts<T>, Error<T>> {
-			match AccountStore::<T>::get(&who_account_id) {
-				Some(member_accounts) => {
-					Self::verify_account_store_hash(&who_account_id, maybe_account_store_hash)?;
-					Ok(member_accounts)
-				},
-				None => Self::create_account_store(who, who_account_id),
-			}
-		}
-
-		fn verify_account_store_hash(
-			who: &T::AccountId,
-			maybe_account_store_hash: Option<H256>,
-		) -> Result<(), Error<T>> {
-			let current_account_store_hash =
-				AccountStoreHash::<T>::get(who).ok_or(Error::<T>::AccountStoreHashMissing)?;
-			match maybe_account_store_hash {
-				Some(h) => {
-					ensure!(current_account_store_hash == h, Error::<T>::AccountStoreHashMismatch);
-				},
-				None => return Err(Error::<T>::AccountStoreHashMissing),
-			}
-
-			Ok(())
-		}
-
-		fn create_account_store(
-			owner_identity: Identity,
-			owner_account_id: T::AccountId,
-		) -> Result<MemberAccounts<T>, Error<T>> {
-			let owner_identity_hash = owner_identity.hash();
-			if MemberAccountHash::<T>::contains_key(owner_identity_hash) {
-				return Err(Error::<T>::AccountAlreadyAdded);
-			}
-			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
-			member_accounts
-				.try_push(MemberAccount {
-					id: MemberIdentity::from(owner_identity.clone()),
-					hash: owner_identity_hash,
-				})
-				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
-			MemberAccountHash::<T>::insert(owner_identity_hash, owner_account_id.clone());
-			AccountStore::<T>::insert(owner_account_id.clone(), member_accounts.clone());
-
-			Ok(member_accounts)
 		}
 	}
 }

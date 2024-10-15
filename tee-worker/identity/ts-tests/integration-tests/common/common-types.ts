@@ -11,7 +11,7 @@ import { Signer } from './utils/crypto';
 // If there are types already defined in the client-api, please avoid redefining these types.
 // Instead, make every effort to use the types that have been generated within the client-api.
 
-interface WalletType {
+export interface WalletType {
     [walletName: string]: Signer;
 }
 export interface Wallets {

@@ -162,7 +162,7 @@ where
 			.author_api
 			.get_pending_trusted_calls_for(
 				*shard,
-				&trusted_call.sender_identity().to_account_id().ok_or_else(|| {
+				&trusted_call.sender_identity().to_native_account().ok_or_else(|| {
 					Error::OtherError(format!(
 						"Not a valid account: {:?}",
 						trusted_call.sender_identity()
