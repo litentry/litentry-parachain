@@ -950,6 +950,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "lc-data-providers",
+ "lc-direct-call-request-receiver",
  "lc-evm-dynamic-assertions",
  "lc-identity-verification",
  "lc-parachain-extrinsic-task-receiver",
@@ -2817,6 +2818,7 @@ dependencies = [
  "itp-utils",
  "its-primitives",
  "jsonrpc-core",
+ "lc-direct-call-request-sender",
  "lc-vc-task-sender",
  "litentry-primitives",
  "log",
@@ -3036,6 +3038,45 @@ dependencies = [
  "sgx_tstd",
  "thiserror",
  "url 2.5.0",
+]
+
+[[package]]
+name = "lc-direct-call-request-receiver"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.8",
+ "id-ita-sgx-runtime",
+ "id-ita-stf",
+ "id-itp-stf-executor",
+ "id-itp-top-pool-author",
+ "itp-enclave-metrics",
+ "itp-extrinsics-factory",
+ "itp-node-api",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-primitives",
+ "itp-stf-state-handler",
+ "itp-types",
+ "lc-data-providers",
+ "lc-direct-call-request-sender",
+ "lc-dynamic-assertion",
+ "litentry-macros",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-core",
+]
+
+[[package]]
+name = "lc-direct-call-request-sender"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "litentry-primitives",
+ "log",
 ]
 
 [[package]]

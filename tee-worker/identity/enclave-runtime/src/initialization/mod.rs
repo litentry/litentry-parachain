@@ -87,6 +87,7 @@ use its_sidechain::{
 };
 use jsonrpc_core::IoHandler;
 use lc_data_providers::DataProviderConfig;
+use lc_direct_call_request_receiver::{run_direct_call_request_receiver, DirectCallRequestContext};
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
@@ -332,6 +333,43 @@ fn run_vc_issuance() -> Result<(), Error> {
 	Ok(())
 }
 
+fn run_direct_call_requests_handler() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository.clone(),
+		author_api.clone(),
+	));
+
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+
+	let context = DirectCallRequestContext::new(
+		shielding_key_repository,
+		author_api,
+		stf_enclave_signer,
+		enclave_account,
+		ocall_api,
+		data_provider_config,
+		extrinsic_factory,
+		node_metadata_repo,
+	);
+
+	run_direct_call_request_receiver(Arc::new(direct_call_context));
+
+	Ok(())
+}
+
 fn run_parachain_extrinsic_sender() -> Result<(), Error> {
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
@@ -411,6 +449,12 @@ pub(crate) fn init_enclave_sidechain_components(
 		println!("running vc issuance");
 		#[allow(clippy::unwrap_used)]
 		run_vc_issuance().unwrap();
+	});
+
+	std::thread::spawn(move || {
+		println!("running direct call requets handler");
+		#[allow(clippy::unwrap_used)]
+		run_direct_call_requests_handler().unwrap();
 	});
 
 	std::thread::spawn(move || {
