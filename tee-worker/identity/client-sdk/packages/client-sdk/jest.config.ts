@@ -1,15 +1,13 @@
 /* eslint-disable */
 export default {
-  displayName: 'vc-sdk',
+  displayName: 'client-sdk',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/package/vc-sdk',
+  coverageDirectory: '../../coverage/packages/client-sdk',
   transformIgnorePatterns: ['node_modules/(?!(@litentry/|.pnpm/@litentry)).*'],
-  moduleNameMapper: {
-    // '@litentry/enclave': '<rootDir>/../enclave/src',
-  },
+  moduleNameMapper: {},
 };

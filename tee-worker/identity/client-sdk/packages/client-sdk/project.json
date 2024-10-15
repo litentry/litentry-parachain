@@ -1,36 +1,36 @@
 {
-  "name": "vc-sdk",
+  "name": "client-sdk",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/vc-sdk/src",
+  "sourceRoot": "packages/client-sdk/src",
   "projectType": "library",
   "targets": {
+    "publish": {
+      "command": "node tools/scripts/publish.mjs client-sdk {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": [
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/vc-sdk",
-        "main": "packages/vc-sdk/src/index.ts",
-        "tsConfig": "packages/vc-sdk/tsconfig.lib.json",
+        "outputPath": "dist/packages/client-sdk",
+        "main": "packages/client-sdk/src/index.ts",
+        "tsConfig": "packages/client-sdk/tsconfig.lib.json",
         "assets": [
-          "packages/vc-sdk/*.md",
-          "packages/vc-sdk/docs/*.md"
+          "packages/client-sdk/*.md",
+          "packages/client-sdk/LICENSE"
         ]
       }
     },
     "generate-doc": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "./packages/vc-sdk",
+        "cwd": "./packages/client-sdk",
         "command": "typedoc --options ./typedoc.json"
       }
-    },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs vc-sdk {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
@@ -39,8 +39,8 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/vc-sdk/src/**/*.ts",
-          "packages/vc-sdk/package.json"
+          "packages/client-sdk/src/**/*.ts",
+          "packages/client-sdk/package.json"
         ]
       }
     },
@@ -50,7 +50,7 @@
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
       "options": {
-        "jestConfig": "packages/vc-sdk/jest.config.ts",
+        "jestConfig": "packages/client-sdk/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {

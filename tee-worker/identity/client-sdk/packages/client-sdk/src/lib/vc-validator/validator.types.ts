@@ -1,8 +1,3 @@
-import { NETWORKS } from './validator.constants';
-export { NETWORKS } from './validator.constants';
-
-export type Network = keyof typeof NETWORKS;
-
 /**
  * Defines the details of the validation result for each component of the Verifiable Credential (VC).
  */

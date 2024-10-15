@@ -29,19 +29,15 @@ const log =
  * - Retrieve the Enclave's Shielding Key. (1)
  * - Retrieve the Enclave's MREnclave value which is used as the Shard value. (1)
  * - Encrypt data using the Enclave's Shielding Key.
- * - Send request to the Enclave. This is also known as Direct Invocation. (2)
+ * - Send request to the Enclave.
  *
- * (1) This is done by querying the Parachain. Its shielding key can be retrieved directly but
- * since the MREnclave cannot we opted to leave both from the Parachain in the meantime.
- *
- * (2) This is done by using a reverse proxy API. By default, it expects the proxy API to be
- * running on `/api/enclave`. See `createEnclaveHttpProxyHandler` for more details.
+ * (1) Querying from the Parachain, instead of directly from the Enclave Worker itself helps
+ * ensuring clients are connected to a trusted worker.
  *
  * @example
  * ```ts
- * import { Enclave } from '@litentry/enclave';
+ * import { enclave } from '@litentry/client-sdk';
  *
- * const enclave = new Enclave(); // same as the `enclave` variable exported from this module
  * const shard = await enclave.getShard(api);
  * const key = await enclave.getKey(api);
  *
@@ -50,7 +46,7 @@ const log =
  * // Encrypt data using the Enclave's Shielding Key
  * const encrypted = await enclave.encrypt(api, { cleartext: new Uint8Array([1, 2, 3]) });
  *
- * // Send request to the Enclave directly. This is also known as Direct Invocation.
+ * // Send request to the Enclave.
  * const response = await enclave.send({
  *  jsonrpc: '2.0',
  *  method: 'author_submitAndWatch',

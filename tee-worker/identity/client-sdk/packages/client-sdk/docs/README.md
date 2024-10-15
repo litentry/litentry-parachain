@@ -1,6 +1,6 @@
-@litentry/enclave
+@litentry/client-sdk
 
-# @litentry/enclave
+# @litentry/client-sdk
 
 ## Table of contents
 
@@ -20,12 +20,18 @@
 
 - [DiscordOAuth2Proof](README.md#discordoauth2proof)
 - [DiscordProof](README.md#discordproof)
+- [EmailProof](README.md#emailproof)
+- [IdGraph](README.md#idgraph)
 - [TwitterOAuth2Proof](README.md#twitteroauth2proof)
 - [TwitterProof](README.md#twitterproof)
+- [ValidationResult](README.md#validationresult)
+- [ValidationResultDetail](README.md#validationresultdetail)
+- [VerifiableCredentialLike](README.md#verifiablecredentiallike)
 - [Web3Proof](README.md#web3proof)
 
 ### Variables
 
+- [ID\_GRAPH\_STRUCT](README.md#id_graph_struct)
 - [enclave](README.md#enclave)
 
 ### Functions
@@ -37,6 +43,7 @@
 - [createRequestType](README.md#createrequesttype)
 - [createTrustedCallType](README.md#createtrustedcalltype)
 - [toPublicKey](README.md#topublickey)
+- [validateVc](README.md#validatevc)
 
 ## References
 
@@ -93,6 +100,41 @@ createLitentryValidationDataType
 
 ___
 
+### EmailProof
+
+Ƭ **EmailProof**: `Object`
+
+Ownership proof for Email
+
+**`See`**
+
+createLitentryValidationDataType
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `email` | `string` |
+| `verificationCode` | `string` |
+
+#### Defined in
+
+[lib/type-creators/validation-data.ts:68](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/validation-data.ts#L68)
+
+___
+
+### IdGraph
+
+Ƭ **IdGraph**: `Vec`\<`ITuple`\<[`LitentryIdentity`, `IdentityContext`]\>\>
+
+The Identity Graph type
+
+#### Defined in
+
+[lib/type-creators/id-graph.ts:13](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/id-graph.ts#L13)
+
+___
+
 ### TwitterOAuth2Proof
 
 Ƭ **TwitterOAuth2Proof**: `Object`
@@ -139,6 +181,54 @@ createLitentryValidationDataType
 
 ___
 
+### ValidationResult
+
+Ƭ **ValidationResult**: `Object`
+
+Represents the overall validation result for a Verifiable Credential (VC).
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `detail` | [`ValidationResultDetail`](README.md#validationresultdetail) | Represents the whole validation result detail. |
+| `isValid` | `boolean` | Represents the whole validation result status. If is true, means all fields of the detail are true, otherwise any one of it is not true. The caller should use this field to determine whether the VC is valid. |
+
+#### Defined in
+
+[lib/vc-validator/validator.types.ts:28](https://github.com/litentry/client-sdk/blob/develop/lib/vc-validator/validator.types.ts#L28)
+
+___
+
+### ValidationResultDetail
+
+Ƭ **ValidationResultDetail**: `Object`
+
+Defines the details of the validation result for each component of the Verifiable Credential (VC).
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `enclaveRegistry?` | ``true`` \| `string` | Represents the validation result (vcPubkey and mrEnclave) for the Enclave registry. If validation succeeds, it's true; if validation fails, it's an error message. The vcPubkey from Enclave registry must be same as issuer.id in VC JSON. The mrEnclave from Enclave registry must be same as issuer.mrenclave in VC JSON. |
+| `vcSignature?` | ``true`` \| `string` | Represents the validation result for the VC signature. If validation succeeds, it's true; if validation fails, it's an error message. Use issuer.id in VC JSON as vcPubkey, proof.proofValue in VC JSON as signature to verify VC JSON. |
+
+#### Defined in
+
+[lib/vc-validator/validator.types.ts:4](https://github.com/litentry/client-sdk/blob/develop/lib/vc-validator/validator.types.ts#L4)
+
+___
+
+### VerifiableCredentialLike
+
+Ƭ **VerifiableCredentialLike**: `Record`\<`string`, `unknown`\> & \{ `@context`: `string` ; `credentialSubject`: `Record`\<`string`, `unknown`\> ; `id`: `string` ; `issuer`: \{ `id`: `string` ; `mrenclave`: `string` ; `name`: `string`  } ; `parachainBlockNumber?`: `number` ; `proof`: \{ `proofValue`: `string` ; `verificationMethod`: `string`  } ; `sidechainBlockNumber?`: `number` ; `type`: `string`[]  }
+
+#### Defined in
+
+[lib/vc-validator/validator.ts:11](https://github.com/litentry/client-sdk/blob/develop/lib/vc-validator/validator.ts#L11)
+
+___
+
 ### Web3Proof
 
 Ƭ **Web3Proof**: `Object`
@@ -163,6 +253,18 @@ createLitentryIdentityType
 [lib/type-creators/validation-data.ts:20](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/validation-data.ts#L20)
 
 ## Variables
+
+### ID\_GRAPH\_STRUCT
+
+• `Const` **ID\_GRAPH\_STRUCT**: ``"Vec<(LitentryIdentity, IdentityContext)>"``
+
+The Type Struct that represents an Identity Graph
+
+#### Defined in
+
+[lib/type-creators/id-graph.ts:18](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/id-graph.ts#L18)
+
+___
 
 ### enclave
 
@@ -193,7 +295,7 @@ const response = await enclave.send({
 
 #### Defined in
 
-[lib/enclave.ts:298](https://github.com/litentry/client-sdk/blob/develop/lib/enclave.ts#L298)
+[lib/enclave.ts:294](https://github.com/litentry/client-sdk/blob/develop/lib/enclave.ts#L294)
 
 ## Functions
 
@@ -207,7 +309,7 @@ Returns the hash of the given id graph. It matches the hash used in the Litentry
 
 | Name | Type |
 | :------ | :------ |
-| `idGraph` | `IdGraph` |
+| `idGraph` | [`IdGraph`](README.md#idgraph) |
 
 #### Returns
 
@@ -279,9 +381,7 @@ For Substrate, the address is expected to be a SS58-encoded or hex-encoded addre
 | Name | Type |
 | :------ | :------ |
 | `registry` | `Registry` |
-| `data` | `Object` |
-| `data.addressOrHandle` | `string` |
-| `data.type` | ``"Solana"`` \| ``"Twitter"`` \| ``"Discord"`` \| ``"Github"`` \| ``"Substrate"`` \| ``"Evm"`` \| ``"Bitcoin"`` |
+| `data` | \`0x$\{string}\` \| `Uint8Array` \| \{ `addressOrHandle`: `string` ; `type`: ``"Solana"`` \| ``"Twitter"`` \| ``"Discord"`` \| ``"Github"`` \| ``"Substrate"`` \| ``"Evm"`` \| ``"Bitcoin"`` \| ``"Email"``  } |
 
 #### Returns
 
@@ -322,7 +422,7 @@ The proof to pass depends on the identity network (IIdentityType):
 
 | Name | Type |
 | :------ | :------ |
-| `IIdentityType` | extends ``"Solana"`` \| ``"Twitter"`` \| ``"Discord"`` \| ``"Github"`` \| ``"Substrate"`` \| ``"Evm"`` \| ``"Bitcoin"`` |
+| `IIdentityType` | extends ``"Solana"`` \| ``"Twitter"`` \| ``"Discord"`` \| ``"Github"`` \| ``"Substrate"`` \| ``"Evm"`` \| ``"Bitcoin"`` \| ``"Email"`` |
 
 #### Parameters
 
@@ -332,7 +432,7 @@ The proof to pass depends on the identity network (IIdentityType):
 | `identityDescriptor` | `Object` | - |
 | `identityDescriptor.addressOrHandle` | `string` | The address or handle of the identity |
 | `identityDescriptor.type` | `IIdentityType` | The identity type |
-| `proof` | `IIdentityType` extends ``"Discord"`` ? [`DiscordProof`](README.md#discordproof) \| [`DiscordOAuth2Proof`](README.md#discordoauth2proof) : `IIdentityType` extends ``"Twitter"`` ? [`TwitterProof`](README.md#twitterproof) \| [`TwitterOAuth2Proof`](README.md#twitteroauth2proof) : [`Web3Proof`](README.md#web3proof) | The ownership proof |
+| `proof` | `IIdentityType` extends ``"Discord"`` ? [`DiscordProof`](README.md#discordproof) \| [`DiscordOAuth2Proof`](README.md#discordoauth2proof) : `IIdentityType` extends ``"Twitter"`` ? [`TwitterProof`](README.md#twitterproof) \| [`TwitterOAuth2Proof`](README.md#twitteroauth2proof) : `IIdentityType` extends ``"Email"`` ? [`EmailProof`](README.md#emailproof) : [`Web3Proof`](README.md#web3proof) | The ownership proof |
 
 #### Returns
 
@@ -342,8 +442,8 @@ The proof to pass depends on the identity network (IIdentityType):
 
 Web3
 ```ts
-import { createLitentryValidationDataType } from '@litentry/enclave';
-import type { Web3Proof } from '@litentry/enclave';
+import { createLitentryValidationDataType } from '@litentry/client-sdk';
+import type { Web3Proof } from '@litentry/client-sdk';
 
 const userAddress = '0x123';
 
@@ -366,8 +466,8 @@ const validationData = createLitentryValidationDataType(
 
 Twitter
 ```ts
-import { createLitentryValidationDataType } from '@litentry/enclave';
-import type { TwitterProof } from '@litentry/enclave';
+import { createLitentryValidationDataType } from '@litentry/client-sdk';
+import type { TwitterProof } from '@litentry/client-sdk';
 
 const userHandle = '@litentry';
 
@@ -388,7 +488,7 @@ const validationData = createLitentryValidationDataType(
 
 #### Defined in
 
-[lib/type-creators/validation-data.ts:116](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/validation-data.ts#L116)
+[lib/type-creators/validation-data.ts:126](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/validation-data.ts#L126)
 
 ___
 
@@ -413,7 +513,7 @@ The shielding key is encrypted using the Enclave's shielding key and attached in
 | `data.nonce` | `Index` |
 | `data.shard` | `Uint8Array` |
 | `data.signature` | `string` |
-| `data.who` | `LitentryIdentity` |
+| `data.signer` | `LitentryIdentity` |
 
 #### Returns
 
@@ -456,7 +556,7 @@ Similarly, our types definitions must match also.
 
 #### Defined in
 
-[lib/type-creators/trusted-call.ts:69](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L69)
+[lib/type-creators/trusted-call.ts:79](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L79)
 
 ▸ **createTrustedCallType**(`registry`, `data`): `Promise`\<\{ `call`: `TrustedCall` ; `key`: `CryptoKey`  }\>
 
@@ -475,7 +575,7 @@ Similarly, our types definitions must match also.
 
 #### Defined in
 
-[lib/type-creators/trusted-call.ts:76](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L76)
+[lib/type-creators/trusted-call.ts:86](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L86)
 
 ▸ **createTrustedCallType**(`registry`, `data`): `Promise`\<\{ `call`: `TrustedCall` ; `key`: `CryptoKey`  }\>
 
@@ -494,7 +594,7 @@ Similarly, our types definitions must match also.
 
 #### Defined in
 
-[lib/type-creators/trusted-call.ts:83](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L83)
+[lib/type-creators/trusted-call.ts:93](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L93)
 
 ▸ **createTrustedCallType**(`registry`, `data`): `Promise`\<\{ `call`: `TrustedCall` ; `key`: `CryptoKey`  }\>
 
@@ -513,7 +613,26 @@ Similarly, our types definitions must match also.
 
 #### Defined in
 
-[lib/type-creators/trusted-call.ts:90](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L90)
+[lib/type-creators/trusted-call.ts:100](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L100)
+
+▸ **createTrustedCallType**(`registry`, `data`): `Promise`\<\{ `call`: `TrustedCall` ; `key`: `CryptoKey`  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `registry` | `Registry` |
+| `data` | `Object` |
+| `data.method` | ``"link_identity_callback"`` |
+| `data.params` | `LinkIdentityCallbackParams` |
+
+#### Returns
+
+`Promise`\<\{ `call`: `TrustedCall` ; `key`: `CryptoKey`  }\>
+
+#### Defined in
+
+[lib/type-creators/trusted-call.ts:107](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/trusted-call.ts#L107)
 
 ___
 
@@ -539,4 +658,79 @@ if the address is not a valid substrate address
 
 #### Defined in
 
-[lib/type-creators/litentry-identity.ts:78](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/litentry-identity.ts#L78)
+[lib/type-creators/litentry-identity.ts:85](https://github.com/litentry/client-sdk/blob/develop/lib/type-creators/litentry-identity.ts#L85)
+
+___
+
+### validateVc
+
+▸ **validateVc**(`api`, `vc`): `Promise`\<[`ValidationResult`](README.md#validationresult)\>
+
+Validate Verifiable Credential (VC)
+
+### How to find the wallet account address in VC
+
+The id of VC's credentialSubject is the encoded wallet account address, using code below to encode:
+
+```typescript
+import { decodeAddress } from '@polkadot/util-crypto';
+import { u8aToHex } from '@polkadot/util';
+
+const address = u8aToHex(decodeAddress(walletAccountAddress));
+const credentialSubjectId = address.substring(2);
+```
+
+With the code above:
+- If your Polkadot account address is `5CwPfqmormPx9wJ4ASq7ikwdJeRonoUZX9SxwUtm1px9L72W`, the credentialSubjectId will be `26a84b380d8c3226d69f9ae6e482aa6669ed34c6371c52c4dfb48596913d6f28`.
+- If your Metamask account address is `0xC620b3e5BEBedA952A8AD18b83Dc4Cf3Dc9CAF4b`, the credentialSubjectId will be `c620b3e5bebeda952a8ad18b83dc4cf3dc9caf4b`.
+
+### What the validation function do
+
+- The validation function can only verify that the VC was issued by Litentry.
+- The VC's credentialSubject can be Substrate or EVM account that is support by Litentry.
+
+### What the validation function can't do
+
+- The validation function cannot validate that the VC's credentialSubject is the current wallet account. It's SDK's consumer's responsibility to validate the id of VC's credentialSubject is equal to the wallet address.
+
+### How to use
+
+```typescript
+import { WsProvider, ApiPromise } from '@polkadot/api';
+import { validateVc, NETWORKS } from '@litentry/vc-sdk';
+
+const api: ApiPromise = await ApiPromise.create({
+  provider: new WsProvider(NETWORKS['litentry-staging'])
+});
+const vcJson = '{"@context": "https://www.w3.org/2018/credentials/v1", "type": "VerifiableCredential", "issuer": "https://example.com/issuer", "subject": "did:example:123", "credentialStatus": "https://example.com/status"}';
+const result = await validateVc(api, vcJson);
+
+// isValid is false if any field value of the result.detail is not true
+if (!result.isValid) {
+  // true or error message
+  console.log('vcJson: ', result.detail.vcJson);
+  // true or error message
+  console.log('vcRegistry: ', result.detail.vcRegistry);
+  // true or error message
+  console.log('vcSignature: ', result.detail.vcSignature);
+  // true or error message
+  console.log('enclaveRegistry: ', result.detail.enclaveRegistry);
+}
+```
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `api` | `ApiPromise` | The instance of ApiPromise. |
+| `vc` | `string` | The VC JSON string that needs to be validated. |
+
+#### Returns
+
+`Promise`\<[`ValidationResult`](README.md#validationresult)\>
+
+The validation result.
+
+#### Defined in
+
+[lib/vc-validator/validator.ts:86](https://github.com/litentry/client-sdk/blob/develop/lib/vc-validator/validator.ts#L86)
