@@ -365,7 +365,7 @@ fn run_direct_call_requests_handler() -> Result<(), Error> {
 		node_metadata_repo,
 	);
 
-	run_direct_call_request_receiver(Arc::new(direct_call_context));
+	run_direct_call_request_receiver(Arc::new(context));
 
 	Ok(())
 }
