@@ -29,8 +29,8 @@ itp-types = { workspace = true }
 
 frame-support = { workspace = true }
 lc-data-providers = { workspace = true }
-lc-native-task-sender = { workspace = true }
 lc-dynamic-assertion = { workspace = true }
+lc-native-task-sender = { workspace = true }
 litentry-macros = { workspace = true }
 litentry-primitives = { workspace = true }
 
