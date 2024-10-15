@@ -173,7 +173,7 @@ enum DirectCallTask {
 // TODO: move to config
 const THREAD_POOL_SIZE: usize = 10;
 
-pub fn run_direct_call_request_handler<
+pub fn run_direct_call_request_receiver<
 	ShieldingKeyRepository,
 	AuthorApi,
 	StfEnclaveSigning,
