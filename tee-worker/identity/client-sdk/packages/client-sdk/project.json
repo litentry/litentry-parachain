@@ -5,7 +5,7 @@
   "projectType": "library",
   "targets": {
     "publish": {
-      "command": "node tools/scripts/publish.mjs enclave {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs client-sdk {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]
