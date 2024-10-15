@@ -41,6 +41,8 @@ Please refer to the `examples` folder in this repository to learn more about all
 
 ### Quick start
 
+These are the steps for publishing the package locally for development purposes.
+
 1. Install dependencies
 
     ```
