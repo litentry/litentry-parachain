@@ -28,10 +28,10 @@ itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../../../
 itp-types = { workspace = true }
 
 frame-support = { workspace = true }
-lc-dynamic-assertion = { workspace = true }
-lc-direct-call-request-sender = { workspace = true }
-litentry-macros = { workspace = true }
 lc-data-providers = { workspace = true }
+lc-direct-call-request-sender = { workspace = true }
+lc-dynamic-assertion = { workspace = true }
+litentry-macros = { workspace = true }
 litentry-primitives = { workspace = true }
 
 [features]
