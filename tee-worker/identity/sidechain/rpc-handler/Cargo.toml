@@ -16,6 +16,7 @@ itp-utils = { workspace = true }
 its-primitives = { workspace = true }
 
 lc-vc-task-sender = { workspace = true }
+lc-direct-call-request-sender = { workspace = true }
 litentry-primitives = { workspace = true }
 
 futures_sgx = { workspace = true, optional = true }

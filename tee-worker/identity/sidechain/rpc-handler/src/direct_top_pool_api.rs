@@ -14,6 +14,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
+use lc_direct_call_request_sender::{DirectCallRequest, DirectCallRequestSender};
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::{debug, error, warn};
@@ -105,6 +106,24 @@ pub fn add_top_pool_direct_rpc_methods<R, TCS, G>(
 	io_handler.add_sync_method("author_requestVc", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_requestVc");
 		let json_value = match author_submit_request_vc_inner(params) {
+			Ok(hash_value) => RpcReturnValue {
+				do_watch: true,
+				value: vec![],
+				status: DirectRequestStatus::TrustedOperationStatus(
+					TrustedOperationStatus::Submitted,
+					hash_value,
+				),
+			}
+			.to_hex(),
+			Err(e) => compute_hex_encoded_return_error(e.as_str()),
+		};
+
+		Ok(json!(json_value))
+	});
+
+	io_handler.add_sync_method("author_SubmitDirectCallRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_SubmitDirectCallRequest");
+		let json_value = match author_submit_direct_call_request_inner(params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: true,
 				value: vec![],
@@ -324,6 +343,20 @@ fn author_submit_request_vc_inner(params: Params) -> Result<H256, String> {
 	let vc_request_sender = VcRequestSender::new();
 	if let Err(err) = vc_request_sender.send(VCRequest { request: request.clone() }) {
 		let error_msg = format!("failed to send AesRequest within request_vc: {:?}", err);
+		error!("{}", error_msg);
+		Err(error_msg)
+	} else {
+		Ok(request.using_encoded(|x| H256::from(blake2_256(x))))
+	}
+}
+
+fn author_submit_direct_call_request_inner(params: Params) -> Result<H256, String> {
+	let payload = get_request_payload(params)?;
+	let request = AesRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
+	let request_sender = DirectCallRequestSender::new();
+
+	if let Err(err) = request_sender.send(DirectCallRequest { request: request.clone() }) {
+		let error_msg = format!("failed to send AesRequest within direct_call_request: {:?}", err);
 		error!("{}", error_msg);
 		Err(error_msg)
 	} else {
