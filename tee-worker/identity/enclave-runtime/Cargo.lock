@@ -3077,6 +3077,7 @@ dependencies = [
  "lazy_static",
  "litentry-primitives",
  "log",
+ "sgx_tstd",
 ]
 
 [[package]]

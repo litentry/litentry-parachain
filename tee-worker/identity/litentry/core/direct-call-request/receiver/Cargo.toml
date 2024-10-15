@@ -45,6 +45,7 @@ sgx = [
     "litentry-primitives/sgx",
     "itp-node-api/sgx",
     "itp-extrinsics-factory/sgx",
+    "lc-direct-call-request-sender/sgx",
 ]
 std = [
     "futures",
@@ -59,6 +60,7 @@ std = [
     "ita-sgx-runtime/std",
     "frame-support/std",
     "itp-node-api/std",
+    "lc-direct-call-request-sender/std",
 ]
 development = [
     "litentry-macros/development",
