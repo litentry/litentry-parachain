@@ -519,13 +519,13 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 	let local_state = state.clone();
 
-	io_handler.add_sync_method("omni_uploadAccountStore", move |params: Params| {
-		debug!("worker_api_direct rpc was called: omni_uploadAccountStore");
+	io_handler.add_sync_method("omni_UploadIDGraph", move |params: Params| {
+		debug!("worker_api_direct rpc was called: omni_UploadIDGraph");
 		let local_state = match local_state.clone() {
 			Some(s) => s,
 			None =>
 				return Ok(json!(compute_hex_encoded_return_error(
-					"omni_uploadAccountStore is not avaiable"
+					"omni_UploadIDGraph is not avaiable"
 				))),
 		};
 
