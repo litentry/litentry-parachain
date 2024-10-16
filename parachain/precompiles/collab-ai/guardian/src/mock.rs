@@ -16,15 +16,12 @@
 
 use crate::*;
 use frame_support::{
-	assert_ok, construct_runtime, parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, Everything},
+	construct_runtime, parameter_types,
+	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
-use pallet_balances;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use pallet_guardian;
 use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
-use sp_core::{Get, H160, H256};
-use sp_io::TestExternalities;
+use sp_core::{H160, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, BuildStorage,
