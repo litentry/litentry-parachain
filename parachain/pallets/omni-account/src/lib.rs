@@ -202,25 +202,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// initial creation request has to come from `TEECallOrigin`
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			let hash = identity.hash();
-			let omni_account = T::OmniAccountConverter::convert(&identity);
-
-			ensure!(!MemberAccountHash::<T>::contains_key(hash), Error::<T>::AccountAlreadyAdded);
-
-			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
-			member_accounts
-				.try_push(identity.into())
-				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
-
-			MemberAccountHash::<T>::insert(hash, omni_account.clone());
-			AccountStore::<T>::insert(omni_account.clone(), member_accounts.clone());
-			AccountStoreHash::<T>::insert(omni_account.clone(), member_accounts.hash());
-
-			Self::deposit_event(Event::AccountStoreCreated {
-				who: omni_account,
-				account_store_hash: member_accounts.hash(),
-			});
-
+			let _ = Self::do_create_account_store(identity)?;
 			Ok(Pays::No.into())
 		}
 
@@ -316,13 +298,17 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn update_account_store_by_one(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			member_account: MemberAccount,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin.clone())?;
 
-			let mut member_accounts =
-				AccountStore::<T>::get(&who).ok_or(Error::<T>::UnknownAccountStore)?;
+			let who_account = T::OmniAccountConverter::convert(&who);
+
+			let mut member_accounts = match AccountStore::<T>::get(&who_account) {
+				Some(s) => s,
+				None => Self::do_create_account_store(who)?,
+			};
 
 			if !member_accounts.contains(&member_account) {
 				member_accounts
@@ -330,11 +316,36 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 			}
 
-			MemberAccountHash::<T>::insert(member_account.hash(), who.clone());
-			AccountStore::<T>::insert(who.clone(), member_accounts);
-			Self::deposit_event(Event::AccountStoreUpdated { who });
+			MemberAccountHash::<T>::insert(member_account.hash(), who_account.clone());
+			AccountStore::<T>::insert(who_account.clone(), member_accounts);
+			Self::deposit_event(Event::AccountStoreUpdated { who: who_account });
 
 			Ok(Pays::No.into())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn do_create_account_store(identity: Identity) -> Result<MemberAccounts<T>, Error<T>> {
+			let hash = identity.hash();
+			let omni_account = T::OmniAccountConverter::convert(&identity);
+
+			ensure!(!MemberAccountHash::<T>::contains_key(hash), Error::<T>::AccountAlreadyAdded);
+
+			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
+			member_accounts
+				.try_push(identity.into())
+				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
+
+			MemberAccountHash::<T>::insert(hash, omni_account.clone());
+			AccountStore::<T>::insert(omni_account.clone(), member_accounts.clone());
+			AccountStoreHash::<T>::insert(omni_account.clone(), member_accounts.hash());
+
+			Self::deposit_event(Event::AccountStoreCreated {
+				who: omni_account,
+				account_store_hash: member_accounts.hash(),
+			});
+
+			Ok(member_accounts)
 		}
 	}
 }

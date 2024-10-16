@@ -18,7 +18,7 @@ use ita_stf::{aes_encrypt_default, AesOutput, Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_component_container::ComponentGetter;
 use itp_node_api::metadata::{
-	pallet_omni_account::OmniAccountCallIndexes, provider::AccessNodeMetadata, NodeMetadata,
+	pallet_omni_account::OmniAccountCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
@@ -41,7 +41,7 @@ use lc_identity_verification::web2::{email, twitter};
 use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use litentry_macros::if_development;
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity, MemberAccount};
-use log::debug;
+use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
@@ -529,8 +529,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 				))),
 		};
 
-		match params.parse::<String>() {
-			Ok(shard_base58) => {
+		match params.parse::<(String,)>() {
+			Ok((shard_base58,)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
 					Ok(s) => s,
 					Err(msg) => {
@@ -589,6 +589,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 				};
 
 				let sender = ParachainExtrinsicSender::new();
+				info!("uploading {} identity pairs", identities.len());
 
 				for (prime_id, sub_id) in identities {
 					let member_account: MemberAccount = if prime_id == sub_id {
