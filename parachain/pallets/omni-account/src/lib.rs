@@ -140,7 +140,11 @@ pub mod pallet {
 			account_store: MemberAccounts<T>,
 		},
 		/// Some member account is made public
-		AccountMadePublic { who: T::AccountId, member_account_hash: H256 },
+		AccountMadePublic {
+			who: T::AccountId,
+			member_account_hash: H256,
+			account_store: MemberAccounts<T>,
+		},
 		/// Some call is dispatched as omni-account origin
 		DispatchedAsOmniAccount { who: T::AccountId, result: DispatchResult },
 		/// Some call is dispatched as signed origin
@@ -316,9 +320,13 @@ pub mod pallet {
 				.ok_or(Error::<T>::AccountNotFound)?;
 			*m = member_account.into();
 
-			AccountStore::<T>::insert(who.clone(), member_accounts);
+			AccountStore::<T>::insert(who.clone(), member_accounts.clone());
 
-			Self::deposit_event(Event::AccountMadePublic { who, member_account_hash: hash });
+			Self::deposit_event(Event::AccountMadePublic {
+				who,
+				member_account_hash: hash,
+				account_store: member_accounts,
+			});
 
 			Ok(())
 		}

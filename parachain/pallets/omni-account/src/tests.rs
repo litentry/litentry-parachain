@@ -516,19 +516,21 @@ fn publicize_account_works() {
 			.into(),
 		);
 
-		System::assert_has_event(
-			Event::AccountMadePublic {
-				who: who_omni_account.clone(),
-				member_account_hash: public_account_hash,
-			}
-			.into(),
-		);
-
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
 				MemberAccount::Public(who_identity.clone()),
 				MemberAccount::Public(Identity::from(bob())),
 			]);
+
+		System::assert_has_event(
+			Event::AccountMadePublic {
+				who: who_omni_account.clone(),
+				member_account_hash: public_account_hash,
+				account_store: expected_member_accounts.clone(),
+			}
+			.into(),
+		);
+
 		assert_eq!(
 			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
 			expected_member_accounts
