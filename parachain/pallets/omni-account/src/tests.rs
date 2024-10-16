@@ -137,6 +137,7 @@ fn add_account_works() {
 			Event::AccountAdded {
 				who: who_omni_account.clone(),
 				member_account_hash: bob_member_account.hash(),
+				account_store: expected_member_accounts.clone(),
 			}
 			.into(),
 		);
@@ -156,21 +157,22 @@ fn add_account_works() {
 			who_identity.hash(),
 			call
 		));
-
-		System::assert_has_event(
-			Event::AccountAdded {
-				who: who_identity.to_omni_account(),
-				member_account_hash: charlie_member_account.hash(),
-			}
-			.into(),
-		);
-
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
 				MemberAccount::Public(who_identity.clone()),
 				bob_member_account.clone(),
 				charlie_member_account.clone(),
 			]);
+
+		System::assert_has_event(
+			Event::AccountAdded {
+				who: who_identity.to_omni_account(),
+				member_account_hash: charlie_member_account.hash(),
+				account_store: expected_member_accounts.clone(),
+			}
+			.into(),
+		);
+
 		let expected_account_store_hash = H256::from(blake2_256(
 			&expected_member_accounts
 				.iter()

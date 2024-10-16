@@ -128,7 +128,11 @@ pub mod pallet {
 		/// An account store is created
 		AccountStoreCreated { who: T::AccountId, account_store: MemberAccounts<T> },
 		/// Some member account is added
-		AccountAdded { who: T::AccountId, member_account_hash: H256 },
+		AccountAdded {
+			who: T::AccountId,
+			member_account_hash: H256,
+			account_store: MemberAccounts<T>,
+		},
 		/// Some member accounts are removed
 		AccountRemoved { who: T::AccountId, member_account_hashes: Vec<H256> },
 		/// Some member account is made public
@@ -245,7 +249,11 @@ pub mod pallet {
 			AccountStore::<T>::insert(who.clone(), member_accounts.clone());
 			AccountStoreHash::<T>::insert(who.clone(), member_accounts.hash());
 
-			Self::deposit_event(Event::AccountAdded { who, member_account_hash: hash });
+			Self::deposit_event(Event::AccountAdded {
+				who,
+				member_account_hash: hash,
+				account_store: member_accounts,
+			});
 
 			Ok(())
 		}
