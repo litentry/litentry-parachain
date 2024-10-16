@@ -35,9 +35,11 @@ pub use identity::*;
 pub mod intention;
 pub use intention::*;
 
-mod omni_account;
+pub mod omni_account;
 pub use omni_account::*;
 
+extern crate alloc;
+extern crate core;
 use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
 use sp_runtime::{traits::ConstU32, BoundedVec};
 

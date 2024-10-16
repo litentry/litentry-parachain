@@ -118,7 +118,11 @@ pub trait EnclaveOnChainOCallApi: Clone + Send + Sync {
 
 	// Litentry
 	// given a key prefix, get all storage keys
-	fn get_storage_keys(&self, key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>>;
+	fn get_storage_keys<H: Header<Hash = H256>>(
+		&self,
+		key_prefix: Vec<u8>,
+		header: Option<&H>,
+	) -> Result<Vec<Vec<u8>>>;
 }
 
 /// Trait for sending metric updates.
