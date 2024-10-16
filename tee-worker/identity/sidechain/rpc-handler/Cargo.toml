@@ -15,6 +15,7 @@ itp-types = { workspace = true }
 itp-utils = { workspace = true }
 its-primitives = { workspace = true }
 
+lc-native-task-sender = { workspace = true }
 lc-vc-task-sender = { workspace = true }
 litentry-primitives = { workspace = true }
 
@@ -45,6 +46,7 @@ std = [
     "log/std",
     "rust-base58",
     "lc-vc-task-sender/std",
+    "lc-native-task-sender/std",
 ]
 sgx = [
     "futures_sgx",
@@ -55,4 +57,5 @@ sgx = [
     "jsonrpc-core_sgx",
     "rust-base58_sgx",
     "lc-vc-task-sender/sgx",
+    "lc-native-task-sender/sgx",
 ]
