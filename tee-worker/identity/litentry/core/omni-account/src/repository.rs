@@ -23,7 +23,8 @@ use itp_storage::{
 };
 
 pub trait GetAccountStoresRepository {
-	fn get_by_account_id(&self, account_id: AccountId) -> Result<Vec<MemberAccount>, Error>;
+	fn get_by_account_id(&self, account_id: AccountId)
+		-> Result<Option<Vec<MemberAccount>>, Error>;
 	fn get_all(&self) -> Result<OmniAccounts, Error>;
 }
 
