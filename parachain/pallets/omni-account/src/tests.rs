@@ -392,13 +392,17 @@ fn remove_account_works() {
 			.into(),
 		);
 
-		System::assert_has_event(
-			Event::AccountRemoved { who: who_omni_account.clone(), member_account_hashes: hashes }
-				.into(),
-		);
-
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![MemberAccount::Public(who_identity.clone())]);
+
+		System::assert_has_event(
+			Event::AccountRemoved {
+				who: who_omni_account.clone(),
+				member_account_hashes: hashes,
+				account_store: expected_member_accounts.clone(),
+			}
+			.into(),
+		);
 
 		assert_eq!(
 			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),

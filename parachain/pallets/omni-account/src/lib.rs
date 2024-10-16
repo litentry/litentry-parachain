@@ -134,7 +134,11 @@ pub mod pallet {
 			account_store: MemberAccounts<T>,
 		},
 		/// Some member accounts are removed
-		AccountRemoved { who: T::AccountId, member_account_hashes: Vec<H256> },
+		AccountRemoved {
+			who: T::AccountId,
+			member_account_hashes: Vec<H256>,
+			account_store: MemberAccounts<T>,
+		},
 		/// Some member account is made public
 		AccountMadePublic { who: T::AccountId, member_account_hash: H256 },
 		/// Some call is dispatched as omni-account origin
@@ -284,10 +288,14 @@ pub mod pallet {
 			if member_accounts.is_empty() {
 				AccountStore::<T>::remove(&who);
 			} else {
-				AccountStore::<T>::insert(who.clone(), member_accounts);
+				AccountStore::<T>::insert(who.clone(), member_accounts.clone());
 			}
 
-			Self::deposit_event(Event::AccountRemoved { who, member_account_hashes });
+			Self::deposit_event(Event::AccountRemoved {
+				who,
+				member_account_hashes,
+				account_store: member_accounts,
+			});
 
 			Ok(())
 		}
