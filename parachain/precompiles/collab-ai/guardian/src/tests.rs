@@ -127,13 +127,16 @@ fn test_vote_for_guardian() {
 		)
 		.is_some());
 
+		let guardian_account = TruncatedAddressMapping::into_account_id(guardian);
+		let guardian_account: [u8; 32] = guardian_account.into();
+		let guardian_account: H256 = guardian_account.into();
 		// Cast the vote
 		PrecompilesValue::get()
 			.prepare_test(
 				voter,
 				H160::from_low_u64_be(1000),
 				PCall::<Test>::vote {
-					guardian: guardian.into(),
+					guardian: guardian_account,
 					status: 1,
 					potential_proposal_index: 0.into(),
 				},
@@ -161,7 +164,7 @@ fn test_remove_all_votes() {
 			.prepare_test(
 				guardian,
 				H160::from_low_u64_be(1000),
-				PCall::<Test>::regist_guardian { guardian: guardian.into(), info_hash },
+				PCall::<Test>::regist_guardian { info_hash },
 			)
 			.execute_returns(());
 
@@ -171,13 +174,16 @@ fn test_remove_all_votes() {
 		)
 		.is_some());
 
+		let guardian_account = TruncatedAddressMapping::into_account_id(guardian);
+		let guardian_account: [u8; 32] = guardian_account.into();
+		let guardian_account: H256 = guardian_account.into();
 		// Cast a vote
 		PrecompilesValue::get()
 			.prepare_test(
 				voter,
 				H160::from_low_u64_be(1000),
 				PCall::<Test>::vote {
-					guardian: guardian.into(),
+					guardian: guardian_account,
 					status: 1,
 					potential_proposal_index: 0.into(),
 				},
