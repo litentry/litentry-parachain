@@ -311,7 +311,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn request_intention(origin: OriginFor<T>, intention: Intention) -> DispatchResult {
 			let who = T::OmniAccountOrigin::ensure_origin(origin)?;

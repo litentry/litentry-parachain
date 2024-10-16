@@ -603,11 +603,21 @@ fn request_intention_works() {
 		let who_identity_hash = who_identity.hash();
 		let who_omni_account = who_identity.to_omni_account();
 
-		assert_ok!(OmniAccount::add_account(
+		let private_account =
+			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3])));
+
+		assert_ok!(OmniAccount::create_account_store(
 			RuntimeOrigin::signed(tee_signer.clone()),
-			who_identity,
-			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3]))),
+			who_identity.clone(),
 		));
+
+		let call = add_account_call(private_account);
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
+		));
+
 		let intention = Intention::CallEthereum(CallEthereum {
 			address: H160::zero(),
 			input: BoundedVec::new(),
