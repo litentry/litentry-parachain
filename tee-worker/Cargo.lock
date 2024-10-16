@@ -3529,6 +3529,7 @@ dependencies = [
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
+ "itp-sgx-io",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-stf-state-handler",
@@ -4318,6 +4319,7 @@ dependencies = [
  "frame-support",
  "hash-db 0.15.2",
  "itp-types",
+ "litentry-hex-utils",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -5223,6 +5225,21 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.20",
  "sgx_tstd",
+]
+
+[[package]]
+name = "lc-omni-account"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "itp-ocall-api",
+ "itp-storage",
+ "itp-types",
+ "lazy_static",
+ "litentry-primitives",
+ "log 0.4.20",
+ "sgx_tstd",
+ "sp-core",
 ]
 
 [[package]]

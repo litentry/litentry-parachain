@@ -28,8 +28,6 @@
 //!
 //! * https://download.01.org/intel-sgx/linux-1.5/docs/Intel_SGX_Developer_Guide.pdf
 
-pub extern crate alloc;
-
 use self::{
     collateral::{EnclaveIdentity, TcbInfo},
     netscape_comment::NetscapeComment,

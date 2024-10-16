@@ -15,9 +15,11 @@
 
 */
 
-use codec::Encode;
+use alloc::{string::String, vec::Vec};
+use codec::{Decode, Encode};
 use frame_metadata::v14::StorageHasher;
-use sp_std::vec::Vec;
+use frame_support::{Blake2_128Concat, ReversibleStorageHasher};
+use litentry_hex_utils::decode_hex;
 
 pub fn storage_value_key(module_prefix: &str, storage_prefix: &str) -> Vec<u8> {
 	let mut bytes = sp_core::twox_128(module_prefix.as_bytes()).to_vec();
@@ -35,6 +37,16 @@ pub fn storage_map_key<K: Encode>(
 	bytes.extend(&sp_core::twox_128(storage_prefix.as_bytes())[..]);
 	bytes.extend(key_hash(mapkey1, hasher1));
 	bytes
+}
+
+pub fn extract_blake2_128concat_key<K: Decode>(raw_storage_key: &[u8]) -> Option<K> {
+	let mut raw_key = Blake2_128Concat::reverse(raw_storage_key);
+	K::decode(&mut raw_key).ok()
+}
+
+pub fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
+	let hex_key = String::decode(&mut raw_key.as_slice()).unwrap_or_default();
+	decode_hex(hex_key).ok()
 }
 
 pub fn storage_double_map_key<K: Encode, Q: Encode>(
