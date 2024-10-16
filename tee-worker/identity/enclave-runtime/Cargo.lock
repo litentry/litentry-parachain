@@ -952,6 +952,7 @@ dependencies = [
  "lc-data-providers",
  "lc-evm-dynamic-assertions",
  "lc-identity-verification",
+ "lc-native-task-receiver",
  "lc-parachain-extrinsic-task-receiver",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
@@ -2819,6 +2820,7 @@ dependencies = [
  "itp-utils",
  "its-primitives",
  "jsonrpc-core",
+ "lc-native-task-sender",
  "lc-vc-task-sender",
  "litentry-primitives",
  "log",
@@ -3102,6 +3104,46 @@ dependencies = [
  "sp-core",
  "thiserror",
  "url 2.5.0",
+]
+
+[[package]]
+name = "lc-native-task-receiver"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.8",
+ "id-ita-sgx-runtime",
+ "id-ita-stf",
+ "id-itp-stf-executor",
+ "id-itp-top-pool-author",
+ "itp-enclave-metrics",
+ "itp-extrinsics-factory",
+ "itp-node-api",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-primitives",
+ "itp-stf-state-handler",
+ "itp-types",
+ "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-native-task-sender",
+ "litentry-macros",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-core",
+]
+
+[[package]]
+name = "lc-native-task-sender"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "sgx_tstd",
 ]
 
 [[package]]
