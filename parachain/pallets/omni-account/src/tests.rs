@@ -60,11 +60,8 @@ fn create_account_store_works() {
 			vec![MemberAccount::Public(who_identity.clone())].try_into().unwrap();
 
 		System::assert_last_event(
-			Event::AccountStoreCreated {
-				who: who_omni_account,
-				account_store_hash: member_accounts.hash(),
-			}
-			.into(),
+			Event::AccountStoreCreated { who: who_omni_account, account_store: member_accounts }
+				.into(),
 		);
 
 		// create it the second time will fail

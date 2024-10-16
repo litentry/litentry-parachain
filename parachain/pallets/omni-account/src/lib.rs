@@ -126,7 +126,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// An account store is created
-		AccountStoreCreated { who: T::AccountId, account_store_hash: H256 },
+		AccountStoreCreated { who: T::AccountId, account_store: MemberAccounts<T> },
 		/// Some member account is added
 		AccountAdded { who: T::AccountId, member_account_hash: H256 },
 		/// Some member accounts are removed
@@ -214,7 +214,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::AccountStoreCreated {
 				who: omni_account,
-				account_store_hash: member_accounts.hash(),
+				account_store: member_accounts,
 			});
 
 			Ok(())
