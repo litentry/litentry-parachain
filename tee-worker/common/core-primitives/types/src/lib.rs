@@ -18,6 +18,8 @@
 #![cfg_attr(all(not(target_env = "sgx"), not(feature = "std")), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 
+extern crate alloc;
+
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
