@@ -5,6 +5,7 @@ name = "pallet-evm-precompile-guardian"
 version = '0.1.0'
 
 [dependencies]
+pallet-balances = { workspace = true }
 precompile-utils = { workspace = true }
 
 # Substrate
@@ -15,6 +16,7 @@ pallet-guardian = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["max-encoded-len"] }
 scale-info = { workspace = true, features = ["derive"] }
 sp-core = { workspace = true }
+sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
@@ -41,6 +43,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "pallet-collab-ai-common/std",
+    "pallet-balances/std",
     "pallet-guardian/std",
     "pallet-evm/std",
     "pallet-timestamp/std",
