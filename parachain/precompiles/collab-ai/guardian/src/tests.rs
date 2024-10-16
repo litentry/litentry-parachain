@@ -22,7 +22,7 @@ use pallet_guardian::Event;
 // use pallet_evm::AddressMapping::GuardianPrecompileCall;
 use crate::GuardianPrecompileCall;
 use precompile_utils::testing::PrecompileTesterExt;
-use sp_core::{H160, H256};
+use sp_core::{H160, H256, U256};
 
 pub type PCall<Runtime> = GuardianPrecompileCall<Runtime>;
 
@@ -198,5 +198,145 @@ fn test_remove_all_votes() {
 		System::assert_last_event(RuntimeEvent::Guardian(Event::RemoveAllVote {
 			voter: TruncatedAddressMapping::into_account_id(voter),
 		}));
+	});
+}
+
+#[test]
+fn test_public_guardian_count() {
+	new_test_ext().execute_with(|| {
+		// Initially, there should be no guardians
+		PrecompilesValue::get()
+			.prepare_test(
+				H160::from_low_u64_be(1001),
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::public_guardian_count {},
+			)
+			.execute_returns(U256::from(0)); // Provide expected result
+
+		// Register a guardian to increase the count
+		let info_hash: H256 = H256::from([1u8; 32]);
+		PrecompilesValue::get()
+			.prepare_test(
+				H160::from_low_u64_be(1001),
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::regist_guardian { info_hash },
+			)
+			.execute_returns(());
+
+		// Check the guardian count again, should be 1
+		PrecompilesValue::get()
+			.prepare_test(
+				H160::from_low_u64_be(1001),
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::public_guardian_count {},
+			)
+			.execute_returns(U256::from(1));
+	});
+}
+
+#[test]
+fn test_public_guardian_to_index() {
+	new_test_ext().execute_with(|| {
+		let guardian: H160 = H160::from_low_u64_be(1001);
+		let info_hash: H256 = H256::from([1u8; 32]);
+
+		// Register the guardian
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::regist_guardian { info_hash },
+			)
+			.execute_returns(());
+
+		// Query the guardian's index
+
+		let guardian_account = TruncatedAddressMapping::into_account_id(guardian);
+		let guardian_account: [u8; 32] = guardian_account.into();
+		let guardian_account: H256 = guardian_account.into();
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::public_guardian_to_index { guardian: guardian_account },
+			)
+			.execute_returns((true, U256::from(0)));
+	});
+}
+
+#[test]
+fn test_guardian_index_to_info() {
+	new_test_ext().execute_with(|| {
+		let guardian: H160 = H160::from_low_u64_be(1001);
+		let info_hash: H256 = H256::from([1u8; 32]);
+
+		// Register the guardian
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::regist_guardian { info_hash },
+			)
+			.execute_returns(());
+
+		// Query the guardian info by index
+
+		let guardian_account = TruncatedAddressMapping::into_account_id(guardian);
+		let guardian_account: [u8; 32] = guardian_account.into();
+		let guardian_account: H256 = guardian_account.into();
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::guardian_index_to_info { index: 0.into() },
+			)
+			.execute_returns((true, info_hash, U256::from(1), guardian_account, 0u8));
+	});
+}
+
+#[test]
+fn test_guardian_votes() {
+	new_test_ext().execute_with(|| {
+		let guardian: H160 = H160::from_low_u64_be(1001);
+		let voter: H160 = H160::from_low_u64_be(1002);
+		let info_hash: H256 = H256::from([1u8; 32]);
+
+		// Register the guardian
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::regist_guardian { info_hash },
+			)
+			.execute_returns(());
+
+		// Cast a vote for the guardian
+		let guardian_account = TruncatedAddressMapping::into_account_id(guardian);
+		let guardian_account: [u8; 32] = guardian_account.into();
+		let guardian_account: H256 = guardian_account.into();
+		PrecompilesValue::get()
+			.prepare_test(
+				voter,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::vote {
+					guardian: guardian_account,
+					status: 1,
+					potential_proposal_index: 0.into(),
+				},
+			)
+			.execute_returns(());
+
+		// Check the vote for the guardian
+
+		let voter_account = TruncatedAddressMapping::into_account_id(voter);
+		let voter_account: [u8; 32] = voter_account.into();
+		let voter_account: H256 = voter_account.into();
+		PrecompilesValue::get()
+			.prepare_test(
+				voter,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::guardian_votes { voter: voter_account, guardian_index: 0.into() },
+			)
+			.execute_returns((1u8, U256::from(0))); // Aye vote
 	});
 }
