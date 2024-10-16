@@ -123,6 +123,14 @@ pub trait FilterEvents {
 	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
 
 	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
+
+	fn get_account_store_created_events(&self) -> Result<Vec<AccountStoreCreated>, Self::Error>;
+
+	fn get_account_added_events(&self) -> Result<Vec<AccountAdded>, Self::Error>;
+
+	fn get_account_removed_events(&self) -> Result<Vec<AccountRemoved>, Self::Error>;
+
+	fn get_account_made_public_events(&self) -> Result<Vec<AccountMadePublic>, Self::Error>;
 }
 
 #[derive(Debug)]
