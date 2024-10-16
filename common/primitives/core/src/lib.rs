@@ -32,6 +32,9 @@ pub use assertion::Assertion;
 pub mod identity;
 pub use identity::*;
 
+pub mod intention;
+pub use intention::*;
+
 pub mod omni_account;
 pub use omni_account::*;
 
