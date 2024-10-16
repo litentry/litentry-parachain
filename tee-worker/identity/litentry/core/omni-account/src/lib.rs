@@ -39,6 +39,5 @@ pub type OmniAccounts = BTreeMap<AccountId, Vec<MemberAccount>>;
 #[derive(Debug)]
 pub enum Error {
 	LockPoisoning,
-	NotFound,
 	OCallApiError(&'static str),
 }

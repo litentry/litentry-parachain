@@ -45,7 +45,7 @@ impl<OCallApi: EnclaveOnChainOCallApi> OmniAccountRepository<OCallApi> {
 impl<OCallApi: EnclaveOnChainOCallApi> GetAccountStoresRepository
 	for OmniAccountRepository<OCallApi>
 {
-	fn get_by_account_id(&self, owner: AccountId) -> Result<Vec<MemberAccount>, Error> {
+	fn get_by_account_id(&self, owner: AccountId) -> Result<Option<Vec<MemberAccount>>, Error> {
 		let storage_key = storage_map_key(
 			"OmniAccount",
 			"AccountStore",
@@ -56,8 +56,7 @@ impl<OCallApi: EnclaveOnChainOCallApi> GetAccountStoresRepository
 			.ocall_api
 			.get_storage_verified(storage_key, &self.header, &ParentchainId::Litentry)
 			.map_err(|_| Error::OCallApiError("Failed to get storage"))?;
-		let member_accounts: Vec<MemberAccount> =
-			storage_entry.value().to_owned().ok_or(Error::NotFound)?;
+		let member_accounts = storage_entry.value().to_owned();
 
 		Ok(member_accounts)
 	}

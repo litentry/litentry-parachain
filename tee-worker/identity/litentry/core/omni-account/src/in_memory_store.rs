@@ -29,7 +29,7 @@ lazy_static! {
 pub struct InMemoryStore;
 
 impl InMemoryStore {
-	pub fn get(&self, owner: AccountId) -> Result<Vec<MemberAccount>, Error> {
+	pub fn get(&self, owner: AccountId) -> Result<Option<Vec<MemberAccount>>, Error> {
 		let omni_account_members = STORE
 			.read()
 			.map_err(|_| {
@@ -39,7 +39,7 @@ impl InMemoryStore {
 			.get(&owner)
 			.cloned();
 
-		omni_account_members.ok_or(Error::NotFound)
+		Ok(omni_account_members)
 	}
 
 	pub fn insert(&self, account_id: AccountId, members: Vec<MemberAccount>) -> Result<(), Error> {
