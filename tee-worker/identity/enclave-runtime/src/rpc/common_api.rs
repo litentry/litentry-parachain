@@ -602,11 +602,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 						)
 					};
 
-					let call = OpaqueCall::from_tuple(&(
-						call_index,
-						prime_id.to_omni_account(),
-						member_account,
-					));
+					let call = OpaqueCall::from_tuple(&(call_index, prime_id, member_account));
 
 					if let Err(e) = sender.send(call) {
 						return Ok(json!(compute_hex_encoded_return_error(e.as_str())))
