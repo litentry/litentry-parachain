@@ -16,11 +16,11 @@
 */
 
 use crate::{
-	error::Result,
+	error::{Error, Result},
 	initialization::{
 		global_components::{
 			GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT,
-			GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT,
+			GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 			GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT,
 			GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT,
 			GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT,
@@ -39,9 +39,10 @@ use codec::{Decode, Encode};
 use integritee_parachain::IntegriteeParachainHandler;
 use integritee_solochain::IntegriteeSolochainHandler;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
-use itp_component_container::ComponentInitializer;
+use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_settings::worker_mode::ProvideWorkerMode;
 use itp_types::parentchain::{ParentchainId, ParentchainInitParams};
+use lc_omni_account::init_in_memory_state;
 use log::*;
 use std::{path::PathBuf, vec::Vec};
 
@@ -59,6 +60,10 @@ pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>
 ) -> Result<Vec<u8>> {
 	match ParentchainInitParams::decode(&mut encoded_params.as_slice())? {
 		ParentchainInitParams::Parachain { id, shard, params } => {
+			let ocall_api = GLOBAL_OCALL_API_COMPONENT.get().map_err(|e| Error::Other(e.into()))?;
+			info!("Initializing in-memory state for shard: {:?}", shard);
+			init_in_memory_state(ocall_api).map_err(|e| Error::Other(e.into()))?;
+			info!("In Memory State initialized for shard: {:?}", shard);
 			info!(
 				"[{:?}] initializing parachain parentchain components for shard: {:?}",
 				id, shard

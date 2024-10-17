@@ -123,6 +123,14 @@ pub trait FilterEvents {
 	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
 
 	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
+
+	fn get_account_store_created_events(&self) -> Result<Vec<AccountStoreCreated>, Self::Error>;
+
+	fn get_account_added_events(&self) -> Result<Vec<AccountAdded>, Self::Error>;
+
+	fn get_account_removed_events(&self) -> Result<Vec<AccountRemoved>, Self::Error>;
+
+	fn get_account_made_public_events(&self) -> Result<Vec<AccountMadePublic>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -163,6 +171,10 @@ pub enum ParentchainEventProcessingError {
 	EnclaveAddFailure,
 	EnclaveRemoveFailure,
 	BtcWalletGeneratedFailure,
+	AccountStoreCreatedFailure,
+	AccountAddedFailure,
+	AccountRemovedFailure,
+	AccountMadePublicFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -196,6 +208,14 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: EnclaveRemoveFailure",
 			ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
 				"Parentchain Event Processing Error: BtcWalletGeneratedFailure",
+			ParentchainEventProcessingError::AccountStoreCreatedFailure =>
+				"Parentchain Event Processing Error: AccountStoreCreatedFailure",
+			ParentchainEventProcessingError::AccountAddedFailure =>
+				"Parentchain Event Processing Error: AccountAddedFailure",
+			ParentchainEventProcessingError::AccountRemovedFailure =>
+				"Parentchain Event Processing Error: AccountRemovedFailure",
+			ParentchainEventProcessingError::AccountMadePublicFailure =>
+				"Parentchain Event Processing Error: AccountMadePublicFailure",
 		};
 		write!(f, "{}", message)
 	}

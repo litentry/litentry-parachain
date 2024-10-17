@@ -65,11 +65,8 @@ fn create_account_store_works() {
 			vec![MemberAccount::Public(who_identity.clone())].try_into().unwrap();
 
 		System::assert_last_event(
-			Event::AccountStoreCreated {
-				who: who_omni_account,
-				account_store_hash: member_accounts.hash(),
-			}
-			.into(),
+			Event::AccountStoreCreated { who: who_omni_account, account_store: member_accounts }
+				.into(),
 		);
 
 		// create it the second time will fail
@@ -145,6 +142,7 @@ fn add_account_works() {
 			Event::AccountAdded {
 				who: who_omni_account.clone(),
 				member_account_hash: bob_member_account.hash(),
+				account_store: expected_member_accounts.clone(),
 			}
 			.into(),
 		);
@@ -164,21 +162,22 @@ fn add_account_works() {
 			who_identity.hash(),
 			call
 		));
-
-		System::assert_has_event(
-			Event::AccountAdded {
-				who: who_identity.to_omni_account(),
-				member_account_hash: charlie_member_account.hash(),
-			}
-			.into(),
-		);
-
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
 				MemberAccount::Public(who_identity.clone()),
 				bob_member_account.clone(),
 				charlie_member_account.clone(),
 			]);
+
+		System::assert_has_event(
+			Event::AccountAdded {
+				who: who_identity.to_omni_account(),
+				member_account_hash: charlie_member_account.hash(),
+				account_store: expected_member_accounts.clone(),
+			}
+			.into(),
+		);
+
 		let expected_account_store_hash = H256::from(blake2_256(
 			&expected_member_accounts
 				.iter()
@@ -398,13 +397,17 @@ fn remove_account_works() {
 			.into(),
 		);
 
-		System::assert_has_event(
-			Event::AccountRemoved { who: who_omni_account.clone(), member_account_hashes: hashes }
-				.into(),
-		);
-
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![MemberAccount::Public(who_identity.clone())]);
+
+		System::assert_has_event(
+			Event::AccountRemoved {
+				who: who_omni_account.clone(),
+				member_account_hashes: hashes,
+				account_store: expected_member_accounts.clone(),
+			}
+			.into(),
+		);
 
 		assert_eq!(
 			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
@@ -518,19 +521,21 @@ fn publicize_account_works() {
 			.into(),
 		);
 
-		System::assert_has_event(
-			Event::AccountMadePublic {
-				who: who_omni_account.clone(),
-				member_account_hash: public_account_hash,
-			}
-			.into(),
-		);
-
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
 				MemberAccount::Public(who_identity.clone()),
 				MemberAccount::Public(Identity::from(bob())),
 			]);
+
+		System::assert_has_event(
+			Event::AccountMadePublic {
+				who: who_omni_account.clone(),
+				member_account_hash: public_account_hash,
+				account_store: expected_member_accounts.clone(),
+			}
+			.into(),
+		);
+
 		assert_eq!(
 			AccountStore::<TestRuntime>::get(&who_omni_account).unwrap(),
 			expected_member_accounts
