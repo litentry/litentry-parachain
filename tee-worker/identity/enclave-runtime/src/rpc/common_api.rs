@@ -348,7 +348,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 	});
 
 	if_development!({
-		let local_state = state.clone();
+		let local_state = state;
 		// state_getStorage
 		io_handler.add_sync_method("state_getStorage", move |params: Params| {
 			let local_state = match local_state.clone() {

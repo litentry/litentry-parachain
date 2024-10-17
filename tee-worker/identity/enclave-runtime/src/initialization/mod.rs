@@ -127,7 +127,7 @@ pub(crate) fn init_enclave(
 
 	let account_store_key_repository =
 		Arc::new(create_aes256_repository(base_dir.clone(), "account_store", None)?);
-	GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT.initialize(account_store_key_repository.clone());
+	GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT.initialize(account_store_key_repository);
 
 	let integritee_light_client_seal = Arc::new(EnclaveLightClientSeal::new(
 		base_dir.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),
@@ -544,7 +544,8 @@ pub(crate) fn upload_id_graph() -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 
 	let shard = match state_handler.list_shards()? {
-		shards if shards.len() == 1 => shards[0],
+		shards if shards.len() == 1 =>
+			*shards.get(0).ok_or_else(|| Error::Other("Shard len unexpected".into()))?,
 		_ => return Err(Error::Other("Cannot get shard".into())),
 	};
 
@@ -570,7 +571,7 @@ pub(crate) fn upload_id_graph() -> EnclaveResult<()> {
 		calls.push(call);
 
 		if calls.len() >= BATCH_SIZE {
-			let _ = extrinsic_factory
+			extrinsic_factory
 				.create_batch_extrinsic(calls.drain(..).collect(), None)
 				.map_err(|_| Error::Other("failed to create extrinsic".into()))
 				.and_then(|ext| {
@@ -582,7 +583,7 @@ pub(crate) fn upload_id_graph() -> EnclaveResult<()> {
 	}
 
 	if !calls.is_empty() {
-		let _ = extrinsic_factory
+		extrinsic_factory
 			.create_batch_extrinsic(calls.drain(..).collect(), None)
 			.map_err(|_| Error::Other("failed to create extrinsic".into()))
 			.and_then(|ext| {
