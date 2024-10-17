@@ -53,7 +53,7 @@ pub enum Error {
 	BatchAllHandlingError,
 	#[error("AssertionCreated handling error: {0:?}")]
 	AssertionCreatedHandling(String),
-	#[error("AccountStore error: {0}")]
+	#[error("AccountStore error: {0:?}")]
 	AccountStoreError(String),
 }
 
