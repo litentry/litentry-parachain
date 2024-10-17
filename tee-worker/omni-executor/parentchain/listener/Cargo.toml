@@ -1,0 +1,17 @@
+[package]
+name = "parentchain-listener"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+executor-core = { path = "../../executor-core" }
+log = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-encode = "0.7.1"
+subxt = "0.37.0"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+env_logger = { workspace = true }

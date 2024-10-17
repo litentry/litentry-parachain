@@ -15,9 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{mock::*, AccountStore, MemberAccountHash, *};
-use core_primitives::Identity;
+use core_primitives::{CallEthereum, Identity};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::hashing::blake2_256;
+use sp_core::H160;
 use sp_runtime::{traits::BadOrigin, ModuleError};
 use sp_std::vec;
 
@@ -35,6 +36,10 @@ fn remove_accounts_call(hashes: Vec<H256>) -> Box<RuntimeCall> {
 fn publicize_account_call(id: Identity) -> Box<RuntimeCall> {
 	let call = RuntimeCall::OmniAccount(crate::Call::publicize_account { member_account: id });
 	Box::new(call)
+}
+
+fn request_intention_call(intention: Intention) -> Box<RuntimeCall> {
+	RuntimeCall::OmniAccount(crate::Call::request_intention { intention }).into()
 }
 
 fn make_balance_transfer_call(dest: AccountId, value: Balance) -> Box<RuntimeCall> {
@@ -590,6 +595,56 @@ fn publicize_account_identity_not_found_works() {
 				})),
 			}
 			.into(),
+		);
+	});
+}
+
+#[test]
+fn request_intention_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = who_identity.hash();
+		let who_omni_account = who_identity.to_omni_account();
+
+		let private_account =
+			MemberAccount::Private(vec![1, 2, 3], H256::from(blake2_256(&[1, 2, 3])));
+
+		assert_ok!(OmniAccount::create_account_store(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.clone(),
+		));
+
+		let call = add_account_call(private_account);
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity.hash(),
+			call
+		));
+
+		let intention = Intention::CallEthereum(CallEthereum {
+			address: H160::zero(),
+			input: BoundedVec::new(),
+		});
+
+		let call = request_intention_call(intention.clone());
+		assert_ok!(OmniAccount::dispatch_as_omni_account(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who_identity_hash,
+			call
+		));
+
+		System::assert_has_event(
+			Event::DispatchedAsOmniAccount {
+				who: who_omni_account.clone(),
+				result: DispatchResult::Ok(()),
+			}
+			.into(),
+		);
+
+		System::assert_has_event(
+			Event::IntentionRequested { who: who_omni_account, intention }.into(),
 		);
 	});
 }

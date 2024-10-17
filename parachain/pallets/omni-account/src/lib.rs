@@ -21,7 +21,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{GetAccountStoreHash, Identity, MemberAccount, OmniAccountConverter};
+pub use core_primitives::{
+	GetAccountStoreHash, Identity, Intention, MemberAccount, OmniAccountConverter,
+};
 pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
@@ -149,6 +151,8 @@ pub mod pallet {
 		DispatchedAsOmniAccount { who: T::AccountId, result: DispatchResult },
 		/// Some call is dispatched as signed origin
 		DispatchedAsSigned { who: T::AccountId, result: DispatchResult },
+		/// Intention is requested
+		IntentionRequested { who: T::AccountId, intention: Intention },
 	}
 
 	#[pallet::error]
@@ -328,6 +332,14 @@ pub mod pallet {
 				account_store: member_accounts,
 			});
 
+			Ok(())
+		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn request_intention(origin: OriginFor<T>, intention: Intention) -> DispatchResult {
+			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IntentionRequested { who, intention });
 			Ok(())
 		}
 	}
