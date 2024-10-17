@@ -24,8 +24,8 @@ use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
-		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
-		ParentchainEventProcessingError, ProcessedEventsArtifacts,
+		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
+		ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
