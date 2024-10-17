@@ -19,7 +19,6 @@ use codec::{Decode, Encode};
 pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
-use itp_api_client_types::StaticEvent;
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
@@ -346,7 +345,7 @@ where
 			events.iter().for_each(|event| {
 				debug!("found ParentchainBlockProcessed event: {:?}", event);
 				// This is for monitoring purposes
-				handled_events.push(hash_of(ParentchainBlockProcessed::EVENT));
+				handled_events.push(hash_of(&event));
 			});
 		}
 
