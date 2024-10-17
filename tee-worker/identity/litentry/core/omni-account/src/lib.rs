@@ -25,12 +25,13 @@ extern crate sgx_tstd as std;
 extern crate alloc;
 
 mod repository;
+use itp_ocall_api::EnclaveOnChainOCallApi;
 pub use repository::*;
 
 mod in_memory_store;
 pub use in_memory_store::InMemoryStore;
 
-use alloc::{collections::btree_map::BTreeMap, vec::Vec};
+use alloc::{collections::btree_map::BTreeMap, sync::Arc, vec::Vec};
 use itp_types::parentchain::{AccountId, Header, ParentchainId};
 use litentry_primitives::MemberAccount;
 
@@ -40,4 +41,16 @@ pub type OmniAccounts = BTreeMap<AccountId, Vec<MemberAccount>>;
 pub enum Error {
 	LockPoisoning,
 	OCallApiError(&'static str),
+}
+
+pub fn init_in_memory_state<OCallApi>(ocall_api: Arc<OCallApi>) -> Result<(), &'static str>
+where
+	OCallApi: EnclaveOnChainOCallApi,
+{
+	let header = ocall_api
+		.get_header(&ParentchainId::Litentry)
+		.map_err(|_| "Failed to get header")?;
+	let repository = OmniAccountRepository::new(ocall_api, header);
+	let account_stores = repository.get_all().map_err(|_| "Failed to get all account stores")?;
+	InMemoryStore::load(account_stores).map_err(|_| "Failed to load account stores")
 }
