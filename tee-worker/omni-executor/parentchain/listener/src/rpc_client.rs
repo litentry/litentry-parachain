@@ -16,6 +16,7 @@
 
 use crate::primitives::{BlockEvent, EventId};
 use async_trait::async_trait;
+use log::error;
 use parity_scale_codec::Encode;
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -25,12 +26,20 @@ use subxt::config::Header;
 use subxt::events::EventsClient;
 use subxt::{Config, OnlineClient};
 
+pub struct RuntimeVersion {
+	pub spec_version: u32,
+	pub transaction_version: u32,
+}
+
 /// For fetching data from Substrate RPC node
 #[async_trait]
 pub trait SubstrateRpcClient {
 	async fn get_last_finalized_block_num(&mut self) -> Result<u64, ()>;
 	async fn get_block_events(&mut self, block_num: u64) -> Result<Vec<BlockEvent>, ()>;
-	async fn get_raw_metadata(&mut self, block_num: u64) -> Result<Vec<u8>, ()>;
+	async fn get_raw_metadata(&mut self, block_num: Option<u64>) -> Result<Vec<u8>, ()>;
+	async fn submit_tx(&mut self, raw_tx: &[u8]) -> Result<(), ()>;
+	async fn runtime_version(&mut self) -> Result<RuntimeVersion, ()>;
+	async fn get_genesis_hash(&mut self) -> Result<Vec<u8>, ()>;
 }
 
 pub struct SubxtClient<ChainConfig: Config> {
@@ -72,10 +81,35 @@ impl<ChainConfig: Config> SubstrateRpcClient for SubxtClient<ChainConfig> {
 		}
 	}
 
-	async fn get_raw_metadata(&mut self, block_num: u64) -> Result<Vec<u8>, ()> {
-		let maybe_hash =
-			self.legacy.chain_get_block_hash(Some(block_num.into())).await.map_err(|_| ())?;
+	async fn get_raw_metadata(&mut self, block_num: Option<u64>) -> Result<Vec<u8>, ()> {
+		let maybe_hash = self
+			.legacy
+			.chain_get_block_hash(block_num.map(|b| b.into()))
+			.await
+			.map_err(|_| ())?;
 		Ok(self.legacy.state_get_metadata(maybe_hash).await.unwrap().deref().encode())
+	}
+
+	async fn submit_tx(&mut self, raw_tx: &[u8]) -> Result<(), ()> {
+		self.legacy.author_submit_extrinsic(raw_tx).await.map(|_| ()).map_err(|e| {
+			error!("Could not submit tx: {:?}", e);
+			()
+		})
+	}
+
+	async fn runtime_version(&mut self) -> Result<RuntimeVersion, ()> {
+		self.legacy
+			.state_get_runtime_version(None)
+			.await
+			.map(|rv| RuntimeVersion {
+				spec_version: rv.spec_version,
+				transaction_version: rv.transaction_version,
+			})
+			.map_err(|_| ())
+	}
+
+	async fn get_genesis_hash(&mut self) -> Result<Vec<u8>, ()> {
+		self.legacy.genesis_hash().await.map(|h| h.encode()).map_err(|_| ())
 	}
 }
 
@@ -93,7 +127,19 @@ impl SubstrateRpcClient for MockedRpcClient {
 		Ok(vec![])
 	}
 
-	async fn get_raw_metadata(&mut self, _block_num: u64) -> Result<Vec<u8>, ()> {
+	async fn get_raw_metadata(&mut self, _block_num: Option<u64>) -> Result<Vec<u8>, ()> {
+		Ok(vec![])
+	}
+
+	async fn submit_tx(&mut self, _raw_tx: &[u8]) -> Result<(), ()> {
+		Ok(())
+	}
+
+	async fn runtime_version(&mut self) -> Result<RuntimeVersion, ()> {
+		Ok(RuntimeVersion { spec_version: 0, transaction_version: 0 })
+	}
+
+	async fn get_genesis_hash(&mut self) -> Result<Vec<u8>, ()> {
 		Ok(vec![])
 	}
 }

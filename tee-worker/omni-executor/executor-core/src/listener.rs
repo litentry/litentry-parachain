@@ -159,11 +159,11 @@ impl<
 							self.checkpoint_repository.get().expect("Could not read checkpoint")
 						{
 							if checkpoint.lt(&event.get_event_id().clone().into()) {
-								log::info!("Executing intention");
+								log::info!("Handling event: {:?}", event_id);
 								if let Err(e) =
 									self.handle.block_on(self.intention_event_handler.handle(event))
 								{
-									log::error!("Could not execute intention: {:?}", e);
+									log::error!("Could not handle event: {:?}", e);
 									match e {
 										Error::NonRecoverableError => {
 											error!("Non-recoverable intention handling error, event: {:?}", event_id);
@@ -178,7 +178,6 @@ impl<
 										},
 									}
 								}
-								log::info!("Intention executed");
 							} else {
 								log::debug!("Skipping event");
 							}
@@ -187,12 +186,24 @@ impl<
 							if let Err(e) =
 								self.handle.block_on(self.intention_event_handler.handle(event))
 							{
-								log::error!("Could not execute intention: {:?}", e);
-								// sleep(Duration::from_secs(1));
-								// // it will try again in next loop
-								// continue 'main;
+								log::error!("Could not handle event: {:?}", e);
+								match e {
+									Error::NonRecoverableError => {
+										error!(
+											"Non-recoverable intention handling error, event: {:?}",
+											event_id
+										);
+										break 'main;
+									},
+									Error::RecoverableError => {
+										error!(
+											"Recoverable intention handling error, event: {:?}",
+											event_id
+										);
+										continue 'main;
+									},
+								}
 							}
-							log::info!("Intention executed");
 						}
 						self.checkpoint_repository
 							.save(event_id.into())

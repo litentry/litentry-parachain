@@ -11,7 +11,10 @@ log = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-encode = "0.7.1"
 subxt = "0.37.0"
+subxt-core = "0.37.0"
+subxt-signer = { version = "0.37.0", features = ["subxt"]}
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+hex = "0.4.3"
 
 [dev-dependencies]
 env_logger = { workspace = true }
