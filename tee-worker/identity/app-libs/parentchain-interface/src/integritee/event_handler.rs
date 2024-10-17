@@ -31,7 +31,8 @@ use itp_types::{
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
-use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
+use lc_omni_account::InMemoryStore as OmniAccountStore;
+use litentry_primitives::{Assertion, Identity, MemberAccount, ValidationData, Web3Network};
 use log::*;
 use sp_core::{blake2_256, H160};
 use sp_std::vec::Vec;
@@ -218,6 +219,19 @@ where
 
 		Ok(())
 	}
+
+	fn update_account_store(
+		account_id: AccountId,
+		members: Vec<MemberAccount>,
+	) -> Result<(), Error> {
+		// TODO: decrypt members and change members to be Vec<Identity> instead
+		OmniAccountStore::insert(account_id.clone(), members).map_err(|e| {
+			Error::AccountStoreError(format!(
+				"Could not update account store for account_id: {:?}, reason: {:?}",
+				account_id, e
+			))
+		})
+	}
 }
 
 impl<Executor, MetricsApi> HandleParentchainEvents<Executor, TrustedCallSigned, Error, (), (), ()>
@@ -347,6 +361,54 @@ where
 				// This is for monitoring purposes
 				handled_events.push(hash_of(&event));
 			});
+		}
+
+		if let Ok(events) = events.get_account_store_created_events() {
+			debug!("Handling AccountStoreCreated events");
+			events
+				.into_iter()
+				.try_for_each(|event| {
+					debug!("found AccountStoreCreated event: {:?}", event);
+					handled_events.push(hash_of(&event));
+					Self::update_account_store(event.who, event.account_store)
+				})
+				.map_err(|_| ParentchainEventProcessingError::AccountStoreCreatedFailure)?;
+		}
+
+		if let Ok(events) = events.get_account_added_events() {
+			debug!("Handling AccountAdded events");
+			events
+				.into_iter()
+				.try_for_each(|event| {
+					debug!("found AccountAdded event: {:?}", event);
+					handled_events.push(hash_of(&event));
+					Self::update_account_store(event.who, event.account_store)
+				})
+				.map_err(|_| ParentchainEventProcessingError::AccountAddedFailure)?;
+		}
+
+		if let Ok(events) = events.get_account_removed_events() {
+			debug!("Handling AccountRemoved events");
+			events
+				.into_iter()
+				.try_for_each(|event| {
+					debug!("found AccountRemoved event: {:?}", event);
+					handled_events.push(hash_of(&event));
+					Self::update_account_store(event.who, event.account_store)
+				})
+				.map_err(|_| ParentchainEventProcessingError::AccountRemovedFailure)?;
+		}
+
+		if let Ok(events) = events.get_account_made_public_events() {
+			debug!("Handling AccountMadePublic events");
+			events
+				.into_iter()
+				.try_for_each(|event| {
+					debug!("found AccountMadePublic event: {:?}", event);
+					handled_events.push(hash_of(&event));
+					Self::update_account_store(event.who, event.account_store)
+				})
+				.map_err(|_| ParentchainEventProcessingError::AccountMadePublicFailure)?;
 		}
 
 		Ok((handled_events, successful_assertion_ids, failed_assertion_ids))
