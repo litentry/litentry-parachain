@@ -64,7 +64,7 @@ impl EnclaveOnChainOCallApi for OcallApi {
 	) -> SgxResult<Vec<WorkerResponse<V>>> {
 		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
 		// Litentry: since #1221 we need 28139 bytes
-		let mut resp: Vec<u8> = vec![0; 4196 * 16];
+		let mut resp: Vec<u8> = vec![0; 4196 * 16]; // TODO: should we increase this size?
 		let request_encoded = req.encode();
 		let parentchain_id_encoded = parentchain_id.encode();
 
@@ -178,10 +178,13 @@ impl EnclaveOnChainOCallApi for OcallApi {
 			.worker_request::<Vec<u8>>(request, parentchain_id)?
 			.iter()
 			.filter_map(|r| match r {
-				WorkerResponse::ChainHeader(Some(h)) => Decode::decode(&mut h.as_slice()).ok()?,
+				WorkerResponse::ChainHeader(Some(h)) =>
+					Some(Decode::decode(&mut h.as_slice()).ok()?),
 				_ => None,
 			})
 			.collect();
+
+		log::error!("Got headers: {:?}", responses);
 
 		responses.first().cloned().ok_or(Error::ChainCallFailed)
 	}

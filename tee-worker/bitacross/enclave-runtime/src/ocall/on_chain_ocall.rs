@@ -178,7 +178,8 @@ impl EnclaveOnChainOCallApi for OcallApi {
 			.worker_request::<Vec<u8>>(request, parentchain_id)?
 			.iter()
 			.filter_map(|r| match r {
-				WorkerResponse::ChainHeader(Some(h)) => Decode::decode(&mut h.as_slice()).ok()?,
+				WorkerResponse::ChainHeader(Some(h)) =>
+					Some(Decode::decode(&mut h.as_slice()).ok()?),
 				_ => None,
 			})
 			.collect();
