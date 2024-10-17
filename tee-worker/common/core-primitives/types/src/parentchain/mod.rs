@@ -171,6 +171,10 @@ pub enum ParentchainEventProcessingError {
 	EnclaveAddFailure,
 	EnclaveRemoveFailure,
 	BtcWalletGeneratedFailure,
+	AccountStoreCreatedFailure,
+	AccountAddedFailure,
+	AccountRemovedFailure,
+	AccountMadePublicFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -204,6 +208,14 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: EnclaveRemoveFailure",
 			ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
 				"Parentchain Event Processing Error: BtcWalletGeneratedFailure",
+			ParentchainEventProcessingError::AccountStoreCreatedFailure =>
+				"Parentchain Event Processing Error: AccountStoreCreatedFailure",
+			ParentchainEventProcessingError::AccountAddedFailure =>
+				"Parentchain Event Processing Error: AccountAddedFailure",
+			ParentchainEventProcessingError::AccountRemovedFailure =>
+				"Parentchain Event Processing Error: AccountRemovedFailure",
+			ParentchainEventProcessingError::AccountMadePublicFailure =>
+				"Parentchain Event Processing Error: AccountMadePublicFailure",
 		};
 		write!(f, "{}", message)
 	}
