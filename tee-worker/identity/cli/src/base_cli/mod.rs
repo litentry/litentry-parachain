@@ -91,9 +91,6 @@ pub enum BaseCommand {
 
 	/// Shield text
 	ShieldText(ShieldTextCommand),
-
-	/// Upload the IDGraph onto chain as AccountStore
-	UploadIdGraph(UploadIdGraphCommand),
 }
 
 impl BaseCommand {
@@ -116,7 +113,6 @@ impl BaseCommand {
 			BaseCommand::DeactivateIdentity(cmd) => cmd.run(cli),
 			BaseCommand::ActivateIdentity(cmd) => cmd.run(cli),
 			BaseCommand::ShieldText(cmd) => cmd.run(cli),
-			BaseCommand::UploadIdGraph(cmd) => cmd.run(cli),
 		}
 	}
 }

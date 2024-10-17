@@ -3,12 +3,8 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
-	initialization::global_components::GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT,
 	std::borrow::ToOwned,
-	utils::{
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
-		get_validator_accessor_from_integritee_solo_or_parachain,
-	},
+	utils::get_validator_accessor_from_integritee_solo_or_parachain,
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
@@ -16,10 +12,6 @@ use core::result::Result;
 use ita_sgx_runtime::{Runtime, System, VERSION};
 use ita_stf::{aes_encrypt_default, AesOutput, Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itp_component_container::ComponentGetter;
-use itp_node_api::metadata::{
-	pallet_omni_account::OmniAccountCallIndexes, provider::AccessNodeMetadata,
-};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
@@ -32,15 +24,14 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Index, OpaqueCall, RsaRequest, ShardIdentifier, H256};
+use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_rpc_handler::direct_top_pool_api::add_top_pool_direct_rpc_methods;
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::{email, twitter};
-use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use litentry_macros::if_development;
-use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity, MemberAccount};
+use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
@@ -512,105 +503,6 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 						"Could not save verification code"
 					))),
 				}
-			},
-			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
-		}
-	});
-
-	let local_state = state.clone();
-
-	io_handler.add_sync_method("omni_UploadIDGraph", move |params: Params| {
-		debug!("worker_api_direct rpc was called: omni_UploadIDGraph");
-		let local_state = match local_state.clone() {
-			Some(s) => s,
-			None =>
-				return Ok(json!(compute_hex_encoded_return_error(
-					"omni_UploadIDGraph is not avaiable"
-				))),
-		};
-
-		match params.parse::<(String,)>() {
-			Ok((shard_base58,)) => {
-				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
-					Ok(s) => s,
-					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-
-				let aes_key =
-					match GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT.get().and_then(|r| {
-						r.retrieve_key()
-							.map_err(|_| itp_component_container::error::Error::Other("".into()))
-					}) {
-						Ok(k) => k,
-						Err(e) => {
-							let error_msg =
-								format!("Cannot get AccountStore key repository: {:?}", e);
-							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
-					};
-
-				let node_metadata_repo =
-					match get_node_metadata_repository_from_integritee_solo_or_parachain() {
-						Ok(r) => r,
-						Err(e) =>
-							return Ok(json!(compute_hex_encoded_return_error(
-								format!("{:?}", e).as_str()
-							))),
-					};
-
-				let call_index = match node_metadata_repo
-					.get_from_metadata(|m| m.update_account_store_by_one_call_indexes())
-				{
-					Ok(r) => match r {
-						Ok(r) => r,
-						Err(e) =>
-							return Ok(json!(compute_hex_encoded_return_error(
-								format!("{:?}", e).as_str()
-							))),
-					},
-					Err(e) =>
-						return Ok(json!(compute_hex_encoded_return_error(
-							format!("{:?}", e).as_str()
-						))),
-				};
-
-				let identities: Vec<(Identity, Identity)> = match local_state.load_cloned(&shard) {
-					Ok((mut state, _)) => state.execute_with(|| {
-						pallet_identity_management_tee::IDGraphs::<Runtime>::iter_keys().collect()
-					}),
-					Err(e) =>
-						return Ok(json!(compute_hex_encoded_return_error(
-							format!("{:?}", e).as_str()
-						))),
-				};
-
-				let sender = ParachainExtrinsicSender::new();
-				info!("uploading {} identity pairs", identities.len());
-
-				for (prime_id, sub_id) in identities {
-					let member_account: MemberAccount = if prime_id == sub_id {
-						sub_id.into()
-					} else {
-						let enc_id: Vec<u8> = sub_id.encode();
-						MemberAccount::Private(
-							aes_encrypt_default(&aes_key, &enc_id).encode(),
-							sub_id.hash(),
-						)
-					};
-
-					let call = OpaqueCall::from_tuple(&(call_index, prime_id, member_account));
-
-					if let Err(e) = sender.send(call) {
-						return Ok(json!(compute_hex_encoded_return_error(e.as_str())))
-					}
-				}
-
-				let json_value = RpcReturnValue::new(vec![], false, DirectRequestStatus::Ok);
-				Ok(json!(json_value.to_hex()))
 			},
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
 		}

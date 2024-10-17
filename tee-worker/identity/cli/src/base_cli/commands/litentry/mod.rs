@@ -29,7 +29,4 @@ pub use link_identity::*;
 mod shield_text;
 pub use shield_text::*;
 
-mod upload_id_graph;
-pub use upload_id_graph::*;
-
 pub const IMP: &str = "IdentityManagement";
