@@ -16,6 +16,7 @@
 
 use crate::event_handler::IntentionEventHandler;
 use crate::fetcher::Fetcher;
+use crate::key_store::SubstrateKeyStore;
 use crate::metadata::SubxtMetadataProvider;
 use crate::primitives::SyncCheckpoint;
 use crate::primitives::{BlockEvent, EventId};
@@ -36,5 +37,12 @@ pub type ParentchainListener<
 	CheckpointRepository,
 	IntentionEventId,
 	BlockEvent,
-	IntentionEventHandler<Metadata, SubxtMetadataProvider<ChainConfig>, EthereumIntentionExecutor>,
+	IntentionEventHandler<
+		Metadata,
+		SubxtMetadataProvider<ChainConfig>,
+		EthereumIntentionExecutor,
+		SubstrateKeyStore,
+		RpcClient,
+		RpcClientFactory,
+	>,
 >;
