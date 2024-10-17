@@ -52,7 +52,8 @@ use crate::{
 use base58::ToBase58;
 use codec::Encode;
 use core::str::FromStr;
-use ita_stf::{Getter, TrustedCallSigned};
+use ita_sgx_runtime::Runtime;
+use ita_stf::{aes_encrypt_default, Getter, TrustedCallSigned};
 use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
@@ -65,6 +66,11 @@ use itc_tls_websocket_server::{
 };
 use itp_attestation_handler::IntelAttestationHandler;
 use itp_component_container::{ComponentGetter, ComponentInitializer};
+use itp_extrinsics_factory::CreateExtrinsics;
+use itp_node_api::metadata::{
+	pallet_omni_account::OmniAccountCallIndexes, provider::AccessNodeMetadata,
+};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
 	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
@@ -73,6 +79,7 @@ use itp_settings::files::{
 use itp_sgx_crypto::{
 	get_aes_repository, get_ed25519_repository, get_rsa3072_repository, key_repository::AccessKey,
 };
+use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
 	state_snapshot_repository::VersionedStateAccess,
@@ -80,7 +87,7 @@ use itp_stf_state_handler::{
 };
 use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
-use itp_types::{parentchain::ParentchainId, ShardIdentifier};
+use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use its_sidechain::{
 	block_composer::BlockComposer,
 	slots::{FailSlotMode, FailSlotOnDemand},
@@ -92,11 +99,13 @@ use lc_native_task_receiver::{run_native_task_receiver, NativeTaskContext};
 use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
-use litentry_primitives::{sgx::create_aes256_repository, BroadcastedRequest};
+use litentry_primitives::{
+	sgx::create_aes256_repository, BroadcastedRequest, Identity, MemberAccount,
+};
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
-use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc, vec::Vec};
 
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
@@ -511,6 +520,77 @@ pub(crate) fn init_shard(shard: ShardIdentifier) -> EnclaveResult<()> {
 pub(crate) fn migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let _ = state_handler.migrate_shard(new_shard)?;
+	Ok(())
+}
+
+pub(crate) fn upload_id_graph() -> EnclaveResult<()> {
+	const BATCH_SIZE: usize = 400;
+
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+
+	let aes_key = GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT
+		.get()
+		.and_then(|r| {
+			r.retrieve_key()
+				.map_err(|_| itp_component_container::error::Error::Other("".into()))
+		})
+		.map_err(|e| Error::Other(e.into()))?;
+
+	let call_index = node_metadata_repo
+		.get_from_metadata(|m| m.update_account_store_by_one_call_indexes())??;
+
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+
+	let shard = match state_handler.list_shards()? {
+		shards if shards.len() == 1 => shards[0],
+		_ => return Err(Error::Other("Cannot get shard".into())),
+	};
+
+	let identities: Vec<(Identity, Identity)> = match state_handler.load_cloned(&shard) {
+		Ok((mut state, _)) => state.execute_with(|| {
+			pallet_identity_management_tee::IDGraphs::<Runtime>::iter_keys().collect()
+		}),
+		Err(e) => return Err(Error::Other(e.into())),
+	};
+
+	info!("uploading {} identity pairs", identities.len());
+
+	let mut calls: Vec<OpaqueCall> = Default::default();
+	for (prime_id, sub_id) in identities {
+		let member_account: MemberAccount = if prime_id == sub_id {
+			sub_id.into()
+		} else {
+			let enc_id: Vec<u8> = sub_id.encode();
+			MemberAccount::Private(aes_encrypt_default(&aes_key, &enc_id).encode(), sub_id.hash())
+		};
+
+		let call = OpaqueCall::from_tuple(&(call_index, prime_id, member_account));
+		calls.push(call);
+
+		if calls.len() >= BATCH_SIZE {
+			let _ = extrinsic_factory
+				.create_batch_extrinsic(calls.drain(..).collect(), None)
+				.map_err(|_| Error::Other("failed to create extrinsic".into()))
+				.and_then(|ext| {
+					ocall_api
+						.send_to_parentchain(vec![ext], &ParentchainId::Litentry, true)
+						.map_err(|_| Error::Other("failed to send extrinsic".into()))
+				})?;
+		}
+	}
+
+	if !calls.is_empty() {
+		let _ = extrinsic_factory
+			.create_batch_extrinsic(calls.drain(..).collect(), None)
+			.map_err(|_| Error::Other("failed to create extrinsic".into()))
+			.and_then(|ext| {
+				ocall_api
+					.send_to_parentchain(vec![ext], &ParentchainId::Litentry, true)
+					.map_err(|_| Error::Other("failed to send extrinsic".into()))
+			})?;
+	}
 	Ok(())
 }
 

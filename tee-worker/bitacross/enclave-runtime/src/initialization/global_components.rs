@@ -68,7 +68,7 @@ use itp_sgx_crypto::{
 	ecdsa::{Pair as EcdsaPair, Seal as EcdsaSeal},
 	key_repository::KeyRepository,
 	schnorr::{Pair as SchnorrPair, Seal as SchnorrSeal},
-	Aes, AesSeal, Ed25519Seal, IDGraphKey, IDGraphKeySeal, Rsa3072Seal,
+	Aes, AesSeal, Ed25519Seal, Rsa3072Seal,
 };
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,

@@ -109,7 +109,7 @@ pub type EnclaveGetter = Getter;
 pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
-pub type EnclaveIDGraphKeyRepository = KeyRepository<Aes256Key, Aes256Seal>;
+pub type EnclaveAccountStoreKeyRepository = KeyRepository<Aes256Key, Aes256Seal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
 pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
@@ -377,7 +377,7 @@ pub static GLOBAL_STATE_KEY_REPOSITORY_COMPONENT: ComponentContainer<EnclaveStat
 
 /// IDGraph key repository
 pub static GLOBAL_ACCOUNT_STORE_KEY_REPOSITORY_COMPONENT: ComponentContainer<
-	EnclaveIDGraphKeyRepository,
+	EnclaveAccountStoreKeyRepository,
 > = ComponentContainer::new("StoreAccount key repository");
 
 /// Shielding key repository
