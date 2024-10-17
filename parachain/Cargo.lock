@@ -7990,7 +7990,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-core-hashing",
  "sp-io",
  "sp-keyring",
  "sp-runtime",

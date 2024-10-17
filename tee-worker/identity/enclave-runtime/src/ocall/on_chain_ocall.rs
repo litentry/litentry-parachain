@@ -125,9 +125,13 @@ impl EnclaveOnChainOCallApi for OcallApi {
 		Ok(storage_entries)
 	}
 
-	fn get_storage_keys(&self, key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>> {
-		// always using the latest state - we need to support optional header
-		let requests = vec![WorkerRequest::ChainStorageKeys(key_prefix, None)];
+	fn get_storage_keys<H: Header<Hash = H256>>(
+		&self,
+		key_prefix: Vec<u8>,
+		header: Option<&H>,
+	) -> Result<Vec<Vec<u8>>> {
+		let header_hash = header.map(|h| h.hash());
+		let requests = vec![WorkerRequest::ChainStorageKeys(key_prefix, header_hash)];
 
 		let responses: Vec<Vec<Vec<u8>>> = self
 			.worker_request::<Vec<u8>>(requests, &ParentchainId::Litentry)?
