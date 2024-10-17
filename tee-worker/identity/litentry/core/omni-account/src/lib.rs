@@ -52,5 +52,6 @@ where
 		.map_err(|_| "Failed to get header")?;
 	let repository = OmniAccountRepository::new(ocall_api, header);
 	let account_stores = repository.get_all().map_err(|_| "Failed to get all account stores")?;
+	// TOOD: decrypt state
 	InMemoryStore::load(account_stores).map_err(|_| "Failed to load account stores")
 }
