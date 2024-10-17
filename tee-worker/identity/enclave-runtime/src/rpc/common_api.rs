@@ -30,9 +30,9 @@ use its_rpc_handler::direct_top_pool_api::add_top_pool_direct_rpc_methods;
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::{email, twitter};
-use litentry_macros::if_development;
+use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
-use log::*;
+use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
@@ -113,7 +113,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 	let local_top_pool_author = top_pool_author.clone();
 
-	let local_state = state.clone();
+	let local_state = if_development_or!(state.clone(), state);
 
 	io_handler.add_sync_method("author_getNextNonce", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_getNextNonce");
@@ -348,10 +348,9 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 	});
 
 	if_development!({
-		let local_state = state;
 		// state_getStorage
 		io_handler.add_sync_method("state_getStorage", move |params: Params| {
-			let local_state = match local_state.clone() {
+			let local_state = match state.clone() {
 				Some(s) => s,
 				None =>
 					return Ok(json!(compute_hex_encoded_return_error(
