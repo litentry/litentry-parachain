@@ -22,9 +22,10 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
-	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	pallet_omni_account::OmniAccountCallIndexes, pallet_proxy::ProxyCallIndexes,
+	pallet_system::SystemConstants, pallet_teebag::TeebagCallIndexes,
+	pallet_timestamp::TimestampCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -37,6 +38,7 @@ pub mod pallet_balances;
 pub mod pallet_bitacross;
 pub mod pallet_evm_assertion;
 pub mod pallet_imp;
+pub mod pallet_omni_account;
 pub mod pallet_proxy;
 pub mod pallet_system;
 pub mod pallet_teebag;
@@ -60,6 +62,7 @@ pub trait NodeMetadataTrait:
 	+ TimestampCallIndexes
 	+ EvmAssertionsCallIndexes
 	+ BitAcrossCallIndexes
+	+ OmniAccountCallIndexes
 {
 }
 
@@ -73,7 +76,8 @@ impl<
 			+ BalancesCallIndexes
 			+ TimestampCallIndexes
 			+ EvmAssertionsCallIndexes
-			+ BitAcrossCallIndexes,
+			+ BitAcrossCallIndexes
+			+ OmniAccountCallIndexes,
 	> NodeMetadataTrait for T
 {
 }

@@ -18,9 +18,10 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
-	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	pallet_omni_account::OmniAccountCallIndexes, pallet_proxy::ProxyCallIndexes,
+	pallet_system::SystemConstants, pallet_teebag::TeebagCallIndexes,
+	pallet_timestamp::TimestampCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -95,6 +96,12 @@ pub struct NodeMetadataMock {
 	btc_wallet_generated: u8,
 	eth_wallet_generated: u8,
 	ton_wallet_generated: u8,
+
+	omni_account_module: u8,
+	dispatch_as_omni_account: u8,
+	dispatch_as_signed: u8,
+	create_account_store: u8,
+	update_account_store_by_one: u8,
 }
 
 impl NodeMetadataMock {
@@ -157,6 +164,12 @@ impl NodeMetadataMock {
 			btc_wallet_generated: 2u8,
 			eth_wallet_generated: 3u8,
 			ton_wallet_generated: 4u8,
+
+			omni_account_module: 70u8,
+			dispatch_as_omni_account: 0u8,
+			dispatch_as_signed: 1u8,
+			create_account_store: 2u8,
+			update_account_store_by_one: 3u8,
 		}
 	}
 }
@@ -344,5 +357,23 @@ impl EvmAssertionsCallIndexes for NodeMetadataMock {
 
 	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
+	}
+}
+
+impl OmniAccountCallIndexes for NodeMetadataMock {
+	fn dispatch_as_omni_account_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.omni_account_module, self.dispatch_as_omni_account])
+	}
+
+	fn dispatch_as_signed_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.omni_account_module, self.dispatch_as_signed])
+	}
+
+	fn create_account_store_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.omni_account_module, self.create_account_store])
+	}
+
+	fn update_account_store_by_one_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.omni_account_module, self.update_account_store_by_one])
 	}
 }

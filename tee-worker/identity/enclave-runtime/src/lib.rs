@@ -441,6 +441,16 @@ pub unsafe extern "C" fn migrate_shard(new_shard: *const u8, shard_size: u32) ->
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn upload_id_graph() -> sgx_status_t {
+	if let Err(e) = initialization::upload_id_graph() {
+		error!("Failed to upload IDGraph: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn sync_parentchain(
 	blocks_to_sync: *const u8,
 	blocks_to_sync_size: usize,
