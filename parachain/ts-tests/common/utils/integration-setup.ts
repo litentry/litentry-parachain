@@ -23,6 +23,16 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     // Initiate the polkadot API.
     const api = await ApiPromise.create({
         provider: wsProvider,
+        signedExtensions: {
+            CheckMetadataHash: {
+                extrinsic: {
+                    mode: 'u8'
+                },
+                payload: {
+                    metadataHash: 'Option<[u8;32]>'
+                }
+            }
+        }
     });
 
     console.log(`Initialization done`);

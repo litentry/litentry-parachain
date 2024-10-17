@@ -154,8 +154,8 @@ rlp = { version = "0.5", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 
 url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.42-tag-v0.14.0", default-features = false, features = ["sync-api"] }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
+substrate-api-client = { git = "https://github.com/encointer/substrate-api-client.git", branch = "v0.9.42-tag-v0.14.0-retracted-check-metadata-hash", default-features = false, features = ["sync-api"] }
+substrate-client-keystore = { git = "https://github.com/encointer/substrate-api-client.git", branch = "v0.9.42-tag-v0.14.0-retracted-check-metadata-hash" }
 
 # substrate
 finality-grandpa = { version = "0.16.0", default-features = false, features = ["derive-codec"] }
