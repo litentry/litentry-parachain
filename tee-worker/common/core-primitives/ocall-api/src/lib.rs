@@ -125,6 +125,14 @@ pub trait EnclaveOnChainOCallApi: Clone + Send + Sync {
 		header: Option<&H>,
 	) -> Result<Vec<Vec<u8>>>;
 
+	fn get_storage_keys_paged<H: Header<Hash = H256>>(
+		&self,
+		key_prefix: Vec<u8>,
+		count: u32,
+		start_key: Option<Vec<u8>>,
+		header: Option<&H>,
+	) -> Result<Vec<Vec<u8>>>;
+
 	fn get_header<H: Header<Hash = H256>>(&self, parentchain_id: &ParentchainId) -> Result<H>;
 }
 

@@ -113,6 +113,18 @@ where
 					};
 					WorkerResponse::ChainStorageKeys(keys)
 				},
+				WorkerRequest::ChainStorageKeysPaged(prefix, count, start_key, hash) => {
+					let keys: Vec<Vec<u8>> = match api.get_storage_keys_paged(
+						Some(StorageKey(prefix)),
+						count,
+						start_key.map(StorageKey),
+						hash,
+					) {
+						Ok(keys) => keys.iter().map(|k| k.as_ref().encode()).collect(),
+						_ => Default::default(),
+					};
+					WorkerResponse::ChainStorageKeys(keys)
+				},
 				WorkerRequest::ChainHeader(block_hash) => {
 					let header = match api.get_header(block_hash) {
 						Ok(Some(header)) => Some(header.encode()),

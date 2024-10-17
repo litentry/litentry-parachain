@@ -149,6 +149,8 @@ pub enum WorkerRequest {
 	#[codec(index = 1)]
 	ChainStorageKeys(Vec<u8>, Option<BlockHash>), // (storage_key_prefix, at_block)
 	#[codec(index = 2)]
+	ChainStorageKeysPaged(Vec<u8>, u32, Option<Vec<u8>>, Option<BlockHash>), // (storage_key_prefix, count, start_key, at_block)
+	#[codec(index = 3)]
 	ChainHeader(Option<BlockHash>), // (at_block)
 }
 

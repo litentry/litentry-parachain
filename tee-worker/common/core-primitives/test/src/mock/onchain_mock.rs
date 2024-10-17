@@ -237,6 +237,16 @@ impl EnclaveOnChainOCallApi for OnchainMock {
 		Ok(Default::default())
 	}
 
+	fn get_storage_keys_paged<H: HeaderTrait<Hash = H256>>(
+		&self,
+		_key_prefix: Vec<u8>,
+		_count: u32,
+		_start_key: Option<Vec<u8>>,
+		_header: Option<&H>,
+	) -> itp_ocall_api::Result<Vec<Vec<u8>>> {
+		Ok(Default::default())
+	}
+
 	fn get_header<H: HeaderTrait<Hash = H256>>(
 		&self,
 		_: &ParentchainId,
