@@ -89,7 +89,6 @@ use jsonrpc_core::IoHandler;
 use lc_data_providers::DataProviderConfig;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_native_task_receiver::{run_native_task_receiver, NativeTaskContext};
-use lc_omni_account::init_in_memory_state;
 use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
@@ -245,8 +244,6 @@ pub(crate) fn init_enclave(
 
 	let evm_assertion_repository = EvmAssertionRepository::new(ASSERTIONS_FILE)?;
 	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
-
-	init_in_memory_state(ocall_api).map_err(|e| Error::Other(e.into()))?;
 
 	Ok(())
 }
