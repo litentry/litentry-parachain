@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{AccountId, Error, Header, MemberAccount, OmniAccounts, ParentchainId};
-use alloc::vec::Vec;
+use alloc::{borrow::ToOwned, vec::Vec};
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_storage::{
