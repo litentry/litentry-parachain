@@ -148,6 +148,8 @@ pub enum WorkerRequest {
 	ChainStorage(Vec<u8>, Option<BlockHash>), // (storage_key, at_block)
 	#[codec(index = 1)]
 	ChainStorageKeys(Vec<u8>, Option<BlockHash>), // (storage_key_prefix, at_block)
+	#[codec(index = 2)]
+	ChainHeader(Option<BlockHash>), // (at_block)
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
@@ -156,6 +158,8 @@ pub enum WorkerResponse<V: Encode + Decode> {
 	ChainStorage(Vec<u8>, Option<V>, Option<Vec<Vec<u8>>>), // (storage_key, storage_value, storage_proof)
 	#[codec(index = 1)]
 	ChainStorageKeys(Vec<Vec<u8>>), // (storage_keys)
+	#[codec(index = 2)]
+	ChainHeader(Option<V>), // (header)
 }
 
 impl From<WorkerResponse<Vec<u8>>> for StorageEntry<Vec<u8>> {

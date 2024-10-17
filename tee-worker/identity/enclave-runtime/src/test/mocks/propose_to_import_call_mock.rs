@@ -91,6 +91,13 @@ impl EnclaveOnChainOCallApi for ProposeToImportOCallApi {
 	) -> Result<Vec<Vec<u8>>> {
 		todo!()
 	}
+
+	fn get_header<H: ParentchainHeaderTrait<Hash = H256>>(
+		&self,
+		_parentchain_id: &ParentchainId,
+	) -> Result<H> {
+		todo!()
+	}
 }
 
 impl EnclaveSidechainOCallApi for ProposeToImportOCallApi {
