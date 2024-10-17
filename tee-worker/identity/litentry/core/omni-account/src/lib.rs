@@ -47,9 +47,10 @@ pub fn init_in_memory_state<OCallApi>(ocall_api: Arc<OCallApi>) -> Result<(), &'
 where
 	OCallApi: EnclaveOnChainOCallApi,
 {
-	let header = ocall_api
-		.get_header(&ParentchainId::Litentry)
-		.map_err(|_| "Failed to get header")?;
+	let header = ocall_api.get_header(&ParentchainId::Litentry).map_err(|e| {
+		log::error!("Failed to get header: {:?}", e);
+		"Failed to get header"
+	})?;
 	let repository = OmniAccountRepository::new(ocall_api, header);
 	let account_stores = repository.get_all().map_err(|_| "Failed to get all account stores")?;
 	// TODO: decrypt state
