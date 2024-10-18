@@ -22,13 +22,13 @@ mod metadata;
 mod primitives;
 mod rpc_client;
 
-use crate::event_handler::IntentionEventHandler;
+use crate::event_handler::IntentEventHandler;
 use crate::fetcher::Fetcher;
 use crate::key_store::SubstrateKeyStore;
 use crate::listener::ParentchainListener;
 use crate::metadata::SubxtMetadataProvider;
 use crate::rpc_client::{SubxtClient, SubxtClientFactory};
-use executor_core::intention_executor::IntentionExecutor;
+use executor_core::intent_executor::IntentExecutor;
 use executor_core::key_store::KeyStore;
 use executor_core::listener::Listener;
 use executor_core::sync_checkpoint_repository::FileCheckpointRepository;
@@ -37,7 +37,6 @@ use scale_encode::EncodeAsType;
 use subxt::config::signed_extensions;
 use subxt::Config;
 use subxt_core::utils::AccountId32;
-use subxt_core::utils::MultiAddress::Address32;
 use tokio::runtime::Handle;
 use tokio::sync::oneshot::Receiver;
 
@@ -77,11 +76,11 @@ impl Config for CustomConfig {
 }
 
 /// Creates parentchain listener
-pub async fn create_listener<EthereumIntentionExecutorT: IntentionExecutor + Send + Sync>(
+pub async fn create_listener<EthereumIntentExecutorT: IntentExecutor + Send + Sync>(
 	id: &str,
 	handle: Handle,
 	ws_rpc_endpoint: &str,
-	ethereum_intention_executor: EthereumIntentionExecutorT,
+	ethereum_intent_executor: EthereumIntentExecutorT,
 	stop_signal: Receiver<()>,
 ) -> Result<
 	ParentchainListener<
@@ -89,7 +88,7 @@ pub async fn create_listener<EthereumIntentionExecutorT: IntentionExecutor + Sen
 		SubxtClientFactory<CustomConfig>,
 		FileCheckpointRepository,
 		CustomConfig,
-		EthereumIntentionExecutorT,
+		EthereumIntentExecutorT,
 	>,
 	(),
 > {
@@ -115,9 +114,9 @@ pub async fn create_listener<EthereumIntentionExecutorT: IntentionExecutor + Sen
 
 	info!("Substrate signer address: {}", AccountId32::from(signer.public_key()));
 
-	let intention_event_handler = IntentionEventHandler::new(
+	let intent_event_handler = IntentEventHandler::new(
 		metadata_provider,
-		ethereum_intention_executor,
+		ethereum_intent_executor,
 		key_store,
 		SubxtClientFactory::new(ws_rpc_endpoint),
 	);
@@ -126,7 +125,7 @@ pub async fn create_listener<EthereumIntentionExecutorT: IntentionExecutor + Sen
 		id,
 		handle,
 		fetcher,
-		intention_event_handler,
+		intent_event_handler,
 		stop_signal,
 		last_processed_log_repository,
 	)

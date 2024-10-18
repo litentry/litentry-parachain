@@ -24,23 +24,10 @@ use crate::fetcher::{EventsFetcher, LastFinalizedBlockNumFetcher};
 use crate::primitives::GetEventId;
 use crate::sync_checkpoint_repository::{Checkpoint, CheckpointRepository};
 
-/// Represents event emitted on listened chain.
-#[derive(Clone, Debug, PartialEq)]
-pub struct IntentionEvent<Id: Clone> {
-	id: Id,
-	//todo: fill
-}
-
-impl<Id: Clone> IntentionEvent<Id> {
-	pub fn new(id: Id) -> Self {
-		Self { id }
-	}
-}
-
-/// Component, used to listen to chain and execute requested intentions
+/// Component, used to listen to chain and execute requested intents
 /// Requires specific implementations of:
 /// `Fetcher` - used to fetch data from chain
-/// `IntentionExecutor` - used to execute intentions on target chain
+/// `IntentExecutor` - used to execute intents on target chain
 /// `CheckpointRepository` - used to store listener's progress
 ///	`EventId` - represents chain event id
 /// `BlockEvent` - represents chain event
@@ -50,12 +37,12 @@ pub struct Listener<
 	CheckpointRepository,
 	BlockEventId,
 	BlockEvent,
-	IntentionEventHandler,
+	IntentEventHandler,
 > {
 	id: String,
 	handle: Handle,
 	fetcher: Fetcher,
-	intention_event_handler: IntentionEventHandler,
+	intent_event_handler: IntentEventHandler,
 	stop_signal: Receiver<()>,
 	checkpoint_repository: CheckpointRepository,
 	_phantom: PhantomData<(Checkpoint, BlockEventId, BlockEvent)>,
@@ -67,15 +54,14 @@ impl<
 		Fetcher: LastFinalizedBlockNumFetcher + EventsFetcher<EventId, BlockEventT>,
 		CheckpointT: PartialOrd + Checkpoint + From<u64>,
 		CheckpointRepositoryT: CheckpointRepository<CheckpointT>,
-		IntentionEventHandler: EventHandler<BlockEventT>,
-	>
-	Listener<Fetcher, CheckpointT, CheckpointRepositoryT, EventId, BlockEventT, IntentionEventHandler>
+		IntentEventHandler: EventHandler<BlockEventT>,
+	> Listener<Fetcher, CheckpointT, CheckpointRepositoryT, EventId, BlockEventT, IntentEventHandler>
 {
 	pub fn new(
 		id: &str,
 		handle: Handle,
 		fetcher: Fetcher,
-		intention_event_handler: IntentionEventHandler,
+		intent_event_handler: IntentEventHandler,
 		stop_signal: Receiver<()>,
 		last_processed_log_repository: CheckpointRepositoryT,
 	) -> Result<Self, ()> {
@@ -83,7 +69,7 @@ impl<
 			id: id.to_string(),
 			handle,
 			fetcher,
-			intention_event_handler,
+			intent_event_handler,
 			stop_signal,
 			checkpoint_repository: last_processed_log_repository,
 			_phantom: PhantomData,
@@ -161,17 +147,17 @@ impl<
 							if checkpoint.lt(&event.get_event_id().clone().into()) {
 								log::info!("Handling event: {:?}", event_id);
 								if let Err(e) =
-									self.handle.block_on(self.intention_event_handler.handle(event))
+									self.handle.block_on(self.intent_event_handler.handle(event))
 								{
 									log::error!("Could not handle event: {:?}", e);
 									match e {
 										Error::NonRecoverableError => {
-											error!("Non-recoverable intention handling error, event: {:?}", event_id);
+											error!("Non-recoverable intent handling error, event: {:?}", event_id);
 											break 'main;
 										},
 										Error::RecoverableError => {
 											error!(
-												"Recoverable intention handling error, event: {:?}",
+												"Recoverable intent handling error, event: {:?}",
 												event_id
 											);
 											continue 'main;
@@ -184,20 +170,20 @@ impl<
 						} else {
 							log::info!("Handling event: {:?}", event_id);
 							if let Err(e) =
-								self.handle.block_on(self.intention_event_handler.handle(event))
+								self.handle.block_on(self.intent_event_handler.handle(event))
 							{
 								log::error!("Could not handle event: {:?}", e);
 								match e {
 									Error::NonRecoverableError => {
 										error!(
-											"Non-recoverable intention handling error, event: {:?}",
+											"Non-recoverable intent handling error, event: {:?}",
 											event_id
 										);
 										break 'main;
 									},
 									Error::RecoverableError => {
 										error!(
-											"Recoverable intention handling error, event: {:?}",
+											"Recoverable intent handling error, event: {:?}",
 											event_id
 										);
 										continue 'main;

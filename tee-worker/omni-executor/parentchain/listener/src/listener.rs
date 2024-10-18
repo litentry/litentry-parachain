@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::event_handler::IntentionEventHandler;
+use crate::event_handler::IntentEventHandler;
 use crate::fetcher::Fetcher;
 use crate::key_store::SubstrateKeyStore;
 use crate::metadata::SubxtMetadataProvider;
@@ -23,24 +23,24 @@ use crate::primitives::{BlockEvent, EventId};
 use executor_core::listener::Listener;
 use subxt::Metadata;
 
-pub type IntentionEventId = EventId;
+pub type IntentEventId = EventId;
 
 pub type ParentchainListener<
 	RpcClient,
 	RpcClientFactory,
 	CheckpointRepository,
 	ChainConfig,
-	EthereumIntentionExecutor,
+	EthereumIntentExecutor,
 > = Listener<
 	Fetcher<RpcClient, RpcClientFactory>,
 	SyncCheckpoint,
 	CheckpointRepository,
-	IntentionEventId,
+	IntentEventId,
 	BlockEvent,
-	IntentionEventHandler<
+	IntentEventHandler<
 		Metadata,
 		SubxtMetadataProvider<ChainConfig>,
-		EthereumIntentionExecutor,
+		EthereumIntentExecutor,
 		SubstrateKeyStore,
 		RpcClient,
 		RpcClientFactory,

@@ -20,9 +20,9 @@ use crate::rpc_client::{SubstrateRpcClient, SubstrateRpcClientFactory};
 use async_trait::async_trait;
 use executor_core::event_handler::Error::RecoverableError;
 use executor_core::event_handler::{Error, EventHandler};
-use executor_core::intention_executor::IntentionExecutor;
+use executor_core::intent_executor::IntentExecutor;
 use executor_core::key_store::KeyStore;
-use executor_core::primitives::Intention;
+use executor_core::primitives::Intent;
 use log::error;
 use parity_scale_codec::Decode;
 use std::marker::PhantomData;
@@ -30,22 +30,22 @@ use std::sync::RwLock;
 use subxt::config::DefaultExtrinsicParamsBuilder;
 use subxt::ext::scale_decode;
 use subxt::ext::scale_decode::DecodeAsFields;
-use subxt::ext::subxt_core::{metadata, tx};
+use subxt::ext::subxt_core::tx;
 use subxt::{Config, Metadata};
 use subxt_core::config::DefaultExtrinsicParams;
 use subxt_core::utils::{AccountId32, MultiAddress, MultiSignature};
 use subxt_signer::sr25519::SecretKeyBytes;
 
-pub struct IntentionEventHandler<
+pub struct IntentEventHandler<
 	MetadataT,
 	MetadataProviderT: MetadataProvider<MetadataT>,
-	EthereumIntentionExecutorT: IntentionExecutor,
+	EthereumIntentExecutorT: IntentExecutor,
 	KeyStoreT: KeyStore<SecretKeyBytes>,
 	RpcClient: SubstrateRpcClient,
 	RpcClientFactory: SubstrateRpcClientFactory<RpcClient>,
 > {
 	metadata_provider: MetadataProviderT,
-	ethereum_intention_executor: EthereumIntentionExecutorT,
+	ethereum_intent_executor: EthereumIntentExecutorT,
 	key_store: KeyStoreT,
 	rpc_client_factory: RpcClientFactory,
 	nonce: RwLock<u64>,
@@ -55,15 +55,15 @@ pub struct IntentionEventHandler<
 impl<
 		MetadataT,
 		MetadataProviderT: MetadataProvider<MetadataT>,
-		EthereumIntentionExecutorT: IntentionExecutor,
+		EthereumIntentExecutorT: IntentExecutor,
 		KeyStoreT: KeyStore<SecretKeyBytes>,
 		RpcClient: SubstrateRpcClient,
 		RpcClientFactory: SubstrateRpcClientFactory<RpcClient>,
 	>
-	IntentionEventHandler<
+	IntentEventHandler<
 		MetadataT,
 		MetadataProviderT,
-		EthereumIntentionExecutorT,
+		EthereumIntentExecutorT,
 		KeyStoreT,
 		RpcClient,
 		RpcClientFactory,
@@ -71,13 +71,13 @@ impl<
 {
 	pub fn new(
 		metadata_provider: MetadataProviderT,
-		ethereum_intention_executor: EthereumIntentionExecutorT,
+		ethereum_intent_executor: EthereumIntentExecutorT,
 		key_store: KeyStoreT,
 		rpc_client_factory: RpcClientFactory,
 	) -> Self {
 		Self {
 			metadata_provider,
-			ethereum_intention_executor,
+			ethereum_intent_executor,
 			key_store,
 			rpc_client_factory,
 			nonce: RwLock::new(0),
@@ -94,15 +94,15 @@ impl<
 			Address = MultiAddress<AccountId32, u32>,
 			Signature = MultiSignature,
 		>,
-		EthereumIntentionExecutorT: IntentionExecutor + Send + Sync,
+		EthereumIntentExecutorT: IntentExecutor + Send + Sync,
 		KeyStoreT: KeyStore<SecretKeyBytes> + Send + Sync,
 		RpcClient: SubstrateRpcClient + Send + Sync,
 		RpcClientFactory: SubstrateRpcClientFactory<RpcClient> + Send + Sync,
 	> EventHandler<BlockEvent>
-	for IntentionEventHandler<
+	for IntentEventHandler<
 		Metadata,
 		SubxtMetadataProvider<ChainConfig>,
-		EthereumIntentionExecutorT,
+		EthereumIntentExecutorT,
 		KeyStoreT,
 		RpcClient,
 		RpcClientFactory,
@@ -111,13 +111,13 @@ impl<
 	async fn handle(&self, event: BlockEvent) -> Result<(), Error> {
 		log::debug!("Got event: {:?}, variant name: {}", event.id, event.variant_name);
 
-		if event.pallet_name != "OmniAccount" || event.variant_name != "IntentionRequested" {
+		if event.pallet_name != "OmniAccount" || event.variant_name != "IntentRequested" {
 			// we are not interested in this event
 			log::debug!("Not interested in this event");
 			return Ok(());
 		}
 
-		log::debug!("Got IntentionRequested event: {:?}", event.id);
+		log::debug!("Got IntentRequested event: {:?}", event.id);
 
 		let metadata = self.metadata_provider.get(event.id.block_num).await;
 
@@ -144,7 +144,7 @@ impl<
 			.map(|f| scale_decode::Field::new(f.ty.id, f.name.as_deref()));
 
 		let decoded =
-			crate::litentry_rococo::omni_account::events::IntentionRequested::decode_as_fields(
+			crate::litentry_rococo::omni_account::events::IntentRequested::decode_as_fields(
 				&mut event.field_bytes.clone().as_slice(),
 				&mut fields.clone(),
 				metadata.types(),
@@ -154,39 +154,39 @@ impl<
 				Error::NonRecoverableError
 			})?;
 
-		let intention = match decoded.intention {
-			crate::litentry_rococo::runtime_types::core_primitives::intention::Intention::CallEthereum(call_ethereum) => {
-				Intention::CallEthereum(call_ethereum.address.to_fixed_bytes(), call_ethereum.input.0)
+		let intent = match decoded.intent {
+			crate::litentry_rococo::runtime_types::core_primitives::intent::Intent::CallEthereum(call_ethereum) => {
+				Intent::CallEthereum(call_ethereum.address.to_fixed_bytes(), call_ethereum.input.0)
 			},
-			crate::litentry_rococo::runtime_types::core_primitives::intention::Intention::TransferEthereum(transfer) => {
-				Intention::TransferEthereum(transfer.to.to_fixed_bytes(), transfer.value)
+			crate::litentry_rococo::runtime_types::core_primitives::intent::Intent::TransferEthereum(transfer) => {
+				Intent::TransferEthereum(transfer.to.to_fixed_bytes(), transfer.value)
 			}
 		};
 
-		//to explicitly handle all intention variants
-		match intention {
-			Intention::CallEthereum(_, _) => {
-				self.ethereum_intention_executor.execute(intention).await.map_err(|e| {
+		//to explicitly handle all intent variants
+		match intent {
+			Intent::CallEthereum(_, _) => {
+				self.ethereum_intent_executor.execute(intent).await.map_err(|e| {
 					// assume for now we can easily recover
-					log::error!("Error executing intention");
+					log::error!("Error executing intent");
 					Error::RecoverableError
 				})?;
 			},
-			Intention::TransferEthereum(_, _) => {
-				self.ethereum_intention_executor.execute(intention).await.map_err(|e| {
+			Intent::TransferEthereum(_, _) => {
+				self.ethereum_intent_executor.execute(intent).await.map_err(|e| {
 					// assume for now we can easily recover
-					log::error!("Error executing intention");
+					log::error!("Error executing intent");
 					Error::RecoverableError
 				})?;
 			},
 		}
 
-		log::debug!("Intention executed, publishing result");
+		log::debug!("Intent executed, publishing result");
 
 		// todo: the whole signing part should be encapsulated in separate component like `TransactionSigner`
-		//we need to report back to parachain intention result
+		//we need to report back to parachain intent result
 		let decoded =
-			crate::litentry_rococo::omni_account::events::IntentionRequested::decode_as_fields(
+			crate::litentry_rococo::omni_account::events::IntentRequested::decode_as_fields(
 				&mut event.field_bytes.as_slice(),
 				&mut fields,
 				metadata.types(),
@@ -197,11 +197,11 @@ impl<
 			})?;
 
 		let execution_result =
-			crate::litentry_rococo::omni_account::calls::types::intention_executed::Result::Success;
+			crate::litentry_rococo::omni_account::calls::types::intent_executed::Result::Success;
 
-		let call = crate::litentry_rococo::tx().omni_account().intention_executed(
+		let call = crate::litentry_rococo::tx().omni_account().intent_executed(
 			decoded.who,
-			decoded.intention,
+			decoded.intent,
 			execution_result,
 		);
 

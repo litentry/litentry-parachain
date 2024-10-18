@@ -1750,7 +1750,7 @@ dependencies = [
  "env_logger",
  "executor-core",
  "hex",
- "intention-executor",
+ "intent-executor",
  "log",
  "parentchain-listener",
  "scale-encode",
@@ -2389,7 +2389,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "intention-executor"
+name = "intent-executor"
 version = "0.1.0"
 dependencies = [
  "alloy",
