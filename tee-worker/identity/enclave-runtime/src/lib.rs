@@ -148,6 +148,11 @@ pub unsafe extern "C" fn init(
 		}
 	);
 
+	#[cfg(feature = "dcap")]
+	info!("  DCAP is enabled within enclave");
+	#[cfg(not(feature = "dcap"))]
+	info!("  DCAP is disabled within enclave");
+
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))
 			.map_err(Error::Codec)
