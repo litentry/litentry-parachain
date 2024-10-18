@@ -43,7 +43,9 @@ pub enum Error {
 	OCallApiError(&'static str),
 }
 
-pub fn init_in_memory_state<OCallApi>(ocall_api: Arc<OCallApi>) -> Result<(), &'static str>
+pub fn init_in_memory_omni_account_store<OCallApi>(
+	ocall_api: Arc<OCallApi>,
+) -> Result<(), &'static str>
 where
 	OCallApi: EnclaveOnChainOCallApi,
 {
@@ -56,5 +58,8 @@ where
 	let account_stores = repository.get_all().map_err(|_| "Failed to get all account stores")?;
 	// TODO: decrypt state
 	InMemoryStore::load(account_stores).map_err(|_| "Failed to load account stores")?;
-	InMemoryStore::set_block_height(block_number).map_err(|_| "Failed to set block number")
+	InMemoryStore::set_block_height(block_number).map_err(|_| "Failed to set block number")?;
+	log::info!("In-memory store initialized successfully");
+
+	Ok(())
 }
