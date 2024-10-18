@@ -253,7 +253,7 @@ pub(crate) fn init_enclave(
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
 	let attestation_handler =
-		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository));
+		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
 	let evm_assertion_repository = EvmAssertionRepository::new(ASSERTIONS_FILE)?;
