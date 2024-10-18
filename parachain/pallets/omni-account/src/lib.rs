@@ -340,12 +340,9 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
 
 			MemberAccountHash::<T>::insert(hash, omni_account.clone());
-			AccountStore::<T>::insert(omni_account.clone(), member_accounts);
+			AccountStore::<T>::insert(omni_account.clone(), member_accounts.clone());
 
-			Self::deposit_event(Event::AccountStoreCreated {
-				who: omni_account,
-				account_store_hash: member_accounts.hash(),
-			});
+			Self::deposit_event(Event::AccountStoreCreated { who: omni_account });
 
 			Ok(member_accounts)
 		}
