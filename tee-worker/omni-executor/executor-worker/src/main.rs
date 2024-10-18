@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::cli::Cli;
+use clap::Parser;
 use intention_executor::EthereumIntentionExecutor;
 use log::error;
 use parentchain_listener::CustomConfig;
 use std::io::Write;
 use std::thread::JoinHandle;
 use std::{fs, thread};
-use clap::Parser;
 use tokio::runtime::Handle;
 use tokio::sync::oneshot;
-use crate::cli::Cli;
 
 mod cli;
 
@@ -43,21 +43,27 @@ async fn main() -> Result<(), ()> {
 		})
 		.init();
 
-
 	let cli = Cli::parse();
 
 	fs::create_dir_all("data/").map_err(|e| {
 		error!("Could not create data dir: {:?}", e);
 	})?;
 
-	listen_to_parentchain(cli.parentchain_url, cli.ethereum_url).await.unwrap().join().unwrap();
+	listen_to_parentchain(cli.parentchain_url, cli.ethereum_url)
+		.await
+		.unwrap()
+		.join()
+		.unwrap();
 	Ok(())
 }
 
-async fn listen_to_parentchain(parentchain_url: String, ethereum_url: String) -> Result<JoinHandle<()>, ()> {
+async fn listen_to_parentchain(
+	parentchain_url: String,
+	ethereum_url: String,
+) -> Result<JoinHandle<()>, ()> {
 	let (_sub_stop_sender, sub_stop_receiver) = oneshot::channel();
-	let ethereum_intention_executor = EthereumIntentionExecutor::new(&ethereum_url)
-		.map_err(|e| log::error!("{:?}", e))?;
+	let ethereum_intention_executor =
+		EthereumIntentionExecutor::new(&ethereum_url).map_err(|e| log::error!("{:?}", e))?;
 
 	let mut parentchain_listener =
 		parentchain_listener::create_listener::<CustomConfig, EthereumIntentionExecutor>(
