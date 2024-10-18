@@ -450,6 +450,16 @@ pub unsafe extern "C" fn init_in_memory_state() -> sgx_status_t {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn upload_id_graph() -> sgx_status_t {
+	if let Err(e) = initialization::upload_id_graph() {
+		error!("Failed to upload IDGraph: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn sync_parentchain(
 	blocks_to_sync: *const u8,
 	blocks_to_sync_size: usize,
