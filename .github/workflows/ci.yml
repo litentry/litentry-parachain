@@ -596,10 +596,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build
         working-directory: ./tee-worker/omni-executor
-        run: cargo build --verbose
+        run: cargo build
       - name: Run tests
         working-directory: ./tee-worker/omni-executor
-        run: cargo test --verbose
+        run: cargo test
 
   parachain-ts-test:
     runs-on: ubuntu-latest
