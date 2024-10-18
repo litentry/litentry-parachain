@@ -235,7 +235,6 @@ where
 		if block_number <= last_block_number {
 			return Ok(())
 		}
-		// TODO: decrypt members and change members to be Vec<Identity> instead
 		OmniAccountStore::insert(account_id.clone(), members).map_err(|e| {
 			Error::AccountStoreError(format!(
 				"Could not update account store for account_id: {:?}, reason: {:?}",
