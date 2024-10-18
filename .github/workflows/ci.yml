@@ -594,10 +594,16 @@ jobs:
       - sequentialise
     steps:
       - uses: actions/checkout@v4
+      - name: Clippy
+        if: needs.set-condition.outputs.check_omni_executor == 'true'
+        working-directory: ./tee-worker/omni-executor
+        run: cargo clippy --release -- -D warnings
       - name: Build
+        if: needs.set-condition.outputs.check_omni_executor == 'true'
         working-directory: ./tee-worker/omni-executor
         run: cargo build
-      - name: Run tests
+      - name: Tests
+        if: needs.set-condition.outputs.check_omni_executor == 'true'
         working-directory: ./tee-worker/omni-executor
         run: cargo test
 
