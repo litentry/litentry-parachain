@@ -17,8 +17,7 @@
 use crate::{AccountId, Hash, Identity, Vec};
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_io::hashing::blake2_256;
-use sp_runtime::{BoundedVec, RuntimeDebug};
+use sp_runtime::RuntimeDebug;
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum MemberAccount {
