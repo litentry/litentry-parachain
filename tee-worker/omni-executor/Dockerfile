@@ -1,4 +1,4 @@
-FROM rust:1.79 AS builder
+FROM rust:1.82 AS builder
 WORKDIR /usr/src/omni-executor
 COPY . .
 RUN cargo build --release
