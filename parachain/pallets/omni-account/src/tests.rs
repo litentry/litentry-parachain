@@ -58,7 +58,7 @@ fn create_account_store_works() {
 		));
 
 		let member_accounts: MemberAccounts<TestRuntime> =
-			vec![MemberAccount::Public(alice().identity.clone())].try_into().unwrap();
+			vec![public_member_account(alice())].try_into().unwrap();
 
 		System::assert_last_event(
 			Event::AccountStoreCreated {
@@ -138,7 +138,7 @@ fn add_account_works() {
 		));
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
 			BoundedVec::truncate_from(vec![
-				MemberAccount::Public(alice().identity.clone()),
+				public_member_account(alice()),
 				bob.clone(),
 				charlie.clone(),
 			]);
@@ -344,7 +344,7 @@ fn remove_account_works() {
 		);
 
 		let expected_member_accounts: MemberAccounts<TestRuntime> =
-			BoundedVec::truncate_from(vec![MemberAccount::Public(alice().identity.clone())]);
+			BoundedVec::truncate_from(vec![public_member_account(alice())]);
 
 		System::assert_has_event(
 			Event::AccountRemoved {
