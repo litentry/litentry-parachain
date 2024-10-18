@@ -184,8 +184,6 @@ impl EnclaveOnChainOCallApi for OcallApi {
 			})
 			.collect();
 
-		log::error!("Got headers: {:?}", responses);
-
 		responses.first().cloned().ok_or(Error::ChainCallFailed)
 	}
 }
