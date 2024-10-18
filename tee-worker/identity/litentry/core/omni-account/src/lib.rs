@@ -32,7 +32,7 @@ mod in_memory_store;
 pub use in_memory_store::InMemoryStore;
 
 use alloc::{collections::btree_map::BTreeMap, sync::Arc, vec::Vec};
-use itp_types::parentchain::{AccountId, Header, ParentchainId};
+use itp_types::parentchain::{AccountId, BlockNumber, Header, ParentchainId};
 use litentry_primitives::MemberAccount;
 
 pub type OmniAccounts = BTreeMap<AccountId, Vec<MemberAccount>>;
@@ -47,12 +47,14 @@ pub fn init_in_memory_state<OCallApi>(ocall_api: Arc<OCallApi>) -> Result<(), &'
 where
 	OCallApi: EnclaveOnChainOCallApi,
 {
-	let header = ocall_api.get_header(&ParentchainId::Litentry).map_err(|e| {
+	let header: Header = ocall_api.get_header(&ParentchainId::Litentry).map_err(|e| {
 		log::error!("Failed to get header: {:?}", e);
 		"Failed to get header"
 	})?;
+	let block_number: BlockNumber = header.number;
 	let repository = OmniAccountRepository::new(ocall_api, header);
 	let account_stores = repository.get_all().map_err(|_| "Failed to get all account stores")?;
 	// TODO: decrypt state
-	InMemoryStore::load(account_stores).map_err(|_| "Failed to load account stores")
+	InMemoryStore::load(account_stores).map_err(|_| "Failed to load account stores")?;
+	InMemoryStore::set_block_height(block_number).map_err(|_| "Failed to set block number")
 }

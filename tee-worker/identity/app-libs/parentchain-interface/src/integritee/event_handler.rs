@@ -24,8 +24,8 @@ use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
-		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
-		ProcessedEventsArtifacts,
+		AccountId, BlockNumber, FilterEvents, HandleParentchainEvents,
+		ParentchainEventProcessingError, ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
@@ -35,7 +35,7 @@ use lc_omni_account::InMemoryStore as OmniAccountStore;
 use litentry_primitives::{Assertion, Identity, MemberAccount, ValidationData, Web3Network};
 use log::*;
 use sp_core::{blake2_256, H160};
-use sp_runtime::traits::{Block as ParentchainBlock, Header as ParentchainHeader};
+use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeader};
 use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc, time::Instant};
 
@@ -224,7 +224,17 @@ where
 	fn update_account_store(
 		account_id: AccountId,
 		members: Vec<MemberAccount>,
+		block_number: BlockNumber,
 	) -> Result<(), Error> {
+		let last_block_number = OmniAccountStore::get_block_height().map_err(|e| {
+			Error::AccountStoreError(format!(
+				"Could not get last block number from account store, reason: {:?}",
+				e
+			))
+		})?;
+		if block_number <= last_block_number {
+			return Ok(())
+		}
 		// TODO: decrypt members and change members to be Vec<Identity> instead
 		OmniAccountStore::insert(account_id.clone(), members).map_err(|e| {
 			Error::AccountStoreError(format!(
@@ -247,11 +257,14 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-		_block_number: <<Block as ParentchainBlock>::Header as ParentchainHeader>::Number,
+		block_number: <<Block as ParentchainBlockTrait>::Header as ParentchainHeader>::Number,
 	) -> Result<ProcessedEventsArtifacts, Error>
 	where
-		Block: ParentchainBlock,
+		Block: ParentchainBlockTrait,
 	{
+		let block_number: BlockNumber = block_number
+			.try_into()
+			.map_err(|_| ParentchainEventProcessingError::ParentchainBlockProcessedFailure)?;
 		let mut handled_events: Vec<H256> = Vec::new();
 		let mut successful_assertion_ids: Vec<H160> = Vec::new();
 		let mut failed_assertion_ids: Vec<H160> = Vec::new();
@@ -376,7 +389,7 @@ where
 				.try_for_each(|event| {
 					debug!("found AccountStoreCreated event: {:?}", event);
 					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store)
+					Self::update_account_store(event.who, event.account_store, block_number)
 				})
 				.map_err(|_| ParentchainEventProcessingError::AccountStoreCreatedFailure)?;
 		}
@@ -388,7 +401,7 @@ where
 				.try_for_each(|event| {
 					debug!("found AccountAdded event: {:?}", event);
 					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store)
+					Self::update_account_store(event.who, event.account_store, block_number)
 				})
 				.map_err(|_| ParentchainEventProcessingError::AccountAddedFailure)?;
 		}
@@ -400,7 +413,7 @@ where
 				.try_for_each(|event| {
 					debug!("found AccountRemoved event: {:?}", event);
 					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store)
+					Self::update_account_store(event.who, event.account_store, block_number)
 				})
 				.map_err(|_| ParentchainEventProcessingError::AccountRemovedFailure)?;
 		}
@@ -412,7 +425,7 @@ where
 				.try_for_each(|event| {
 					debug!("found AccountMadePublic event: {:?}", event);
 					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store)
+					Self::update_account_store(event.who, event.account_store, block_number)
 				})
 				.map_err(|_| ParentchainEventProcessingError::AccountMadePublicFailure)?;
 		}
