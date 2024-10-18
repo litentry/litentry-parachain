@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::listener::IntentionEventId;
+use crate::listener::IntentEventId;
 use executor_core::primitives::GetEventId;
 use executor_core::sync_checkpoint_repository::Checkpoint;
 use parity_scale_codec::{Decode, Encode};
 
-/// Used to uniquely identify intention event on parentchain.
+/// Used to uniquely identify intent event on parentchain.
 #[derive(Clone, Debug)]
 pub struct EventId {
 	pub block_num: u64,
@@ -73,8 +73,8 @@ impl From<u64> for SyncCheckpoint {
 	}
 }
 
-impl From<IntentionEventId> for SyncCheckpoint {
-	fn from(event_id: IntentionEventId) -> Self {
+impl From<IntentEventId> for SyncCheckpoint {
+	fn from(event_id: IntentEventId) -> Self {
 		Self::from_event_id(&event_id)
 	}
 }

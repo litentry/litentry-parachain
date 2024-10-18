@@ -16,22 +16,27 @@
 
 mod event_handler;
 mod fetcher;
+mod key_store;
 mod listener;
 mod metadata;
 mod primitives;
 mod rpc_client;
 
-use crate::event_handler::IntentionEventHandler;
+use crate::event_handler::IntentEventHandler;
 use crate::fetcher::Fetcher;
+use crate::key_store::SubstrateKeyStore;
 use crate::listener::ParentchainListener;
 use crate::metadata::SubxtMetadataProvider;
 use crate::rpc_client::{SubxtClient, SubxtClientFactory};
-use executor_core::intention_executor::IntentionExecutor;
+use executor_core::intent_executor::IntentExecutor;
+use executor_core::key_store::KeyStore;
 use executor_core::listener::Listener;
 use executor_core::sync_checkpoint_repository::FileCheckpointRepository;
+use log::{error, info};
 use scale_encode::EncodeAsType;
 use subxt::config::signed_extensions;
 use subxt::Config;
+use subxt_core::utils::AccountId32;
 use tokio::runtime::Handle;
 use tokio::sync::oneshot::Receiver;
 
@@ -48,7 +53,7 @@ pub enum CustomConfig {}
 impl Config for CustomConfig {
 	type Hash = subxt::utils::H256;
 	type AccountId = subxt::utils::AccountId32;
-	type Address = subxt::utils::MultiAddress<Self::AccountId, ()>;
+	type Address = subxt::utils::MultiAddress<Self::AccountId, u32>;
 	type Signature = subxt::utils::MultiSignature;
 	type Hasher = subxt::config::substrate::BlakeTwo256;
 	type Header = subxt::config::substrate::SubstrateHeader<u32, Self::Hasher>;
@@ -71,40 +76,56 @@ impl Config for CustomConfig {
 }
 
 /// Creates parentchain listener
-pub async fn create_listener<
-	ChainConfig: Config,
-	EthereumIntentionExecutorT: IntentionExecutor + Send + Sync,
->(
+pub async fn create_listener<EthereumIntentExecutorT: IntentExecutor + Send + Sync>(
 	id: &str,
 	handle: Handle,
 	ws_rpc_endpoint: &str,
-	ethereum_intention_executor: EthereumIntentionExecutorT,
+	ethereum_intent_executor: EthereumIntentExecutorT,
 	stop_signal: Receiver<()>,
 ) -> Result<
 	ParentchainListener<
-		SubxtClient<ChainConfig>,
-		SubxtClientFactory<ChainConfig>,
+		SubxtClient<CustomConfig>,
+		SubxtClientFactory<CustomConfig>,
 		FileCheckpointRepository,
-		ChainConfig,
-		EthereumIntentionExecutorT,
+		CustomConfig,
+		EthereumIntentExecutorT,
 	>,
 	(),
 > {
-	let client_factory: SubxtClientFactory<ChainConfig> = SubxtClientFactory::new(ws_rpc_endpoint);
+	let client_factory: SubxtClientFactory<CustomConfig> = SubxtClientFactory::new(ws_rpc_endpoint);
 
 	let fetcher = Fetcher::new(client_factory);
 	let last_processed_log_repository =
 		FileCheckpointRepository::new("data/parentchain_last_log.bin");
 
 	let metadata_provider = SubxtMetadataProvider::new(SubxtClientFactory::new(ws_rpc_endpoint));
-	let intention_event_handler =
-		IntentionEventHandler::new(metadata_provider, ethereum_intention_executor);
+	let key_store = SubstrateKeyStore::new("/data/parentchain_key.bin".to_string());
+	let secret_key_bytes = key_store
+		.read()
+		.map_err(|e| {
+			error!("Could not unseal key: {:?}", e);
+		})
+		.unwrap();
+	let signer = subxt_signer::sr25519::Keypair::from_secret_key(secret_key_bytes)
+		.map_err(|e| {
+			error!("Could not create secret key: {:?}", e);
+		})
+		.unwrap();
+
+	info!("Substrate signer address: {}", AccountId32::from(signer.public_key()));
+
+	let intent_event_handler = IntentEventHandler::new(
+		metadata_provider,
+		ethereum_intent_executor,
+		key_store,
+		SubxtClientFactory::new(ws_rpc_endpoint),
+	);
 
 	Listener::new(
 		id,
 		handle,
 		fetcher,
-		intention_event_handler,
+		intent_event_handler,
 		stop_signal,
 		last_processed_log_repository,
 	)

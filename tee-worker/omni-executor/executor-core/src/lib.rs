@@ -16,7 +16,8 @@
 
 pub mod event_handler;
 pub mod fetcher;
-pub mod intention_executor;
+pub mod intent_executor;
+pub mod key_store;
 pub mod listener;
 pub mod primitives;
 pub mod sync_checkpoint_repository;

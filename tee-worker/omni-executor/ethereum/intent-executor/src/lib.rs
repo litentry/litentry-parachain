@@ -22,25 +22,25 @@ use alloy::providers::{Provider, ProviderBuilder, WalletProvider};
 use alloy::rpc::types::{TransactionInput, TransactionRequest};
 use alloy::signers::local::PrivateKeySigner;
 use async_trait::async_trait;
-use executor_core::intention_executor::IntentionExecutor;
-use executor_core::primitives::Intention;
+use executor_core::intent_executor::IntentExecutor;
+use executor_core::primitives::Intent;
 use log::{error, info};
 
-/// Executes intentions on Ethereum network.
-pub struct EthereumIntentionExecutor {
+/// Executes intents on Ethereum network.
+pub struct EthereumIntentExecutor {
 	rpc_url: String,
 }
 
-impl EthereumIntentionExecutor {
+impl EthereumIntentExecutor {
 	pub fn new(rpc_url: &str) -> Result<Self, ()> {
 		Ok(Self { rpc_url: rpc_url.to_string() })
 	}
 }
 
 #[async_trait]
-impl IntentionExecutor for EthereumIntentionExecutor {
-	async fn execute(&self, intention: Intention) -> Result<(), ()> {
-		info!("Relaying intention: {:?}", intention);
+impl IntentExecutor for EthereumIntentExecutor {
+	async fn execute(&self, intent: Intent) -> Result<(), ()> {
+		info!("Executin intent: {:?}", intent);
 		// todo: this should be retrieved from key_store
 		let signer = PrivateKeySigner::from_str(
 			"0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
@@ -53,8 +53,8 @@ impl IntentionExecutor for EthereumIntentionExecutor {
 			.on_http(self.rpc_url.parse().map_err(|e| error!("Could not parse rpc url: {:?}", e))?);
 		let account =
 			provider.get_account(provider.signer_addresses().next().unwrap()).await.unwrap();
-		match intention {
-			Intention::TransferEthereum(to, value) => {
+		match intent {
+			Intent::TransferEthereum(to, value) => {
 				let tx = TransactionRequest::default()
 					.to(Address::from(to))
 					.nonce(account.nonce)
@@ -67,7 +67,7 @@ impl IntentionExecutor for EthereumIntentionExecutor {
 					error!("Could not get transaction receipt: {:?}", e);
 				})?;
 			},
-			Intention::CallEthereum(address, input) => {
+			Intent::CallEthereum(address, input) => {
 				let tx = TransactionRequest::default()
 					.to(Address::from(address))
 					.nonce(account.nonce)

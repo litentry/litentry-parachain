@@ -38,7 +38,7 @@ impl<ChainConfig: Config> SubxtMetadataProvider<ChainConfig> {
 impl<ChainConfig: Config> MetadataProvider<Metadata> for SubxtMetadataProvider<ChainConfig> {
 	async fn get(&self, block_num: u64) -> Metadata {
 		let mut client = self.client_factory.new_client().await.unwrap();
-		let raw_metadata = client.get_raw_metadata(block_num).await.unwrap();
+		let raw_metadata = client.get_raw_metadata(Some(block_num)).await.unwrap();
 
 		Metadata::decode(&mut raw_metadata.as_slice()).unwrap()
 	}

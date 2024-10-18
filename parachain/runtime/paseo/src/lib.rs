@@ -1002,6 +1002,7 @@ impl pallet_omni_account::Config for Runtime {
 	type MaxAccountStoreLength = ConstU32<64>;
 	type OmniAccountOrigin = EnsureOmniAccount;
 	type OmniAccountConverter = DefaultOmniAccountConverter;
+	type SetOmniExecutorOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_bitacross::Config for Runtime {
