@@ -142,6 +142,8 @@ where
 				decode_result(&call_result.1)
 					.map_err(|_| "Could not decode evm assertion execution result")?;
 
+			log::error!("Dynamic_DEBUG: description: {:?}, assertion_type: {:?}, assertions: {:?}, schema_url: {:?}, meet: {:?}", description, assertion_type, assertions, schema_url, meet);
+
 			Ok(AssertionResult {
 				description,
 				assertion_type,
