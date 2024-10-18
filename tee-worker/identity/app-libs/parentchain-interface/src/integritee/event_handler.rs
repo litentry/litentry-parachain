@@ -35,6 +35,7 @@ use lc_omni_account::InMemoryStore as OmniAccountStore;
 use litentry_primitives::{Assertion, Identity, MemberAccount, ValidationData, Web3Network};
 use log::*;
 use sp_core::{blake2_256, H160};
+use sp_runtime::traits::{Block as ParentchainBlock, Header as ParentchainHeader};
 use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc, time::Instant};
 
@@ -241,11 +242,16 @@ where
 	MetricsApi: EnclaveMetricsOCallApi,
 {
 	type Output = ProcessedEventsArtifacts;
-	fn handle_events(
+
+	fn handle_events<Block>(
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<ProcessedEventsArtifacts, Error> {
+		_block_number: <<Block as ParentchainBlock>::Header as ParentchainHeader>::Number,
+	) -> Result<ProcessedEventsArtifacts, Error>
+	where
+		Block: ParentchainBlock,
+	{
 		let mut handled_events: Vec<H256> = Vec::new();
 		let mut successful_assertion_ids: Vec<H160> = Vec::new();
 		let mut failed_assertion_ids: Vec<H160> = Vec::new();

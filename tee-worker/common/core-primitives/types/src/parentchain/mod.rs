@@ -26,7 +26,11 @@ use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H160, H256};
-use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
+use sp_runtime::{
+	generic::Header as HeaderG,
+	traits::{BlakeTwo256, Block as ParentchainBlock, Header as ParentchainHeader},
+	MultiAddress, MultiSignature,
+};
 
 use self::events::ParentchainBlockProcessed;
 
@@ -148,11 +152,14 @@ where
 {
 	type Output;
 
-	fn handle_events(
+	fn handle_events<Block>(
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<Self::Output, Error>;
+		block_number: <<Block as ParentchainBlock>::Header as ParentchainHeader>::Number,
+	) -> Result<Self::Output, Error>
+	where
+		Block: ParentchainBlock;
 }
 
 #[derive(Debug)]

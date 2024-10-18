@@ -6,6 +6,7 @@ use itp_types::{
 	RsaRequest, H256,
 };
 use sp_core::H160;
+use sp_runtime::traits::{Block as ParentchainBlock, Header as ParentchainHeader};
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -110,11 +111,15 @@ where
 	Executor: IndirectExecutor<TrustedCallSignedMock, Error, (), (), ()>,
 {
 	type Output = ProcessedEventsArtifacts;
-	fn handle_events(
+	fn handle_events<Block>(
 		&self,
 		_: &Executor,
 		_: impl FilterEvents,
-	) -> Result<ProcessedEventsArtifacts, Error> {
+		_block_number: <<Block as ParentchainBlock>::Header as ParentchainHeader>::Number,
+	) -> Result<ProcessedEventsArtifacts, Error>
+	where
+		Block: ParentchainBlock,
+	{
 		Ok((
 			Vec::from([H256::default()]),
 			Vec::from([H160::default()]),
