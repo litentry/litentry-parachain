@@ -54,7 +54,7 @@ use litentry_hex_utils::hex_encode;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,
-	RequestAesKeyNonce, VCMPError, ValidationData, Web3Network,
+	VCMPError, ValidationData, Web3Network,
 };
 use log::*;
 use sp_core::{

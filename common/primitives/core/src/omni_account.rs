@@ -17,8 +17,7 @@
 use crate::{AccountId, Hash, Identity, Vec};
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_io::hashing::blake2_256;
-use sp_runtime::{BoundedVec, RuntimeDebug};
+use sp_runtime::RuntimeDebug;
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum MemberAccount {
@@ -45,10 +44,6 @@ impl From<Identity> for MemberAccount {
     }
 }
 
-pub trait GetAccountStoreHash {
-    fn hash(&self) -> Hash;
-}
-
 pub trait OmniAccountConverter {
     type OmniAccount;
     fn convert(identity: &Identity) -> Self::OmniAccount;
@@ -60,19 +55,5 @@ impl OmniAccountConverter for DefaultOmniAccountConverter {
     type OmniAccount = AccountId;
     fn convert(identity: &Identity) -> AccountId {
         identity.to_omni_account()
-    }
-}
-
-impl<T> GetAccountStoreHash for BoundedVec<MemberAccount, T> {
-    fn hash(&self) -> Hash {
-        let hashes: Vec<Hash> = self.iter().map(|member| member.hash()).collect();
-        hashes.using_encoded(blake2_256).into()
-    }
-}
-
-impl GetAccountStoreHash for Vec<MemberAccount> {
-    fn hash(&self) -> Hash {
-        let hashes: Vec<Hash> = self.iter().map(|member| member.hash()).collect();
-        hashes.using_encoded(blake2_256).into()
     }
 }
