@@ -60,6 +60,11 @@ on:
         description: rebuild-bitacross
         required: true
         default: true
+      check-omni-executor:
+        type: boolean
+        description: check-omni-executor
+        required: true
+        default: true
       run-multi-worker-test:
         type: boolean
         description: run-multi-worker-test
@@ -95,6 +100,7 @@ jobs:
       rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
       rebuild_identity: ${{ steps.env.outputs.rebuild_identity }}
       rebuild_bitacross: ${{ steps.env.outputs.rebuild_bitacross }}
+      check_omni_executor: ${{ steps.env.outputs.check_omni_executor }}
       push_docker: ${{ steps.env.outputs.push_docker }}
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
       run_identity_test: ${{ steps.env.outputs.run_identity_test }}
@@ -118,6 +124,7 @@ jobs:
           rebuild_parachain=false
           rebuild_identity=false
           rebuild_bitacross=false
+          check_omni_executor=false
           push_docker=false
           run_parachain_test=false
           run_identity_test=false
@@ -130,6 +137,9 @@ jobs:
           if [ "${{ github.event.inputs.rebuild-bitacross }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
             rebuild_bitacross=true
           fi
+          if [ "${{ github.event.inputs.check-omni-executor }}" = "true" ] || [ "${{ steps.filter.outputs.omni_executor_src }}" = "true" ]; then
+            check_omni_executor=true
+          fi          
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
           elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
@@ -147,6 +157,7 @@ jobs:
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_identity=$rebuild_identity" | tee -a $GITHUB_OUTPUT
           echo "rebuild_bitacross=$rebuild_bitacross" | tee -a $GITHUB_OUTPUT
+          echo "check_omni_executor=$check_omni_executor" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_identity_test=$run_identity_test" | tee -a $GITHUB_OUTPUT
@@ -188,6 +199,11 @@ jobs:
 
       - name: bitacross-worker enclave-runtime fmt check
         working-directory: ./tee-worker/bitacross/enclave-runtime
+        run: |
+          cargo fmt --all -- --check
+
+      - name: omni-executor fmt check
+        working-directory: ./tee-worker/omni-executor
         run: |
           cargo fmt --all -- --check
 
@@ -569,6 +585,19 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.5
+
+  check-executor-build:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
 
   parachain-ts-test:
     runs-on: ubuntu-latest
