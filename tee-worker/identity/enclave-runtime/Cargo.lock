@@ -953,6 +953,7 @@ dependencies = [
  "lc-evm-dynamic-assertions",
  "lc-identity-verification",
  "lc-native-task-receiver",
+ "lc-omni-account",
  "lc-parachain-extrinsic-task-receiver",
  "lc-parachain-extrinsic-task-sender",
  "lc-stf-task-receiver",
@@ -1810,6 +1811,7 @@ dependencies = [
  "itp-types",
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
+ "lc-omni-account",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -3149,6 +3151,21 @@ dependencies = [
  "litentry-primitives",
  "log",
  "sgx_tstd",
+]
+
+[[package]]
+name = "lc-omni-account"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "itp-ocall-api",
+ "itp-storage",
+ "itp-types",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "sgx_tstd",
+ "sp-core",
 ]
 
 [[package]]
