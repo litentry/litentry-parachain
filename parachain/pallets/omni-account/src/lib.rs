@@ -21,9 +21,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{
-	GetAccountStoreHash, Identity, Intention, MemberAccount, OmniAccountConverter,
-};
+pub use core_primitives::{Identity, Intention, MemberAccount, OmniAccountConverter};
 pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
@@ -117,12 +115,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type MemberAccountHash<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = T::AccountId>;
-
-	/// A map between OmniAccount and hash of its AccountStore
-	#[pallet::storage]
-	#[pallet::getter(fn account_store_hash)]
-	pub type AccountStoreHash<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
