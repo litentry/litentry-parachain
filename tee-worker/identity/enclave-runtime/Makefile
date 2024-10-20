@@ -48,6 +48,10 @@ ifeq ($(WORKER_DEV), 1)
 	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),development
 endif
 
+ifeq ($(RA_METHOD), dcap)
+    ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),dcap
+endif
+
 ifeq ($(WORKER_ENV_DATA_PROVIDERS_CONFIG), 1)
 	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),env-data-providers-config
 endif
