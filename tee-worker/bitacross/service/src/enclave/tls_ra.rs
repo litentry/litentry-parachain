@@ -47,7 +47,7 @@ pub fn enclave_run_state_provisioning_server<E: TlsRemoteAttestation>(
 	loop {
 		match listener.accept() {
 			Ok((socket, addr)) => {
-				info!("[MU-RA-Server] a worker at {} is requesting key provisiong", addr);
+				info!("[MU-RA-Server] a worker at {} is requesting key provisioning", addr);
 				// there is some race condition, lets wait until local state gets updated (signers are registered and updated locally through indirect calls)
 				std::thread::sleep(Duration::from_secs(3));
 				let result = enclave_api.run_state_provisioning_server(
