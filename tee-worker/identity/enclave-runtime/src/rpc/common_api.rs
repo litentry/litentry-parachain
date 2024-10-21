@@ -29,7 +29,11 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_rpc_handler::direct_top_pool_api::add_top_pool_direct_rpc_methods;
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
-use lc_identity_verification::web2::{email, twitter};
+use lc_identity_verification::{
+	generate_verification_code,
+	web2::{email, twitter},
+	VerificationCodeStore,
+};
 use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
 use log::debug;
@@ -479,9 +483,9 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 					data_provider_config.sendgrid_api_key.clone(),
 					data_provider_config.sendgrid_from_email.clone(),
 				);
-				let verification_code = email::generate_verification_code();
+				let verification_code = generate_verification_code();
 
-				match email::VerificationCodeStore::insert(
+				match VerificationCodeStore::insert(
 					account_id,
 					email.clone(),
 					verification_code.clone(),

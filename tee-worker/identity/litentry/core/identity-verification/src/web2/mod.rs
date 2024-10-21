@@ -22,10 +22,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 mod discord;
 pub mod email;
-mod helpers;
 pub mod twitter;
 
-use crate::{ensure, Error, Result};
+use crate::{ensure, Error, Result, VerificationCodeStore};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
@@ -210,23 +209,20 @@ pub fn verify(
 			let Some(account_id) = who.to_native_account() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
-			let stored_verification_code =
-				match email::VerificationCodeStore::get(&account_id, &email) {
-					Ok(data) => data.ok_or_else(|| {
-						Error::LinkIdentityFailed(ErrorDetail::StfError(
-							ErrorString::truncate_from(
-								std::format!(
-									"no verification code found for {}:{}",
-									account_id_to_string(&account_id),
-									&email
-								)
-								.as_bytes()
-								.to_vec(),
-							),
-						))
-					})?,
-					Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
-				};
+			let stored_verification_code = match VerificationCodeStore::get(&account_id, &email) {
+				Ok(data) => data.ok_or_else(|| {
+					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+						std::format!(
+							"no verification code found for {}:{}",
+							account_id_to_string(&account_id),
+							&email
+						)
+						.as_bytes()
+						.to_vec(),
+					)))
+				})?,
+				Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
+			};
 
 			ensure!(
 				verification_code == stored_verification_code,
