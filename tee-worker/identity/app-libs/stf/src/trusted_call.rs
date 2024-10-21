@@ -139,6 +139,8 @@ pub enum TrustedCall {
 	#[cfg(feature = "development")]
 	#[codec(index = 25)]
 	clean_id_graphs(Identity),
+	#[codec(index = 26)]
+	add_account(Identity, AccountId, Identity, ValidationData, Option<RequestAesKey>, H256),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
@@ -229,6 +231,7 @@ impl TrustedCall {
 			Self::request_batch_vc(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "development")]
 			Self::clean_id_graphs(sender_identity) => sender_identity,
+			Self::add_account(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -242,6 +245,7 @@ impl TrustedCall {
 			Self::deactivate_identity(..) => "deactivate_identity",
 			Self::activate_identity(..) => "activate_identity",
 			Self::maybe_create_id_graph(..) => "maybe_create_id_graph",
+			Self::add_account(..) => "add_account",
 			_ => "unsupported_trusted_call",
 		}
 	}
@@ -253,6 +257,7 @@ impl TrustedCall {
 				1 => "We are going to help you generate 1 secure credential. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
 				n => format!("We are going to help you generate {n} secure credentials. Please be assured, this process is safe and involves no transactions of your assets. Token: "),
 			},
+			// TODO: add signature message prefix for add_account ?
 			_ => "Token: ".to_string(),
 		}
 	}
@@ -894,6 +899,17 @@ where
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| StfError::CleanIDGraphsFailed(e.into()))?;
 
+				Ok(TrustedCallResult::Empty)
+			},
+			TrustedCall::add_account(
+				_signer,
+				_who,
+				_account,
+				_validation_data,
+				_maybe_key,
+				_req_ext_hash,
+			) => {
+				error!("please use author_submitNativeRequest instead");
 				Ok(TrustedCallResult::Empty)
 			},
 		}
