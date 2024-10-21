@@ -26,7 +26,11 @@ use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H160, H256};
-use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
+use sp_runtime::{
+	generic::Header as HeaderG,
+	traits::{BlakeTwo256, Block as ParentchainBlock, Header as ParentchainHeader},
+	MultiAddress, MultiSignature,
+};
 
 use self::events::ParentchainBlockProcessed;
 
@@ -123,6 +127,14 @@ pub trait FilterEvents {
 	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
 
 	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
+
+	fn get_account_store_created_events(&self) -> Result<Vec<AccountStoreCreated>, Self::Error>;
+
+	fn get_account_added_events(&self) -> Result<Vec<AccountAdded>, Self::Error>;
+
+	fn get_account_removed_events(&self) -> Result<Vec<AccountRemoved>, Self::Error>;
+
+	fn get_account_made_public_events(&self) -> Result<Vec<AccountMadePublic>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -140,11 +152,14 @@ where
 {
 	type Output;
 
-	fn handle_events(
+	fn handle_events<Block>(
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<Self::Output, Error>;
+		block_number: <<Block as ParentchainBlock>::Header as ParentchainHeader>::Number,
+	) -> Result<Self::Output, Error>
+	where
+		Block: ParentchainBlock;
 }
 
 #[derive(Debug)]
@@ -163,6 +178,10 @@ pub enum ParentchainEventProcessingError {
 	EnclaveAddFailure,
 	EnclaveRemoveFailure,
 	BtcWalletGeneratedFailure,
+	AccountStoreCreatedFailure,
+	AccountAddedFailure,
+	AccountRemovedFailure,
+	AccountMadePublicFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -196,6 +215,14 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: EnclaveRemoveFailure",
 			ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
 				"Parentchain Event Processing Error: BtcWalletGeneratedFailure",
+			ParentchainEventProcessingError::AccountStoreCreatedFailure =>
+				"Parentchain Event Processing Error: AccountStoreCreatedFailure",
+			ParentchainEventProcessingError::AccountAddedFailure =>
+				"Parentchain Event Processing Error: AccountAddedFailure",
+			ParentchainEventProcessingError::AccountRemovedFailure =>
+				"Parentchain Event Processing Error: AccountRemovedFailure",
+			ParentchainEventProcessingError::AccountMadePublicFailure =>
+				"Parentchain Event Processing Error: AccountMadePublicFailure",
 		};
 		write!(f, "{}", message)
 	}
