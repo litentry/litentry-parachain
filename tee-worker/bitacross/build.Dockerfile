@@ -23,11 +23,11 @@ FROM litentry/litentry-tee-dev:latest AS builder
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 # set environment variables
-ENV SGX_SDK /opt/sgxsdk
-ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
-ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
-ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
-ENV CARGO_NET_GIT_FETCH_WITH_CLI true
+ENV SGX_SDK=/opt/sgxsdk
+ENV PATH="$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 
 ENV SCCACHE_CACHE_SIZE="20G"
 ENV SCCACHE_DIR="/opt/rust/sccache"
@@ -81,8 +81,8 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 ARG SCRIPT_DIR=/usr/local/worker-cli
 ARG LOG_DIR=/usr/local/log
 
-ENV SCRIPT_DIR ${SCRIPT_DIR}
-ENV LOG_DIR ${LOG_DIR}
+ENV SCRIPT_DIR=${SCRIPT_DIR}
+ENV LOG_DIR=${LOG_DIR}
 
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/bitacross/bin/bitacross-cli /usr/local/bin
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/bitacross/cli/*.sh /usr/local/worker-cli/
@@ -114,8 +114,8 @@ RUN chmod +x /usr/local/bin/bitacross-worker
 RUN ls -al /usr/local/bin
 
 # checks
-ENV SGX_SDK /opt/sgxsdk
-ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
+ENV SGX_SDK=/opt/sgxsdk
+ENV SGX_ENCLAVE_SIGNER=$SGX_SDK/bin/x64/sgx_sign
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
 
@@ -148,12 +148,12 @@ COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libprotobuf* /lib/x86_64-linux-gnu/
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV TERM xterm
-ENV SGX_SDK /opt/sgxsdk
-ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
-ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
-ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM=xterm
+ENV SGX_SDK=/opt/sgxsdk
+ENV PATH="$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 
 RUN mkdir -p /origin /data
 
@@ -171,7 +171,7 @@ RUN touch spid.txt key.txt && \
 
 RUN ldd /usr/local/bin/bitacross-worker && /usr/local/bin/bitacross-worker --version
 
-ENV DATA_DIR /data
+ENV DATA_DIR=/data
 
 USER litentry
 WORKDIR /data

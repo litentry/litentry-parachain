@@ -1440,18 +1440,29 @@ name = "core-primitives"
 version = "0.1.0"
 dependencies = [
  "base58",
+ "base64 0.13.1",
+ "chrono",
+ "der 0.6.1",
  "frame-support",
+ "hex",
+ "hex-literal",
  "litentry-hex-utils",
  "litentry-macros",
  "litentry-proc-macros",
  "pallet-evm",
  "parity-scale-codec",
+ "ring 0.16.20",
+ "rustls-webpki 0.102.0-alpha.3",
  "scale-info",
+ "serde",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
  "strum 0.26.3",
  "strum_macros 0.26.4",
+ "x509-cert",
 ]
 
 [[package]]
@@ -5661,6 +5672,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
@@ -7806,6 +7818,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-omni-account"
+version = "0.1.0"
+dependencies = [
+ "core-primitives",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-teebag",
+ "pallet-timestamp",
+ "pallet-utility",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
 dependencies = [
@@ -8099,6 +8131,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
  "chrono",
+ "core-primitives",
  "der 0.6.1",
  "env_logger 0.10.2",
  "frame-benchmarking",
@@ -8531,6 +8564,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
@@ -10830,6 +10864,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
@@ -11037,6 +11072,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-teebag",
  "pallet-transaction-payment",
  "pallet-treasury",

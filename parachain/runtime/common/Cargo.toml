@@ -50,6 +50,7 @@ cumulus-test-relay-sproof-builder = { workspace = true, optional = true }
 pallet-asset-manager = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
+pallet-omni-account = { workspace = true }
 pallet-teebag = { workspace = true }
 
 [features]
@@ -89,6 +90,7 @@ std = [
     "core-primitives/std",
     "pallet-asset-manager/std",
     "pallet-extrinsic-filter/std",
+    "pallet-omni-account/std",
     "pallet-teebag/std",
     "orml-xtokens/std",
 ]

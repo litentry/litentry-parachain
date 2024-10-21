@@ -15,6 +15,7 @@ itp-node-api = { workspace = true }
 itp-ocall-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 itp-sgx-externalities = { workspace = true }
+itp-sgx-io = { workspace = true }
 itp-stf-interface = { workspace = true }
 itp-stf-primitives = { workspace = true }
 itp-stf-state-handler = { workspace = true }

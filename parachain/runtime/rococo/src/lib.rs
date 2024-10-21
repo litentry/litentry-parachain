@@ -42,7 +42,6 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -68,7 +67,8 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use core_primitives::{
-	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Nonce, Signature, DAYS,
+	opaque, teebag::OperationalMode as TeebagOperationalMode, AccountId, Amount, AssetId, Balance,
+	BlockNumber, DefaultOmniAccountConverter, Hash, Header, Identity, Nonce, Signature, DAYS,
 	HOURS, MINUTES, ROCOCO_PARA_ID, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
@@ -76,7 +76,7 @@ pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance,
-	DeveloperCommitteeMembershipInstance, EnsureRootOrAllCouncil,
+	DeveloperCommitteeMembershipInstance, EnsureOmniAccount, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
@@ -226,7 +226,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9201,
+	spec_version: 9202,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -853,15 +853,15 @@ impl pallet_parachain_staking::Config for Runtime {
 	/// Blocks per round
 	type DefaultBlocksPerRound = ConstU32<{ prod_or_fast!(2 * MINUTES, 2) }>;
 	/// Rounds before the collator leaving the candidates request can be executed
-	type LeaveCandidatesDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type LeaveCandidatesDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the candidate bond increase/decrease can be executed
-	type CandidateBondLessDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type CandidateBondLessDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the delegator exit can be executed
-	type LeaveDelegatorsDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type LeaveDelegatorsDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the delegator revocation can be executed
-	type RevokeDelegationDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type RevokeDelegationDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the delegator bond increase/decrease can be executed
-	type DelegationBondLessDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type DelegationBondLessDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the reward is paid
 	type RewardPaymentDelay = ConstU32<2>;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
@@ -991,6 +991,16 @@ impl pallet_identity_management::Config for Runtime {
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
+}
+
+impl pallet_omni_account::Config for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type MaxAccountStoreLength = ConstU32<64>;
+	type OmniAccountOrigin = EnsureOmniAccount;
+	type OmniAccountConverter = DefaultOmniAccountConverter;
 }
 
 impl pallet_bitacross::Config for Runtime {
@@ -1253,6 +1263,8 @@ construct_runtime! {
 		// New Bridge Added
 		AssetsHandler: pallet_assets_handler = 76,
 
+		OmniAccount: pallet_omni_account = 84,
+
 		// TEE
 		Teebag: pallet_teebag = 93,
 
@@ -1359,7 +1371,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::AssetsHandler(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::EvmAssertions(_) |
-			RuntimeCall::ScoreStaking(_)
+			RuntimeCall::ScoreStaking(_) |
+			RuntimeCall::OmniAccount(_)
 		)
 	}
 }

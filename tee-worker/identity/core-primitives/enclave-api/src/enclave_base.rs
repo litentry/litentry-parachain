@@ -22,9 +22,8 @@ use core::fmt::Debug;
 use itp_stf_interface::ShardCreationInfo;
 use itp_types::{
 	parentchain::{Header, ParentchainId, ParentchainInitParams},
-	ShardIdentifier,
+	EnclaveFingerprint, ShardIdentifier,
 };
-use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
 
@@ -83,6 +82,8 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	// litentry
 	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()>;
+
+	fn upload_id_graph(&self) -> EnclaveResult<()>;
 }
 
 /// EnclaveApi implementation for Enclave struct
@@ -100,10 +101,9 @@ mod impl_ffi {
 	use itp_stf_interface::ShardCreationInfo;
 	use itp_types::{
 		parentchain::{Header, ParentchainId, ParentchainInitParams},
-		ShardIdentifier,
+		EnclaveFingerprint, ShardIdentifier,
 	};
 	use log::*;
-	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 	use sgx_types::*;
 	use sp_core::ed25519;
@@ -384,6 +384,17 @@ mod impl_ffi {
 					new_shard.len() as u32,
 				)
 			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn upload_id_graph(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let result = unsafe { ffi::upload_id_graph(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

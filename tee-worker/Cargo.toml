@@ -53,7 +53,10 @@ members = [
     "identity/litentry/core/data-providers",
     "identity/litentry/core/vc-task/sender",
     "identity/litentry/core/vc-task/receiver",
+    "identity/litentry/core/native-task/sender",
+    "identity/litentry/core/native-task/receiver",
     "identity/litentry/core/identity-verification",
+    "identity/litentry/core/omni-account",
     "identity/litentry/core/stf-task/sender",
     "identity/litentry/core/stf-task/receiver",
     "identity/litentry/core/service",
@@ -178,6 +181,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "bar/polkadot-v0.9.42", default-features = false }
 
 # SGX SDK
 sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
@@ -279,10 +283,7 @@ lc-parachain-extrinsic-task-sender = { path = "common/litentry/core/parachain-ex
 lc-parachain-extrinsic-task-receiver = { path = "common/litentry/core/parachain-extrinsic-task/receiver", default-features = false }
 litentry-hex-utils = { path = "../common/utils/hex", default-features = false }
 litentry-macros = { path = "../common/primitives/core/macros" }
-
-pallet-teebag = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
-pallet-parachain-staking = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
-parentchain-primitives = { package = "core-primitives", git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
+parentchain-primitives = { package = "core-primitives", path = "../common/primitives/core", default-features = false }
 
 # identity
 lc-assertion-build = { path = "identity/litentry/core/assertion-build", default-features = false }
@@ -300,6 +301,9 @@ lc-stf-task-sender = { path = "identity/litentry/core/stf-task/sender", default-
 lc-stf-task-receiver = { path = "identity/litentry/core/stf-task/receiver", default-features = false }
 lc-vc-task-sender = { path = "identity/litentry/core/vc-task/sender", default-features = false }
 lc-vc-task-receiver = { path = "identity/litentry/core/vc-task/receiver", default-features = false }
+lc-omni-account = { path = "identity/app-libs/omni-account", default-features = false }
+lc-native-task-sender = { path = "identity/litentry/core/native-task/sender", default-features = false }
+lc-native-task-receiver = { path = "identity/litentry/core/native-task/receiver", default-features = false }
 
 itc-peer-top-broadcaster = { path = "identity/core/peer-top-broadcaster", default-features = false }
 itc-rpc-server = { path = "identity/core/rpc-server", default-features = false }
@@ -318,6 +322,16 @@ its-state = { path = "identity/sidechain/state", default-features = false }
 its-storage = { path = "identity/sidechain/storage" }
 its-test = { path = "identity/sidechain/test", default-features = false }
 its-validateer-fetch = { path = "identity/sidechain/validateer-fetch", default-features = false }
+
+[patch."https://github.com/paritytech/polkadot-sdk"]
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+
+[patch."https://github.com/paritytech/frontier"]
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "bar/polkadot-v0.9.42" }
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
 sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }

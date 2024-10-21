@@ -147,13 +147,16 @@ its-sidechain = { path = "../sidechain/sidechain-crate", default-features = fals
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }
 lc-evm-dynamic-assertions = { path = "../litentry/core/evm-dynamic-assertions", default-features = false, features = ["sgx"] }
 lc-identity-verification = { path = "../litentry/core/identity-verification", default-features = false, features = ["sgx"] }
+lc-native-task-receiver = { path = "../litentry/core/native-task/receiver", default-features = false, features = ["sgx"] }
 lc-parachain-extrinsic-task-receiver = { path = "../../common/litentry/core/parachain-extrinsic-task/receiver", default-features = false, features = ["sgx"] }
+lc-parachain-extrinsic-task-sender = { path = "../../common/litentry/core/parachain-extrinsic-task/sender", default-features = false, features = ["sgx"] }
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-vc-task-receiver = { path = "../litentry/core/vc-task/receiver", default-features = false, features = ["sgx"] }
 litentry-hex-utils = { path = "../../../common/utils/hex", default-features = false }
 litentry-macros = { path = "../../../common/primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../common/litentry/primitives", default-features = false, features = ["sgx"] }
 litentry-proc-macros = { path = "../../../common/primitives/core/proc-macros", default-features = false }
+pallet-identity-management-tee = { path = "../../common/litentry/pallets/identity-management", default-features = false }
 
 # substrate deps
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
@@ -171,6 +174,16 @@ ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cl
 
 [patch."https://github.com/mesalock-linux/log-sgx"]
 log = { git = "https://github.com/integritee-network/log-sgx" }
+
+[patch."https://github.com/paritytech/polkadot-sdk"]
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-io = { path = "../../common/core-primitives/substrate-sgx/sp-io" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+
+[patch."https://github.com/paritytech/frontier"]
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "bar/polkadot-v0.9.42" }
 
 [patch."https://github.com/paritytech/substrate"]
 sp-io = { path = "../../common/core-primitives/substrate-sgx/sp-io" }

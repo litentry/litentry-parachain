@@ -29,6 +29,8 @@
 ######## Worker Feature Settings ########
 # Set offchain-worker as default feature mode
 WORKER_MODE ?= offchain-worker
+WORKER_DEV ?= 0
+RA_METHOD ?= dcap
 
 Rust_Enclave_Name := libenclave.a
 Rust_Enclave_Files := $(wildcard src/*.rs) $(wildcard ../stf/src/*.rs)
@@ -46,6 +48,14 @@ ifeq ($(SGX_PRODUCTION), 1)
 	ENCLAVE_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 else
 	ENCLAVE_FEATURES = --features=test,development,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+endif
+
+ifeq ($(WORKER_DEV), 1)
+	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),development
+endif
+
+ifeq ($(RA_METHOD), dcap)
+    ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),dcap
 endif
 
 .PHONY: all

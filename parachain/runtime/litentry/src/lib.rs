@@ -18,7 +18,7 @@
 #![allow(clippy::identity_op)]
 #![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
@@ -59,20 +59,21 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use core_primitives::{
-	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Nonce, Signature, DAYS,
+	opaque, teebag::OperationalMode as TeebagOperationalMode, AccountId, Amount, AssetId, Balance,
+	BlockNumber, DefaultOmniAccountConverter, Hash, Header, Identity, Nonce, Signature, DAYS,
 	HOURS, LITENTRY_PARA_ID, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance,
-	DeveloperCommitteeMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
-	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
-	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, WEIGHT_PER_GAS,
-	WEIGHT_TO_FEE_FACTOR,
+	DeveloperCommitteeMembershipInstance, EnsureEnclaveSigner, EnsureOmniAccount,
+	EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil,
+	EnsureRootOrHalfTechnicalCommittee, EnsureRootOrTwoThirdsCouncil,
+	EnsureRootOrTwoThirdsTechnicalCommittee, IMPExtrinsicWhitelistInstance, NegativeImbalance,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
+	TechnicalCommitteeMembershipInstance, VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
+	NORMAL_DISPATCH_RATIO, WEIGHT_PER_GAS, WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -84,7 +85,6 @@ use pallet_evm::{
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -221,7 +221,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9201,
+	spec_version: 9202,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -810,15 +810,15 @@ impl pallet_parachain_staking::Config for Runtime {
 	/// Blocks per round
 	type DefaultBlocksPerRound = Period;
 	/// Rounds before the collator leaving the candidates request can be executed
-	type LeaveCandidatesDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type LeaveCandidatesDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the candidate bond increase/decrease can be executed
-	type CandidateBondLessDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type CandidateBondLessDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the delegator exit can be executed
-	type LeaveDelegatorsDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type LeaveDelegatorsDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the delegator revocation can be executed
-	type RevokeDelegationDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type RevokeDelegationDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the delegator bond increase/decrease can be executed
-	type DelegationBondLessDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
+	type DelegationBondLessDelay = ConstU32<{ prod_or_fast!(8, 1) }>;
 	/// Rounds before the reward is paid
 	type RewardPaymentDelay = ConstU32<2>;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
@@ -949,6 +949,16 @@ impl pallet_identity_management::Config for Runtime {
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
+}
+
+impl pallet_omni_account::Config for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type MaxAccountStoreLength = ConstU32<64>;
+	type OmniAccountOrigin = EnsureOmniAccount;
+	type OmniAccountConverter = DefaultOmniAccountConverter;
 }
 
 impl pallet_bitacross::Config for Runtime {
@@ -1209,6 +1219,7 @@ construct_runtime! {
 		VCManagement: pallet_vc_management = 81,
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 82,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 83,
+		OmniAccount: pallet_omni_account = 84,
 
 		// Frontier
 		EVM: pallet_evm = 120,
@@ -1300,7 +1311,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::AssetsHandler(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::EvmAssertions(_) |
-			RuntimeCall::ScoreStaking(_)
+			RuntimeCall::ScoreStaking(_) |
+			RuntimeCall::OmniAccount(_)
 		)
 	}
 }

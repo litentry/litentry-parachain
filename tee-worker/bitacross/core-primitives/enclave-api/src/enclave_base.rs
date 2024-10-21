@@ -23,9 +23,8 @@ use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_stf_interface::ShardCreationInfo;
 use itp_types::{
 	parentchain::{Header, ParentchainId, ParentchainInitParams},
-	ShardIdentifier,
+	EnclaveFingerprint, ShardIdentifier,
 };
-use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
 
@@ -113,10 +112,9 @@ mod impl_ffi {
 	use itp_stf_interface::ShardCreationInfo;
 	use itp_types::{
 		parentchain::{Header, ParentchainId, ParentchainInitParams},
-		ShardIdentifier,
+		EnclaveFingerprint, ShardIdentifier,
 	};
 	use log::*;
-	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 	use sgx_types::*;
 	use sp_core::{ed25519, Pair};

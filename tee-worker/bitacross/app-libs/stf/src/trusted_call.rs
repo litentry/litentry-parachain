@@ -38,7 +38,7 @@ use itp_types::{
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Identity, LitentryMultiSignature, ParentchainBlockNumber,
-	RequestAesKey, RequestAesKeyNonce, ValidationData,
+	RequestAesKey, ValidationData,
 };
 use log::*;
 use sp_core::{
@@ -205,7 +205,8 @@ where
 		_node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
-		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+		let account_id: AccountId =
+			sender.to_native_account().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
@@ -221,7 +222,7 @@ where
 			},
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
 				let root_account_id: AccountId =
-					root.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+					root.to_native_account().ok_or(Self::Error::InvalidAccount)?;
 				ensure!(
 					is_root::<Runtime, AccountId>(&root_account_id),
 					Self::Error::MissingPrivileges(root_account_id)
@@ -251,7 +252,7 @@ where
 			},
 			TrustedCall::balance_transfer(from, to, value) => {
 				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					from.to_native_account().ok_or(Self::Error::InvalidAccount)?,
 				);
 				std::println!("⣿STF⣿ 🔄 balance_transfer from ⣿⣿⣿ to ⣿⣿⣿ amount ⣿⣿⣿");
 				// endow fee to enclave (self)
@@ -304,7 +305,7 @@ where
 				);
 
 				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
-					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
+					account_incognito.to_native_account().ok_or(StfError::InvalidAccount)?,
 				);
 				ita_sgx_runtime::BalancesCall::<Runtime>::transfer {
 					dest: MultiAddress::Id(fee_recipient),
@@ -315,14 +316,14 @@ where
 					Self::Error::Dispatch(format!("Balance Unshielding error: {:?}", e.error))
 				})?;
 				burn_funds(
-					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
+					account_incognito.to_native_account().ok_or(StfError::InvalidAccount)?,
 					value,
 				)?;
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_shield(enclave_account, who, value, parentchain_id) => {
 				let account_id: AccountId32 =
-					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+					enclave_account.to_native_account().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&account_id)?;
 				debug!(
 					"balance_shield({}, {}, {:?})",
@@ -337,7 +338,7 @@ where
 			},
 			TrustedCall::timestamp_set(enclave_account, now, parentchain_id) => {
 				let account_id: AccountId32 =
-					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+					enclave_account.to_native_account().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&account_id)?;
 				// Litentry: we don't actually set the timestamp, see `BlockMetadata`
 				warn!("unused timestamp_set({}, {:?})", now, parentchain_id);
