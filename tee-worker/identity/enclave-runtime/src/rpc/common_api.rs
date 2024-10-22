@@ -24,7 +24,9 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
+use itp_types::{
+	parentchain::AccountId, DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256,
+};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_rpc_handler::direct_top_pool_api::add_top_pool_direct_rpc_methods;
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
@@ -500,6 +502,47 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 						}
 						let json_value =
 							RpcReturnValue::new(vec![], false, DirectRequestStatus::Ok);
+						Ok(json!(json_value.to_hex()))
+					},
+					Err(_) => Ok(json!(compute_hex_encoded_return_error(
+						"Could not save verification code"
+					))),
+				}
+			},
+			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
+		}
+	});
+
+	io_handler.add_sync_method("omni_account_requestVerificationCode", move |params: Params| {
+		match params.parse::<(String, String)>() {
+			Ok((encoded_omni_account, encoded_identity)) => {
+				let omni_account = match AccountId::from_hex(encoded_omni_account.as_str()) {
+					Ok(account_id) => account_id,
+					Err(_) =>
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not parse omni account"
+						))),
+				};
+				let member_identity = match Identity::from_hex(encoded_identity.as_str()) {
+					Ok(identity) => identity,
+					Err(_) =>
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not parse member identity"
+						))),
+				};
+				let verification_code = generate_verification_code();
+
+				match VerificationCodeStore::insert(
+					omni_account,
+					member_identity.hash(),
+					verification_code.clone(),
+				) {
+					Ok(_) => {
+						let json_value = RpcReturnValue::new(
+							verification_code.encode(),
+							false,
+							DirectRequestStatus::Ok,
+						);
 						Ok(json!(json_value.to_hex()))
 					},
 					Err(_) => Ok(json!(compute_hex_encoded_return_error(
