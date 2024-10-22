@@ -223,13 +223,15 @@ where
 			return Err("Shielding key retrieval failed")
 		},
 	};
-	let tcs: TrustedCallSigned = match request
+	let tca: TrustedCallAuthenticated = match request
 		.decrypt(Box::new(enclave_shielding_key))
 		.ok()
-		.and_then(|v| TrustedOperation::<TrustedCallSigned, Getter>::decode(&mut v.as_slice()).ok())
+		.and_then(|v| {
+			TrustedOperation::<TrustedCallAuthenticated, Getter>::decode(&mut v.as_slice()).ok()
+		})
 		.and_then(|top| top.to_call().cloned())
 	{
-		Some(tcs) => tcs,
+		Some(tca) => tca,
 		None => {
 			let res: Result<(), NativeTaskError> =
 				Err(NativeTaskError::RequestPayloadDecodingFailed);
@@ -245,11 +247,25 @@ where
 			return Err("MrEnclave retrieval failed")
 		},
 	};
-	if !tcs.verify_signature(&mrenclave, &request.shard) {
-		let res: Result<(), NativeTaskError> = Err(NativeTaskError::SignatureVerificationFailed);
+
+	let authentication_valid = match tca.authentication {
+		TCAuthentication::Web3(signature) => verify_tca_web3_authentication(
+			&signature,
+			&tca.call,
+			tca.nonce,
+			&mrenclave,
+			&request.shard,
+		),
+		TCAuthentication::Email(verification_code) =>
+			verify_tca_email_authentication(&tca.call, verification_code),
+	};
+
+	if !authentication_valid {
+		let res: Result<(), NativeTaskError> =
+			Err(NativeTaskError::AuthenticationVerificationFailed);
 		context.author_api.send_rpc_response(connection_hash, res.encode(), false);
-		return Err("Signature verification failed")
+		return Err("Authentication verification failed")
 	}
 
-	Ok(tcs.call)
+	Ok(tca.call)
 }

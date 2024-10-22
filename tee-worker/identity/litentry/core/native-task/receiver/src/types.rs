@@ -100,7 +100,7 @@ pub enum NativeTaskError {
 	MissingAesKey,
 	MrEnclaveRetrievalFailed,
 	EnclaveSignerRetrievalFailed,
-	SignatureVerificationFailed,
+	AuthenticationVerificationFailed,
 	ConnectionHashNotFound(String),
 	MetadataRetrievalFailed(String), // Stringified itp_node_api_metadata_provider::Error
 	InvalidMetadata(String),         // Stringified itp_node_api_metadata::Error
