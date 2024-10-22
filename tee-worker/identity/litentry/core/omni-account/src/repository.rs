@@ -18,9 +18,7 @@ use crate::{AccountId, Error, Header, MemberAccount, OmniAccounts, ParentchainId
 use alloc::vec::Vec;
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_storage::{
-	decode_storage_key, extract_blake2_128concat_key, storage_map_key, StorageHasher,
-};
+use itp_storage::{decode_storage_key, extract_blake2_128concat_key};
 
 pub trait GetAccountStoresRepository {
 	fn get_all(&self) -> Result<OmniAccounts, Error>;
