@@ -25,6 +25,7 @@ pub mod email;
 pub mod twitter;
 
 use crate::{ensure, Error, Result, VerificationCodeStore};
+use codec::Encode;
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
@@ -37,6 +38,7 @@ use litentry_primitives::{
 	TwitterValidationData, Web2ValidationData,
 };
 use log::*;
+use sp_core::blake2_256;
 use std::{string::ToString, vec::Vec};
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
@@ -209,20 +211,23 @@ pub fn verify(
 			let Some(account_id) = who.to_native_account() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
-			let stored_verification_code = match VerificationCodeStore::get(&account_id, &email) {
-				Ok(data) => data.ok_or_else(|| {
-					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
-						std::format!(
-							"no verification code found for {}:{}",
-							account_id_to_string(&account_id),
-							&email
-						)
-						.as_bytes()
-						.to_vec(),
-					)))
-				})?,
-				Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
-			};
+			let stored_verification_code =
+				match VerificationCodeStore::get(&account_id, blake2_256(&email.encode()).into()) {
+					Ok(data) => data.ok_or_else(|| {
+						Error::LinkIdentityFailed(ErrorDetail::StfError(
+							ErrorString::truncate_from(
+								std::format!(
+									"no verification code found for {}:{}",
+									account_id_to_string(&account_id),
+									&email
+								)
+								.as_bytes()
+								.to_vec(),
+							),
+						))
+					})?,
+					Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
+				};
 
 			ensure!(
 				verification_code == stored_verification_code,

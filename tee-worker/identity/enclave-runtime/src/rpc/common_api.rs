@@ -38,7 +38,7 @@ use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sp_core::Pair;
+use sp_core::{blake2_256, Pair};
 use sp_runtime::OpaqueExtrinsic;
 use std::{boxed::Box, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -487,7 +487,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 				match VerificationCodeStore::insert(
 					account_id,
-					email.clone(),
+					blake2_256(&email.encode()).into(),
 					verification_code.clone(),
 				) {
 					Ok(_) => {
