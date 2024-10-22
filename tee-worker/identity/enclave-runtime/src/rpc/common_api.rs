@@ -430,8 +430,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
 
 		match params.parse::<(String, String)>() {
-			Ok((encoded_did, redirect_url)) => {
-				let account_id = match Identity::from_did(encoded_did.as_str()) {
+			Ok((did, redirect_url)) => {
+				let account_id = match Identity::from_did(did.as_str()) {
 					Ok(identity) =>
 						if let Some(account_id) = identity.to_native_account() {
 							account_id
@@ -468,8 +468,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 	io_handler.add_sync_method("identity_requestEmailVerification", move |params: Params| {
 		match params.parse::<(String, String)>() {
-			Ok((encoded_did, email)) => {
-				let account_id = match Identity::from_did(encoded_did.as_str()) {
+			Ok((did, email)) => {
+				let account_id = match Identity::from_did(did.as_str()) {
 					Ok(identity) =>
 						if let Some(account_id) = identity.to_native_account() {
 							account_id
