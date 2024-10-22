@@ -103,6 +103,10 @@ impl EnclaveBase for EnclaveMock {
 	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
+
+	fn upload_id_graph(&self) -> EnclaveResult<()> {
+		unimplemented!()
+	}
 }
 
 impl Sidechain for EnclaveMock {
