@@ -42,7 +42,7 @@ impl<Id: Clone> IntentionEvent<Id> {
 /// `Fetcher` - used to fetch data from chain
 /// `IntentionExecutor` - used to execute intentions on target chain
 /// `CheckpointRepository` - used to store listener's progress
-///	`EventId` - represents chain event id
+/// `EventId` - represents chain event id
 /// `BlockEvent` - represents chain event
 pub struct Listener<
 	Fetcher,
