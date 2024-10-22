@@ -3132,7 +3132,10 @@ dependencies = [
  "itp-types",
  "lc-data-providers",
  "lc-dynamic-assertion",
+ "lc-identity-verification",
  "lc-native-task-sender",
+ "lc-omni-account",
+ "litentry-hex-utils",
  "litentry-macros",
  "litentry-primitives",
  "log",
@@ -3149,6 +3152,21 @@ dependencies = [
  "litentry-primitives",
  "log",
  "sgx_tstd",
+]
+
+[[package]]
+name = "lc-omni-account"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "itp-ocall-api",
+ "itp-storage",
+ "itp-types",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "sgx_tstd",
+ "sp-core",
 ]
 
 [[package]]

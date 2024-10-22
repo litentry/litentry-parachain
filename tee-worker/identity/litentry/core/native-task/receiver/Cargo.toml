@@ -31,8 +31,11 @@ frame-support = { workspace = true }
 lc-data-providers = { workspace = true }
 lc-dynamic-assertion = { workspace = true }
 lc-native-task-sender = { workspace = true }
+lc-identity-verification = { workspace = true }
+lc-omni-account = { workspace = true }
 litentry-macros = { workspace = true }
 litentry-primitives = { workspace = true }
+litentry-hex-utils = { workspace = true }
 
 [features]
 default = ["std"]
@@ -46,6 +49,8 @@ sgx = [
     "itp-node-api/sgx",
     "itp-extrinsics-factory/sgx",
     "lc-native-task-sender/sgx",
+    "lc-identity-verification/sgx",
+    "lc-omni-account/sgx",
 ]
 std = [
     "futures",
@@ -61,6 +66,8 @@ std = [
     "frame-support/std",
     "itp-node-api/std",
     "lc-native-task-sender/std",
+    "lc-identity-verification/std",
+    "lc-omni-account/std",
 ]
 development = [
     "litentry-macros/development",
