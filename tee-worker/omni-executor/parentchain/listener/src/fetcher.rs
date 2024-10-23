@@ -76,9 +76,6 @@ impl<
 
 		if let Some(ref mut client) = self.client {
 			client.get_block_events(block_num).await
-		// client.get_block_events(block_num).await.map(|events| {
-		// 	events.into_iter().map(|event| IntentionEvent::new(event.id)).collect()
-		// })
 		} else {
 			Err(())
 		}

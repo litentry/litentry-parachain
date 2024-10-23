@@ -16,9 +16,8 @@
 
 use crate::cli::Cli;
 use clap::Parser;
-use intention_executor::EthereumIntentionExecutor;
+use intent_executor::EthereumIntentExecutor;
 use log::error;
-use parentchain_listener::CustomConfig;
 use std::io::Write;
 use std::thread::JoinHandle;
 use std::{fs, thread};
@@ -62,18 +61,17 @@ async fn listen_to_parentchain(
 	ethereum_url: String,
 ) -> Result<JoinHandle<()>, ()> {
 	let (_sub_stop_sender, sub_stop_receiver) = oneshot::channel();
-	let ethereum_intention_executor =
-		EthereumIntentionExecutor::new(&ethereum_url).map_err(|e| log::error!("{:?}", e))?;
+	let ethereum_intent_executor =
+		EthereumIntentExecutor::new(&ethereum_url).map_err(|e| log::error!("{:?}", e))?;
 
-	let mut parentchain_listener =
-		parentchain_listener::create_listener::<CustomConfig, EthereumIntentionExecutor>(
-			"litentry_rococo",
-			Handle::current(),
-			&parentchain_url,
-			ethereum_intention_executor,
-			sub_stop_receiver,
-		)
-		.await?;
+	let mut parentchain_listener = parentchain_listener::create_listener::<EthereumIntentExecutor>(
+		"litentry_rococo",
+		Handle::current(),
+		&parentchain_url,
+		ethereum_intent_executor,
+		sub_stop_receiver,
+	)
+	.await?;
 
 	Ok(thread::Builder::new()
 		.name("litentry_rococo_sync".to_string())
