@@ -7208,9 +7208,12 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "pallet-collab-ai-common",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -7473,6 +7476,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "libsecp256k1",
+ "pallet-balances",
  "pallet-collab-ai-common",
  "pallet-curator",
  "pallet-evm",
@@ -7483,6 +7487,7 @@ dependencies = [
  "serde",
  "sha3",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
