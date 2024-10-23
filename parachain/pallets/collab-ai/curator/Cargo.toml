@@ -19,6 +19,11 @@ sp-std = { workspace = true }
 
 pallet-collab-ai-common = { workspace = true }
 
+[dev-dependencies]
+pallet-balances = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+
 [features]
 default = ["std"]
 runtime-benchmarks = [
@@ -34,5 +39,6 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "pallet-collab-ai-common/std",
+    "pallet-balances/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

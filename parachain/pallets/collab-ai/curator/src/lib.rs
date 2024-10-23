@@ -39,6 +39,11 @@ pub use pallet::*;
 use pallet_collab_ai_common::*;
 use sp_runtime::ArithmeticError;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
