@@ -166,14 +166,14 @@ impl<
 		//to explicitly handle all intent variants
 		match intent {
 			Intent::CallEthereum(_, _) => {
-				self.ethereum_intent_executor.execute(intent).await.map_err(|e| {
+				self.ethereum_intent_executor.execute(intent).await.map_err(|_| {
 					// assume for now we can easily recover
 					log::error!("Error executing intent");
 					Error::RecoverableError
 				})?;
 			},
 			Intent::TransferEthereum(_, _) => {
-				self.ethereum_intent_executor.execute(intent).await.map_err(|e| {
+				self.ethereum_intent_executor.execute(intent).await.map_err(|_| {
 					// assume for now we can easily recover
 					log::error!("Error executing intent");
 					Error::RecoverableError

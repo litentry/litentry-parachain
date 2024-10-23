@@ -93,7 +93,6 @@ impl<ChainConfig: Config> SubstrateRpcClient for SubxtClient<ChainConfig> {
 	async fn submit_tx(&mut self, raw_tx: &[u8]) -> Result<(), ()> {
 		self.legacy.author_submit_extrinsic(raw_tx).await.map(|_| ()).map_err(|e| {
 			error!("Could not submit tx: {:?}", e);
-			()
 		})
 	}
 

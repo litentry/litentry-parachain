@@ -45,7 +45,7 @@ impl KeyStore<SecretKeyBytes> for SubstrateKeyStore {
 	}
 
 	fn deserialize(sealed: Vec<u8>) -> Result<SecretKeyBytes, ()> {
-		Ok(sealed.as_slice().try_into().map_err(|_| ())?)
+		sealed.as_slice().try_into().map_err(|_| ())
 	}
 
 	fn path(&self) -> String {

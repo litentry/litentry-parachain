@@ -21,9 +21,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{
-	GetAccountStoreHash, Identity, Intent, MemberAccount, OmniAccountConverter,
-};
+pub use core_primitives::{Identity, Intent, MemberAccount, OmniAccountConverter};
 pub use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
@@ -126,12 +124,6 @@ pub mod pallet {
 	pub type MemberAccountHash<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = T::AccountId>;
 
-	/// A map between OmniAccount and hash of its AccountStore
-	#[pallet::storage]
-	#[pallet::getter(fn account_store_hash)]
-	pub type AccountStoreHash<T: Config> =
-		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn omni_executor)]
 	pub type OmniExecutor<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
@@ -140,13 +132,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// An account store is created
-		AccountStoreCreated { who: T::AccountId, account_store_hash: H256 },
+		AccountStoreCreated { who: T::AccountId },
 		/// Some member account is added
 		AccountAdded { who: T::AccountId, member_account_hash: H256 },
 		/// Some member accounts are removed
 		AccountRemoved { who: T::AccountId, member_account_hashes: Vec<H256> },
 		/// Some member account is made public
 		AccountMadePublic { who: T::AccountId, member_account_hash: H256 },
+		/// An account store is updated
+		AccountStoreUpdated { who: T::AccountId },
 		/// Some call is dispatched as omni-account origin
 		DispatchedAsOmniAccount { who: T::AccountId, result: DispatchResult },
 		/// Some call is dispatched as signed origin
@@ -179,7 +173,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			member_account_hash: H256,
 			call: Box<<T as Config>::RuntimeCall>,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			let omni_account = MemberAccountHash::<T>::get(member_account_hash)
 				.ok_or(Error::<T>::AccountNotFound)?;
@@ -188,7 +182,7 @@ pub mod pallet {
 				who: omni_account,
 				result: result.map(|_| ()).map_err(|e| e.error),
 			});
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		// dispatch the `call` as the standard (frame_system) signed origin
@@ -199,7 +193,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			member_account_hash: H256,
 			call: Box<<T as Config>::RuntimeCall>,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			let omni_account = MemberAccountHash::<T>::get(member_account_hash)
 				.ok_or(Error::<T>::AccountNotFound)?;
@@ -211,34 +205,19 @@ pub mod pallet {
 				who: omni_account,
 				result: result.map(|_| ()).map_err(|e| e.error),
 			});
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn create_account_store(origin: OriginFor<T>, identity: Identity) -> DispatchResult {
+		pub fn create_account_store(
+			origin: OriginFor<T>,
+			identity: Identity,
+		) -> DispatchResultWithPostInfo {
 			// initial creation request has to come from `TEECallOrigin`
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			let hash = identity.hash();
-			let omni_account = T::OmniAccountConverter::convert(&identity);
-
-			ensure!(!MemberAccountHash::<T>::contains_key(hash), Error::<T>::AccountAlreadyAdded);
-
-			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
-			member_accounts
-				.try_push(identity.into())
-				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
-
-			MemberAccountHash::<T>::insert(hash, omni_account.clone());
-			AccountStore::<T>::insert(omni_account.clone(), member_accounts.clone());
-			AccountStoreHash::<T>::insert(omni_account.clone(), member_accounts.hash());
-
-			Self::deposit_event(Event::AccountStoreCreated {
-				who: omni_account,
-				account_store_hash: member_accounts.hash(),
-			});
-
-			Ok(())
+			let _ = Self::do_create_account_store(identity)?;
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(3)]
@@ -264,7 +243,6 @@ pub mod pallet {
 
 			MemberAccountHash::<T>::insert(hash, who.clone());
 			AccountStore::<T>::insert(who.clone(), member_accounts.clone());
-			AccountStoreHash::<T>::insert(who.clone(), member_accounts.hash());
 
 			Self::deposit_event(Event::AccountAdded { who, member_account_hash: hash });
 
@@ -336,7 +314,37 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// temporary extrinsic to upload the existing IDGraph from the worker onto chain
 		#[pallet::call_index(7)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn update_account_store_by_one(
+			origin: OriginFor<T>,
+			who: Identity,
+			member_account: MemberAccount,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin.clone())?;
+
+			let who_account = T::OmniAccountConverter::convert(&who);
+
+			let mut member_accounts = match AccountStore::<T>::get(&who_account) {
+				Some(s) => s,
+				None => Self::do_create_account_store(who)?,
+			};
+
+			if !member_accounts.contains(&member_account) {
+				member_accounts
+					.try_push(member_account.clone())
+					.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
+			}
+
+			MemberAccountHash::<T>::insert(member_account.hash(), who_account.clone());
+			AccountStore::<T>::insert(who_account.clone(), member_accounts);
+			Self::deposit_event(Event::AccountStoreUpdated { who: who_account });
+
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(8)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal,  Pays::No))]
 		pub fn intent_executed(
 			origin: OriginFor<T>,
@@ -349,7 +357,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(9)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal,  Pays::No))]
 		pub fn set_omni_executor(
 			origin: OriginFor<T>,
@@ -360,16 +368,28 @@ pub mod pallet {
 			Self::deposit_event(Event::OmniExecutorSet { omni_executor: new_omni_executor });
 			Ok(())
 		}
-	}
-}
 
-impl<T: Config> Pallet<T> {
-	fn ensure_omni_executor(origin: OriginFor<T>) -> DispatchResult {
-		ensure!(
-			Some(ensure_signed(origin)?) == Self::omni_executor(),
-			Error::<T>::RequireOmniExecutor
-		);
-		Ok(())
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn do_create_account_store(identity: Identity) -> Result<MemberAccounts<T>, Error<T>> {
+			let hash = identity.hash();
+			let omni_account = T::OmniAccountConverter::convert(&identity);
+
+			ensure!(!MemberAccountHash::<T>::contains_key(hash), Error::<T>::AccountAlreadyAdded);
+
+			let mut member_accounts: MemberAccounts<T> = BoundedVec::new();
+			member_accounts
+				.try_push(identity.into())
+				.map_err(|_| Error::<T>::AccountStoreLenLimitReached)?;
+
+			MemberAccountHash::<T>::insert(hash, omni_account.clone());
+			AccountStore::<T>::insert(omni_account.clone(), member_accounts.clone());
+
+			Self::deposit_event(Event::AccountStoreCreated { who: omni_account });
+
+			Ok(member_accounts)
+		}
 	}
 }
 

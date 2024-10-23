@@ -148,6 +148,11 @@ pub unsafe extern "C" fn init(
 		}
 	);
 
+	#[cfg(feature = "dcap")]
+	info!("  DCAP is enabled within enclave");
+	#[cfg(not(feature = "dcap"))]
+	info!("  DCAP is disabled within enclave");
+
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))
 			.map_err(Error::Codec)
@@ -434,6 +439,16 @@ pub unsafe extern "C" fn migrate_shard(new_shard: *const u8, shard_size: u32) ->
 
 	if let Err(e) = initialization::migrate_shard(shard_identifier) {
 		error!("Failed to migrate shard ({:?}): {:?}", shard_identifier, e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn upload_id_graph() -> sgx_status_t {
+	if let Err(e) = initialization::upload_id_graph() {
+		error!("Failed to upload IDGraph: {:?}", e);
 		return sgx_status_t::SGX_ERROR_UNEXPECTED
 	}
 

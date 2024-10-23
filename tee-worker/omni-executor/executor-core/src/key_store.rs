@@ -28,7 +28,7 @@ pub trait KeyStore<K> {
 	fn read(&self) -> Result<K, ()> {
 		match fs::read(self.path()) {
 			Ok(content) => Self::deserialize(content),
-			Err(e) => Err(()),
+			Err(_) => Err(()),
 		}
 	}
 	fn write(&self, k: &K) -> Result<(), ()> {

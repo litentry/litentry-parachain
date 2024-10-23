@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{self as pallet_omni_account, EnsureOmniAccount};
-use core_primitives::DefaultOmniAccountConverter;
+use crate::{self as pallet_omni_account, Encode, EnsureOmniAccount};
+use core_primitives::{DefaultOmniAccountConverter, Identity, MemberAccount};
 use frame_support::{
 	assert_ok,
 	pallet_prelude::EnsureOrigin,
@@ -70,16 +70,36 @@ where
 	}
 }
 
-pub fn alice() -> AccountId {
-	AccountKeyring::Alice.to_account_id()
+pub struct Accounts {
+	pub native_account: AccountId,
+	pub omni_account: AccountId,
+	pub identity: Identity,
 }
 
-pub fn bob() -> AccountId {
-	AccountKeyring::Bob.to_account_id()
+fn create_accounts(keyring: AccountKeyring) -> Accounts {
+	let native_account = keyring.to_account_id();
+	let identity = Identity::from(native_account.clone());
+	Accounts { native_account, omni_account: identity.to_omni_account(), identity }
 }
 
-pub fn charlie() -> AccountId {
-	AccountKeyring::Charlie.to_account_id()
+pub fn alice() -> Accounts {
+	create_accounts(AccountKeyring::Alice)
+}
+
+pub fn bob() -> Accounts {
+	create_accounts(AccountKeyring::Bob)
+}
+
+pub fn charlie() -> Accounts {
+	create_accounts(AccountKeyring::Charlie)
+}
+
+pub fn public_member_account(accounts: Accounts) -> MemberAccount {
+	MemberAccount::Public(accounts.identity)
+}
+
+pub fn private_member_account(accounts: Accounts) -> MemberAccount {
+	MemberAccount::Private(accounts.identity.encode(), accounts.identity.hash())
 }
 
 frame_support::construct_runtime!(
@@ -176,7 +196,7 @@ pub fn get_tee_signer() -> SystemAccountId {
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
-	pallet_balances::GenesisConfig::<TestRuntime> { balances: vec![(alice(), 10)] }
+	pallet_balances::GenesisConfig::<TestRuntime> { balances: vec![(alice().native_account, 10)] }
 		.assimilate_storage(&mut t)
 		.unwrap();
 
