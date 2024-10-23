@@ -5,6 +5,7 @@ name = "pallet-evm-precompile-curator"
 version = '0.1.0'
 
 [dependencies]
+pallet-balances = { workspace = true }
 precompile-utils = { workspace = true }
 
 # Substrate
@@ -15,6 +16,7 @@ pallet-curator = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["max-encoded-len"] }
 scale-info = { workspace = true, features = ["derive"] }
 sp-core = { workspace = true }
+sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
@@ -44,6 +46,7 @@ std = [
     "pallet-curator/std",
     "pallet-evm/std",
     "pallet-timestamp/std",
+    "pallet-balances/std",
     "precompile-utils/std",
     "sp-core/std",
     "sp-runtime/std",

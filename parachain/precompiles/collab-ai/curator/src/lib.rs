@@ -13,6 +13,11 @@ use sp_std::marker::PhantomData;
 
 use pallet_collab_ai_common::CandidateStatus;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 pub struct CuratorPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]
