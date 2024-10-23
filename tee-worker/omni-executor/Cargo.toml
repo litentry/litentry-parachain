@@ -20,3 +20,6 @@ scale-encode = "0.7.1"
 parity-scale-codec = "3.6.12"
 alloy = "0.3.6"
 clap = "4.5.17"
+
+[workspace.lints.clippy]
+result_unit_err = "allow"

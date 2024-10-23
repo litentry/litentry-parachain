@@ -103,14 +103,14 @@ impl<ChainConfig: Config, EthereumIntentionExecutorT: IntentionExecutor + Send +
 		//to explicitly handle all intention variants
 		match intention {
 			Intention::CallEthereum(_, _) => {
-				self.ethereum_intention_executor.execute(intention).await.map_err(|e| {
+				self.ethereum_intention_executor.execute(intention).await.map_err(|_| {
 					// assume for now we can easily recover
 					log::error!("Error executing intention");
 					Error::RecoverableError
 				})?;
 			},
 			Intention::TransferEthereum(_, _) => {
-				self.ethereum_intention_executor.execute(intention).await.map_err(|e| {
+				self.ethereum_intention_executor.execute(intention).await.map_err(|_| {
 					// assume for now we can easily recover
 					log::error!("Error executing intention");
 					Error::RecoverableError
