@@ -368,7 +368,6 @@ pub mod pallet {
 			Self::deposit_event(Event::OmniExecutorSet { omni_executor: new_omni_executor });
 			Ok(())
 		}
-
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -389,6 +388,14 @@ pub mod pallet {
 			Self::deposit_event(Event::AccountStoreCreated { who: omni_account });
 
 			Ok(member_accounts)
+		}
+
+		fn ensure_omni_executor(origin: OriginFor<T>) -> DispatchResult {
+			ensure!(
+				Some(ensure_signed(origin)?) == Self::omni_executor(),
+				Error::<T>::RequireOmniExecutor
+			);
+			Ok(())
 		}
 	}
 }

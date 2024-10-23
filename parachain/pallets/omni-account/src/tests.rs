@@ -533,7 +533,9 @@ fn request_intent_works() {
 			.into(),
 		);
 
-		System::assert_has_event(Event::IntentRequested { who: who_omni_account, intent }.into());
+		System::assert_has_event(
+			Event::IntentRequested { who: alice().omni_account, intent }.into(),
+		);
 	});
 }
 
