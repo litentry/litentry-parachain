@@ -20,14 +20,14 @@ use scale_info::TypeInfo;
 use sp_core::{RuntimeDebug, H256};
 use sp_std::marker::PhantomData;
 
-use frame_support::pallet_prelude::EnsureOrigin;
-use frame_system::RawOrigin;
+use frame_support::{pallet_prelude::EnsureOrigin, traits::EitherOfDiverse};
+use frame_system::{EnsureRoot, RawOrigin};
 
 pub type InfoHash = H256;
 pub type CuratorIndex = u128;
 pub type GuardianIndex = u128;
 pub type PoolProposalIndex = u128;
-pub type InvestingPoolIndex = u128;
+pub type InvestingPoolIndex = PoolProposalIndex;
 
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
 pub struct PoolSetting<BlockNumber, Balance> {
@@ -98,6 +98,10 @@ pub trait CuratorQuery<AccountId> {
 	fn is_verified_curator(account: AccountId) -> bool;
 }
 
+pub trait ProposerQuery<AccountId> {
+	fn is_proposer(account: AccountId, proposal_index: PoolProposalIndex) -> bool;
+}
+
 pub struct EnsureSignedAndCurator<AccountId, EC>(PhantomData<(AccountId, EC)>);
 impl<
 		O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
@@ -128,24 +132,74 @@ where
 	}
 }
 
+pub struct EnsureSignedAndVerifiedCurator<AccountId, EC>(PhantomData<(AccountId, EC)>);
+impl<
+		O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
+		AccountId: Decode + Clone,
+		EC,
+	> EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
+where
+	EC: CuratorQuery<AccountId>,
+{
+	type Success = AccountId;
+	fn try_origin(o: O) -> Result<Self::Success, O> {
+		o.into().and_then(|o| match o {
+			RawOrigin::Signed(who) => {
+				if EC::is_verified_curator(who.clone()) {
+					Ok(who)
+				} else {
+					Err(O::from(RawOrigin::Signed(who)))
+				}
+			},
+			r => Err(O::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<O, ()> {
+		// No promised successful_origin
+		Err(())
+	}
+}
+
+pub type EnsureRootOrVerifiedCurator<AccountId, EC: CuratorQuery<AccountId>> =
+	EitherOfDiverse<EnsureRoot<AccountId>, EnsureSignedAndVerifiedCurator<AccountId, EC>>;
+
 pub const INVESTING_POOL_INDEX_SHIFTER: u128 = 1_000_000_000_000_000;
-pub const INVESTING_POOL_START_MONTH_SHIFTER: u128 = 1_000;
-pub const INVESTING_POOL_END_MONTH_SHIFTER: u128 = 1;
+pub const INVESTING_POOL_START_EPOCH_SHIFTER: u128 = 1_000;
+pub const INVESTING_POOL_END_EPOCH_SHIFTER: u128 = 1;
 
-// pub struct InvestingPoolAssetIdGenerator<AssetId>(PhantomData<AssetId>);
-// impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
-// 	/// Create a series of new asset id based on pool index and reward epoch
-// 	/// Return None if impossible to generate. e.g. overflow
-// 	pub fn get_pool_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<Vec<AssetId>> {
-// 		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
+pub struct InvestingPoolAssetIdGenerator<AssetId>(PhantomData<AssetId>);
+impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
+	/// Create a series of new asset id based on pool index and reward epoch
+	/// Return None if impossible to generate. e.g. overflow
+	pub fn get_all_pool_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<Vec<AssetId>> {
+		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
 
-// 		let mut vec: Vec<AssetId> = Vec::new();
-// 		for n in 0..(epoch + 1) {
-// 			// vec.push(pool_index_prefix + )
-// 		}
-// 		None
-// 	}
-// }
+		let mut vec: Vec<AssetId> = Vec::new();
+		let end_epoch_suffix = epoch.checked_mul(INVESTING_POOL_END_EPOCH_SHIFTER)?;
+		for n in 0..(epoch + 1) {
+			let infix = n.checked_mul(INVESTING_POOL_START_EPOCH_SHIFTER)?;
+			vec.push(pool_index_prefix.checked_add(infix)?.checked_add(end_epoch_suffix)?.into());
+		}
+		Some(vec)
+	}
+
+	pub fn get_epoch_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<AssetId> {
+		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
+
+		let end_epoch_suffix = epoch.checked_mul(INVESTING_POOL_END_EPOCH_SHIFTER)?;
+		let infix = 1u128.checked_mul(INVESTING_POOL_START_EPOCH_SHIFTER)?;
+		Some(pool_index_prefix.checked_add(infix)?.checked_add(end_epoch_suffix)?.into())
+	}
+
+	pub fn get_debt_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<AssetId> {
+		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
+
+		let end_epoch_suffix = epoch.checked_mul(INVESTING_POOL_END_EPOCH_SHIFTER)?;
+		Some(pool_index_prefix.checked_add(end_epoch_suffix)?.into())
+	}
+}
 
 /// Some sort of check on the account is from some group.
 pub trait GuardianQuery<AccountId> {
@@ -157,4 +211,9 @@ pub trait GuardianQuery<AccountId> {
 
 	/// Get vote
 	fn get_vote(voter: AccountId, guardian: AccountId) -> Option<GuardianVote>;
+}
+
+/// Inject investment into pool
+pub trait InvestmentInjector<AccountId, Balance> {
+	fn inject_investment(pool_id: InvestingPoolIndex, investments: Vec<(AccountId, Balance)>);
 }

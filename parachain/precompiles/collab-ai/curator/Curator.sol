@@ -9,6 +9,15 @@ interface ICurator {
 	    Banned
     }
 
+    /// @dev A structure for curator query result
+    struct CuratorQueryResult {
+        bool exist;
+        bytes32 info_hash;
+        uint256 update_block;
+        bytes32 curator;
+        CandidateStatus status;
+    }
+
 	/// @notice Regist info hash of curator and reserve funds, only work if not already registed
 	/// @param info_hash: H256 hash of info image
     /// @custom:selector 0x8ead391c
@@ -39,7 +48,14 @@ interface ICurator {
 
     /// @notice Curator index to curator info, bool represents if such info exists
     /// @param index: Curator index
-    /// @custom:selector 0x916d9a0d
-	/// 				 curatorIndexToInfo(address)
+    /// @custom:selector 0x74cded61
+	/// 				 curatorIndexToInfo(uint256)
     function curatorIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 curator, CandidateStatus status);
+
+    /// @notice Curator index to curator info, bool represents if such info exists
+    /// @param index: Curator index
+    /// @custom:selector 0xa84c8d74
+	/// 				 batchCuratorIndexToInfo(uint256[])
+    function batchCuratorIndexToInfo(uint256[] calldata index) external view returns (CuratorQueryResult[] memory result);
+
 }

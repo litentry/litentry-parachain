@@ -132,4 +132,58 @@ where
 			))
 		}
 	}
+
+	#[precompile::public("batchCuratorIndexToInfo(uint256[])")]
+	#[precompile::view]
+	fn batch_curator_index_to_info(
+		handle: &mut impl PrecompileHandle,
+		index: Vec<U256>,
+	) -> EvmResult<Vec<CuratorQueryResult>> {
+		// Storage item: CuratorIndex u128:
+		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
+		handle.record_db_read::<Runtime>(93 * index.len())?;
+
+		let result = Vec::<CuratorQueryResult>::new();
+
+		let result = index
+			.into_iter()
+			.enumerate()
+			.map(|i| {
+				let i: u128 = i.try_into().map_err(|_| {
+					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+				})?;
+				if let Some((info_hash, update_block, curator, status)) =
+					pallet_curator::Pallet::<Runtime>::curator_index_to_info(i)
+				{
+					let update_block: U256 = update_block.into();
+
+					let curator: [u8; 32] = curator.into();
+					let curator: H256 = curator.into();
+
+					let status =
+						Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
+
+					CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
+				} else {
+					CuratorQueryResult {
+						exist: false,
+						info_hash: Default::default(),
+						update_block: Default::default(),
+						curator: Default::default(),
+						status: Default::default(),
+					}
+				}
+			})
+			.collect();
+		Ok(result)
+	}
+}
+
+#[derive(Default, Debug, solidity::Codec)]
+struct CuratorQueryResult {
+	exist: bool,
+	info_hash: H256,
+	update_block: U256,
+	curator: H256,
+	status: u8,
 }

@@ -245,6 +245,8 @@ pub mod pallet {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			// Check proposal expire by order
 
+			// curator must be verified by this time
+			// check epoch number not too large so asset id will not overflow
 			// Mature the pool by proposal if qualified, refund/transfer all money based on investing pool logic
 
 			Weight::zero()
@@ -256,7 +258,7 @@ pub mod pallet {
 		/// Curator propose a investing pool
 		///
 		/// max_pool_size: At most this amount of raised money curator/investing pool willing to take
-		/// proposal_last_time: How does the proposal lasts for voting/preinvesting.
+		/// proposal_last_time: How long does the proposal lasts for voting/preinvesting.
 		///                     All ProposalStatusFlags must be satisfied after this period passed, which is also
 		/// 					the approximate date when pool begins.
 		/// pool_last_time: How long does the investing pool last if passed
@@ -607,6 +609,17 @@ pub mod pallet {
 		fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 			let sync_account_id = MODULE_ID.into_account_truncating();
 			Ok(T::RuntimeOrigin::from(RawOrigin::Signed(sync_account_id)))
+		}
+	}
+
+	/// Some sort of check on the origin is from proposer.
+	impl<T: Config> ProposerQuery<T::AccountId> for Pallet<T> {
+		fn is_proposer(account: AccountId, proposal_index: PoolProposalIndex) -> bool {
+			if let Some(info) = Self::pool_proposal(proposal_index) {
+				info.proposer == account
+			} else {
+				false
+			}
 		}
 	}
 }

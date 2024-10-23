@@ -194,3 +194,41 @@ fn test_curator_index_to_info() {
 			.execute_returns((true, info_hash, U256::from(1), curator_account, 0u8));
 	});
 }
+
+#[test]
+fn test_curator_index_to_info() {
+	new_test_ext().execute_with(|| {
+		let curator: H160 = H160::from_low_u64_be(1001);
+		let info_hash: H256 = H256::from([1u8; 32]);
+
+		// Register the guardian
+		PrecompilesValue::get()
+			.prepare_test(
+				curator,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::regist_curator { info_hash },
+			)
+			.execute_returns(());
+
+		// Query the curator info by index
+		let curator_account = TruncatedAddressMapping::into_account_id(curator);
+		let curator_account: [u8; 32] = curator_account.into();
+		let curator_account: H256 = curator_account.into();
+
+		let tmp_index_vec = Vec::<U256>::new();
+		tmp_index_vec.push(0.into());
+		PrecompilesValue::get()
+			.prepare_test(
+				curator,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::batch_curator_index_to_info { index: tmp_index_vec },
+			)
+			.execute_returns(vec![crate::CuratorQueryResult {
+				exist: true,
+				info_hash,
+				update_block: U256::from(1),
+				curator: curator_account,
+				status: 0u8,
+			}]);
+	});
+}

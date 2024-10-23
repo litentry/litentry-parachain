@@ -27,21 +27,22 @@ interface IPoolProposal {
         uint256 expiryTime;
     }
 
+    /// @dev A strcuture for proposal details
     struct PoolProposalInfo {
-	// Proposer/Curator
-	bytes32 proposer;
-	// Hash of pool info like legal files etc.
-	bytes32 infoHash;
-	// The maximum investing amount that the pool can handle
-	uint256 maxPoolSize;
-	// If proposal passed, when the investing pool will start, Block number
-	uint256 poolStartTime;
-	// If proposal passed, when the investing pool will end, Block number
-	uint256 poolEndTime;
-	// estimated APR, but in percentage form
-	// i.e. 100 => 100%
-	uint256 estimatedEpochReward;
-	// Proposal status flags
+	    // Proposer/Curator
+	    bytes32 proposer;
+	    // Hash of pool info like legal files etc.
+	    bytes32 infoHash;
+	    // The maximum investing amount that the pool can handle
+	    uint256 maxPoolSize;
+	    // If proposal passed, when the investing pool will start, Block number
+	    uint256 poolStartTime;
+	    // If proposal passed, when the investing pool will end, Block number
+	    uint256 poolEndTime;
+	    // estimated APR, but in percentage form
+	    // i.e. 100 => 100%
+	    uint256 estimatedEpochReward;
+	    // Proposal status flags
     	// 	/// Whether the pool proposal passing the committee/democracy voting.
 		// /// A valid pool must passing committee/public's audit procedure regarding legal files and other pool parameters.
 		// const PUBLIC_VOTE_PASSED = 0b0000_0001;
@@ -60,8 +61,8 @@ interface IPoolProposal {
 		// /// Whether the proposal expired yet
 		// /// Has nothing to do with pool. Only related to proposal expired time
 		// const PROPOSAL_EXPIRED = 0b0000_1000;
-	uint8 proposalStatusFlags;
-}
+	    uint8 proposalStatusFlags;
+    }
 
 	/// @notice Propose an investing pool proposal
     /// @param max_pool_size: At most this amount of raised money curator/investing pool willing to take
