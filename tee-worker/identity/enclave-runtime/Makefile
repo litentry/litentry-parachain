@@ -30,6 +30,7 @@
 # Set sidechain as default feature mode
 WORKER_MODE ?= sidechain
 WORKER_DEV ?= 0
+RA_METHOD ?= dcap
 WORKER_ENV_DATA_PROVIDERS_CONFIG ?= 0
 
 Rust_Enclave_Name := libenclave.a
