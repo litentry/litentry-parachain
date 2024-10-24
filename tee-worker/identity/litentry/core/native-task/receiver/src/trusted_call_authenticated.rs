@@ -22,7 +22,7 @@ use itp_types::parentchain::Index as ParentchainIndex;
 use lc_identity_verification::VerificationCodeStore;
 use lc_omni_account::InMemoryStore as OmniAccountStore;
 use litentry_hex_utils::hex_encode;
-use litentry_primitives::{Identity, MemberAccount, ShardIdentifier};
+use litentry_primitives::{Identity, ShardIdentifier};
 use sp_core::{
 	blake2_256,
 	crypto::{AccountId32, UncheckedFrom},
@@ -76,7 +76,8 @@ impl TrustedCallVerification for TrustedCallAuthenticated {
 		self.nonce
 	}
 
-	fn verify_signature(&self, mrenclave: &[u8; 32], shard: &ShardIdentifier) -> bool {
+	fn verify_signature(&self, _mrenclave: &[u8; 32], _shard: &ShardIdentifier) -> bool {
+		log::error!("verify_signature shold not be used for TrustedCallAuthenticated");
 		false
 	}
 

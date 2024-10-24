@@ -18,7 +18,7 @@ use codec::{Decode, Encode};
 use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCallSigned};
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadata, NodeMetadataTrait};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadata};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning as StfEnclaveSigningTrait;
