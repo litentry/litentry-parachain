@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #[derive(Debug)]
-pub enum Intention {
+pub enum Intent {
 	TransferEthereum([u8; 20], [u8; 32]),
 	CallEthereum([u8; 20], Vec<u8>),
 }

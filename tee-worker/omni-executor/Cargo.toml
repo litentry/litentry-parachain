@@ -3,7 +3,7 @@ members = [
     "executor-core",
     "executor-worker",
     "parentchain/listener",
-    "ethereum/intention-executor",
+    "ethereum/intent-executor",
 ]
 
 resolver = "2"
