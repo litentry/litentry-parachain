@@ -137,7 +137,7 @@ impl<
 		O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
 		AccountId: Decode + Clone,
 		EC,
-	> EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
+	> EnsureOrigin<O> for EnsureSignedAndVerifiedCurator<AccountId, EC>
 where
 	EC: CuratorQuery<AccountId>,
 {
