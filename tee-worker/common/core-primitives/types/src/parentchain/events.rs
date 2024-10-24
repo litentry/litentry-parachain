@@ -141,12 +141,12 @@ impl StaticEvent for EnclaveRemoved {
 
 // omni-account pallet events
 #[derive(Encode, Decode, Debug)]
-pub struct AccountStoreCreated {
+pub struct AccountStoreUpdated {
 	pub who: AccountId,
 	pub account_store: Vec<MemberAccount>,
 }
 
-impl core::fmt::Display for AccountStoreCreated {
+impl core::fmt::Display for AccountStoreUpdated {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
 			"AccountStoreCreated :: who: {}, account_store: {:?}",
@@ -157,81 +157,9 @@ impl core::fmt::Display for AccountStoreCreated {
 	}
 }
 
-impl StaticEvent for AccountStoreCreated {
+impl StaticEvent for AccountStoreUpdated {
 	const PALLET: &'static str = "OmniAccount";
-	const EVENT: &'static str = "AccountStoreCreated";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct AccountAdded {
-	pub who: AccountId,
-	pub member_account_hash: Hash,
-	pub account_store: Vec<MemberAccount>,
-}
-
-impl core::fmt::Display for AccountAdded {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"AccountAdded :: who: {}, member_account_hash: {}, account_store: {:?}",
-			account_id_to_string::<AccountId>(&self.who),
-			self.member_account_hash.to_hex(),
-			self.account_store
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for AccountAdded {
-	const PALLET: &'static str = "OmniAccount";
-	const EVENT: &'static str = "AccountAdded";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct AccountRemoved {
-	pub who: AccountId,
-	pub member_account_hashes: Vec<Hash>,
-	pub account_store: Vec<MemberAccount>,
-}
-
-impl core::fmt::Display for AccountRemoved {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"AccountRemoved :: who: {}, member_account_hashes: {:?}, account_store: {:?}",
-			account_id_to_string::<AccountId>(&self.who),
-			self.member_account_hashes,
-			self.account_store
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for AccountRemoved {
-	const PALLET: &'static str = "OmniAccount";
-	const EVENT: &'static str = "AccountRemoved";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct AccountMadePublic {
-	pub who: AccountId,
-	pub member_account_hash: Hash,
-	pub account_store: Vec<MemberAccount>,
-}
-
-impl core::fmt::Display for AccountMadePublic {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"AccountMadePublic :: who: {}, member_account_hash: {}, account_store: {:?}",
-			account_id_to_string::<AccountId>(&self.who),
-			self.member_account_hash.to_hex(),
-			self.account_store
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for AccountMadePublic {
-	const PALLET: &'static str = "OmniAccount";
-	const EVENT: &'static str = "AccountMadePublic";
+	const EVENT: &'static str = "AccountStoreUpdated";
 }
 
 // Identity-worker events

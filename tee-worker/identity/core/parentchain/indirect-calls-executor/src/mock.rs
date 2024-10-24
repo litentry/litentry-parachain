@@ -86,19 +86,7 @@ impl FilterEvents for MockEvents {
 		Ok(Vec::new())
 	}
 
-	fn get_account_store_created_events(&self) -> Result<Vec<AccountStoreCreated>, Self::Error> {
-		Ok(Vec::new())
-	}
-
-	fn get_account_added_events(&self) -> Result<Vec<AccountAdded>, Self::Error> {
-		Ok(Vec::new())
-	}
-
-	fn get_account_removed_events(&self) -> Result<Vec<AccountRemoved>, Self::Error> {
-		Ok(Vec::new())
-	}
-
-	fn get_account_made_public_events(&self) -> Result<Vec<AccountMadePublic>, Self::Error> {
+	fn get_account_store_updated_events(&self) -> Result<Vec<AccountStoreUpdated>, Self::Error> {
 		Ok(Vec::new())
 	}
 }

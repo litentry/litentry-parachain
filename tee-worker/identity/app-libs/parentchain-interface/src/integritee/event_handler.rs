@@ -381,52 +381,16 @@ where
 			});
 		}
 
-		if let Ok(events) = events.get_account_store_created_events() {
-			debug!("Handling AccountStoreCreated events");
+		if let Ok(events) = events.get_account_store_updated_events() {
+			debug!("Handling AccountStoreUpdated events");
 			events
 				.into_iter()
 				.try_for_each(|event| {
-					debug!("found AccountStoreCreated event: {:?}", event);
+					debug!("found AccountStoreUpdated event: {:?}", event);
 					handled_events.push(hash_of(&event));
 					Self::update_account_store(event.who, event.account_store, block_number)
 				})
-				.map_err(|_| ParentchainEventProcessingError::AccountStoreCreatedFailure)?;
-		}
-
-		if let Ok(events) = events.get_account_added_events() {
-			debug!("Handling AccountAdded events");
-			events
-				.into_iter()
-				.try_for_each(|event| {
-					debug!("found AccountAdded event: {:?}", event);
-					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store, block_number)
-				})
-				.map_err(|_| ParentchainEventProcessingError::AccountAddedFailure)?;
-		}
-
-		if let Ok(events) = events.get_account_removed_events() {
-			debug!("Handling AccountRemoved events");
-			events
-				.into_iter()
-				.try_for_each(|event| {
-					debug!("found AccountRemoved event: {:?}", event);
-					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store, block_number)
-				})
-				.map_err(|_| ParentchainEventProcessingError::AccountRemovedFailure)?;
-		}
-
-		if let Ok(events) = events.get_account_made_public_events() {
-			debug!("Handling AccountMadePublic events");
-			events
-				.into_iter()
-				.try_for_each(|event| {
-					debug!("found AccountMadePublic event: {:?}", event);
-					handled_events.push(hash_of(&event));
-					Self::update_account_store(event.who, event.account_store, block_number)
-				})
-				.map_err(|_| ParentchainEventProcessingError::AccountMadePublicFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::AccountStoreUpdatedFailure)?;
 		}
 
 		Ok((handled_events, successful_assertion_ids, failed_assertion_ids))
