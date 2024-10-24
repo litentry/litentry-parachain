@@ -26,6 +26,7 @@ itp-stf-primitives = { workspace = true }
 itp-stf-state-handler = { workspace = true }
 itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { workspace = true }
+itp-api-client-types = { workspace = true }
 
 frame-support = { workspace = true }
 lc-data-providers = { workspace = true }
@@ -68,6 +69,7 @@ std = [
     "lc-native-task-sender/std",
     "lc-identity-verification/std",
     "lc-omni-account/std",
+    "itp-api-client-types/std",
 ]
 development = [
     "litentry-macros/development",
