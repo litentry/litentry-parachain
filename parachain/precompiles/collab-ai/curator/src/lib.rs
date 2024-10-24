@@ -146,11 +146,11 @@ where
 		let result = index
 			.iter()
 			.map(|i| {
-				let i: u128 = i.clone().try_into().map_err(|_| {
+				let tmp_index: u128 = *i.try_into().map_err(|_| {
 					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 				})?;
 				if let Some((info_hash, update_block, curator, status)) =
-					pallet_curator::Pallet::<Runtime>::curator_index_to_info(i)
+					pallet_curator::Pallet::<Runtime>::curator_index_to_info(tmp_index)
 				{
 					let update_block: U256 = update_block.into();
 
