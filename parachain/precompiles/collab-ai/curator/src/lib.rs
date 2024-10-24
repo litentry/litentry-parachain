@@ -152,7 +152,10 @@ where
 		))?;
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
-		handle.record_db_read::<Runtime>(93 * <u128 as Into<usize>>::into(length))?;
+		let length_usize: usize = length.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		handle.record_db_read::<Runtime>(93 * length_usize)?;
 
 		let result = (start_id..end_id)
 			.map(|i| {
