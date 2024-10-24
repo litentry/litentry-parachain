@@ -901,7 +901,7 @@ where
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::request_intent(..) => {
-				error!("please use author_requestVc instead");
+				error!("please use author_submitNativeRequest instead");
 				Ok(TrustedCallResult::Empty)
 			},
 		}
