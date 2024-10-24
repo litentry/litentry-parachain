@@ -191,7 +191,13 @@ fn test_curator_index_to_info() {
 				H160::from_low_u64_be(1000),
 				PCall::<Test>::curator_index_to_info { index: 0.into() },
 			)
-			.execute_returns((true, info_hash, U256::from(1), curator_account, 0u8));
+			.execute_returns(crate::CuratorQueryResult {
+				exist: true,
+				info_hash,
+				update_block: U256::from(1),
+				curator: curator_account,
+				status: 0u8,
+			});
 	});
 }
 

@@ -50,7 +50,7 @@ interface ICurator {
     /// @param index: Curator index
     /// @custom:selector 0x74cded61
 	/// 				 curatorIndexToInfo(uint256)
-    function curatorIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 curator, CandidateStatus status);
+    function curatorIndexToInfo(uint256 index) external view returns (CuratorQueryResult memory result);
 
     /// @notice Curator index to curator info, bool represents if such info exists
     /// @param start_id: Guardian index start_id, included

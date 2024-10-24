@@ -67,7 +67,7 @@ interface IGuardian {
     /// @param index: Guardian index
     /// @custom:selector 0x59c95743
 	/// 				 guardianIndexToInfo(address)
-    function guardianIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 guardian, CandidateStatus status);
+    function guardianIndexToInfo(uint256 index) external view returns (GuardianQueryResult memory result);
 
     /// @notice Guardian index to guardian info, bool represents if such info exists
     /// @param start_id: Guardian index start_id, included

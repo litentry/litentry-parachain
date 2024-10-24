@@ -103,7 +103,7 @@ where
 	fn curator_index_to_info(
 		handle: &mut impl PrecompileHandle,
 		index: U256,
-	) -> EvmResult<(bool, H256, U256, H256, u8)> {
+	) -> EvmResult<CuratorQueryResult> {
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
 		handle.record_db_read::<Runtime>(93)?;
@@ -121,15 +121,15 @@ where
 
 			let status = Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
 
-			Ok((true, info_hash, update_block, curator, status))
+			Ok(CuratorQueryResult { exist: true, info_hash, update_block, curator, status })
 		} else {
-			Ok((
-				false,
-				Default::default(),
-				Default::default(),
-				Default::default(),
-				Default::default(),
-			))
+			Ok(CuratorQueryResult {
+				exist: false,
+				info_hash: Default::default(),
+				update_block: Default::default(),
+				curator: Default::default(),
+				status: Default::default(),
+			})
 		}
 	}
 
@@ -155,7 +155,7 @@ where
 		let length_usize: usize = length.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		handle.record_db_read::<Runtime>(93 * length_usize)?;
+		handle.record_db_read::<Runtime>(93.saturating_mul(length_usize))?;
 
 		let result = (start_id..end_id)
 			.map(|i| {

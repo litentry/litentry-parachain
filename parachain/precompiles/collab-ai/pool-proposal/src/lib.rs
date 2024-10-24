@@ -223,7 +223,7 @@ where
 	fn pool_proposal(
 		handle: &mut impl PrecompileHandle,
 		pool_proposal_index: U256,
-	) -> EvmResult<(bool, PoolProposalInfo)> {
+	) -> EvmResult<PoolProposalInfo> {
 		// Storage item: PoolProposal ->
 		// 		PoolProposalInfo<InfoHash, AssetBalanceOf<T>, BlockNumberFor<T>, T::AccountId>
 		handle.record_db_read::<Runtime>(PalletPoolProposalInfo::<
@@ -243,7 +243,8 @@ where
 			let proposer: [u8; 32] = info.proposer.into();
 			let proposer = proposer.into();
 
-			let info = PoolProposalInfo {
+			Ok(PoolProposalInfo {
+				exist: true,
 				proposer,
 				info_hash: info.pool_info_hash,
 				max_pool_size: info.max_pool_size.into(),
@@ -251,90 +252,186 @@ where
 				pool_end_time: info.pool_end_time.into(),
 				estimated_epoch_reward: info.estimated_epoch_reward.into(),
 				proposal_status_flags: info.proposal_status_flags.bits(),
-			};
-
-			Ok((true, info))
+			})
 		} else {
-			Ok((false, Default::default()))
+			Ok(PoolProposalInfo {
+				exist: false,
+				proposer,
+				info_hash: Default::default(),
+				max_pool_size: Default::default(),
+				pool_start_time: Default::default(),
+				pool_end_time: Default::default(),
+				estimated_epoch_reward: Default::default(),
+				proposal_status_flags: Default::default(),
+			})
 		}
 	}
 
-	#[precompile::public("poolPreInvestings(uint256)")]
+	#[precompile::public("batchPoolProposal(uint256,uint256)")]
+	#[precompile::view]
+	fn batch_pool_proposal(
+		handle: &mut impl PrecompileHandle,
+		start_id: U256,
+		end_id: U256,
+	) -> EvmResult<Vec<PoolProposalInfo>> {
+		let start_id: u128 = start_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		let end_id: u128 = end_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+
+		let length: u128 = end_id.checked_sub(start_id).ok_or(Into::<PrecompileFailure>::into(
+			RevertReason::value_is_too_large("id overflow"),
+		))?;
+		// Storage item: PoolProposal ->
+		// 		PoolProposalInfo<InfoHash, AssetBalanceOf<T>, BlockNumberFor<T>, T::AccountId>
+		let length_usize: usize = length.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		handle.record_db_read::<Runtime>(
+			PalletPoolProposalInfo::<
+				H256,
+				AssetBalanceOf<Runtime>,
+				BlockNumberFor<Runtime>,
+				Runtime::AccountId,
+			>::max_encoded_len()
+			.saturating_mul(length_usize),
+		)?;
+
+		let result = (start_id..end_id)
+			.map(|i| {
+				if let Some(info) = pallet_pool_proposal::Pallet::<Runtime>::pool_proposal(i) {
+					let proposer: [u8; 32] = info.proposer.into();
+					let proposer = proposer.into();
+
+					PoolProposalInfo {
+						exist: true,
+						proposer,
+						info_hash: info.pool_info_hash,
+						max_pool_size: info.max_pool_size.into(),
+						pool_start_time: info.pool_start_time.into(),
+						pool_end_time: info.pool_end_time.into(),
+						estimated_epoch_reward: info.estimated_epoch_reward.into(),
+						proposal_status_flags: info.proposal_status_flags.bits(),
+					}
+				} else {
+					PoolProposalInfo {
+						exist: false,
+						proposer,
+						info_hash: Default::default(),
+						max_pool_size: Default::default(),
+						pool_start_time: Default::default(),
+						pool_end_time: Default::default(),
+						estimated_epoch_reward: Default::default(),
+						proposal_status_flags: Default::default(),
+					}
+				}
+			})
+			.collect();
+
+		Ok(result)
+	}
+
+	#[precompile::public("poolPreInvestings(uint256,uint256)")]
 	#[precompile::view]
 	fn pool_pre_investings(
 		handle: &mut impl PrecompileHandle,
-		pool_proposal_index: U256,
+		start_id: U256,
+		end_id: U256,
 	) -> EvmResult<Vec<StakingBond>> {
-		// Storage item: PoolPreInvestings ->
-		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
-		handle.record_db_read::<Runtime>(
-			PalletBond::<Runtime::AccountId, AssetBalanceOf<Runtime>>::max_encoded_len()
-				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
-		)?;
-
-		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
+		let start_id: u128 = start_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		let end_id: u128 = end_id.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
-		if let Some(result) =
-			pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(pool_proposal_index)
-		{
-			let bond_vec = result
-				.pre_investings
-				.into_iter()
-				.enumerate()
-				.map(|(_index, bond)| {
-					let owner: [u8; 32] = bond.owner.into();
-					let owner = owner.into();
-					StakingBond { owner, amount: bond.amount.into() }
-				})
-				.collect();
+		let length: u128 = end_id.checked_sub(start_id).ok_or(Into::<PrecompileFailure>::into(
+			RevertReason::value_is_too_large("id overflow"),
+		))?;
+		// Storage item: PoolPreInvestings ->
+		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
+		let length_usize: usize = length.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		handle.record_db_read::<Runtime>(
+			PalletBond::<Runtime::AccountId, AssetBalanceOf<Runtime>>::max_encoded_len()
+				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize)
+				.saturating_mul(length_usize),
+		)?;
+		let mut bond_result = Vec::<StakingBond>::new();
+		for n in start_id..end_id {
+			if let Some(result) = pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(n) {
+				let bond_vec = result
+					.pre_investings
+					.into_iter()
+					.enumerate()
+					.map(|(_index, bond)| {
+						let owner: [u8; 32] = bond.owner.into();
+						let owner = owner.into();
+						StakingBond { pool_index: n, owner, amount: bond.amount.into() }
+					})
+					.collect();
 
-			Ok(bond_vec)
-		} else {
-			Ok(Default::default())
+				bond_result.extend(bond_vec);
+			}
 		}
+
+		Ok(bond_result)
 	}
 
-	#[precompile::public("poolPreInvestingsQueued(uint256)")]
+	#[precompile::public("poolPreInvestingsQueued(uint256,uint256)")]
 	#[precompile::view]
 	fn pool_pre_investings_queued(
 		handle: &mut impl PrecompileHandle,
-		pool_proposal_index: U256,
+		start_id: U256,
+		end_id: U256,
 	) -> EvmResult<Vec<QueuedStakingBond>> {
-		// Storage item: PoolPreInvestings ->
-		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
-		handle.record_db_read::<Runtime>(
-			PalletBond::<Runtime::AccountId, AssetBalanceOf<Runtime>>::max_encoded_len()
-				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize),
-		)?;
-
-		let pool_proposal_index: u128 = pool_proposal_index.try_into().map_err(|_| {
+		let start_id: u128 = start_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		let end_id: u128 = end_id.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
 
-		if let Some(result) =
-			pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(pool_proposal_index)
-		{
-			let bond_vec = result
-				.queued_pre_investings
-				.into_iter()
-				.enumerate()
-				.map(|(_index, bond)| {
-					let owner: [u8; 32] = bond.0.owner.into();
-					let owner = owner.into();
-					QueuedStakingBond {
-						owner,
-						amount: bond.0.amount.into(),
-						queued_time: bond.1.into(),
-					}
-				})
-				.collect();
+		let length: u128 = end_id.checked_sub(start_id).ok_or(Into::<PrecompileFailure>::into(
+			RevertReason::value_is_too_large("id overflow"),
+		))?;
+		// Storage item: PoolPreInvestings ->
+		// 		PoolProposalPreInvesting<T::AccountId, AssetBalanceOf<T>, BlockNumberFor<T>, T::MaximumPoolProposed>
+		let length_usize: usize = length.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		handle.record_db_read::<Runtime>(
+			PalletBond::<Runtime::AccountId, AssetBalanceOf<Runtime>>::max_encoded_len()
+				.saturating_mul(Runtime::MaximumPoolProposed::get() as usize)
+				.saturating_mul(length_usize),
+		)?;
 
-			Ok(bond_vec)
-		} else {
-			Ok(Default::default())
+		let mut bond_result = Vec::<StakingBond>::new();
+		for n in start_id..end_id {
+			if let Some(result) = pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(n) {
+				let bond_vec = result
+					.queued_pre_investings
+					.into_iter()
+					.enumerate()
+					.map(|(_index, bond)| {
+						let owner: [u8; 32] = bond.0.owner.into();
+						let owner = owner.into();
+						QueuedStakingBond {
+							owner,
+							amount: bond.0.amount.into(),
+							queued_time: bond.1.into(),
+						}
+					})
+					.collect();
+
+				bond_result.extend(bond_vec);
+			}
 		}
+
+		Ok(bond_result)
 	}
 
 	#[precompile::public("poolGuardian(uint256)")]
@@ -381,12 +478,14 @@ pub struct DepositBond {
 
 #[derive(Default, Debug, solidity::Codec)]
 pub struct StakingBond {
+	pool_index: U256,
 	owner: H256,
 	amount: U256,
 }
 
 #[derive(Default, Debug, solidity::Codec)]
 pub struct QueuedStakingBond {
+	pool_index: U256,
 	owner: H256,
 	amount: U256,
 	queued_time: U256,
@@ -400,6 +499,7 @@ pub struct PoolProposalStatus {
 
 #[derive(Default, Debug, solidity::Codec)]
 struct PoolProposalInfo {
+	exist: bool,
 	proposer: H256,
 	info_hash: H256,
 	max_pool_size: U256,
