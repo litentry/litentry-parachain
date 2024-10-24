@@ -152,7 +152,7 @@ where
 		))?;
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
-		handle.record_db_read::<Runtime>(93 * length.into())?;
+		handle.record_db_read::<Runtime>(93 * <u128 as Into<usize>>::into(length))?;
 
 		let result = (start_id..end_id)
 			.map(|i| {
