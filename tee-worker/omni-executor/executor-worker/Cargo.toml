@@ -9,9 +9,12 @@ clap = { workspace = true, features = ["derive"] }
 env_logger = { workspace = true }
 executor-core = { path = "../executor-core" }
 hex = "0.4.3"
-intention-executor = { path = "../ethereum/intention-executor" }
+intent-executor = { path = "../ethereum/intent-executor" }
 log = { workspace = true }
 parentchain-listener = { path = "../parentchain/listener" }
 scale-encode = { workspace = true }
 serde_json = "1.0.127"
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true

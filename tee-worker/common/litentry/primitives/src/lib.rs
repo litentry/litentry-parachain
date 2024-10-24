@@ -71,7 +71,7 @@ pub use parentchain_primitives::{
 	},
 	decl_rsa_request,
 	identity::*,
-	intention::*,
+	intent::*,
 	omni_account::*,
 	teebag::*,
 	AccountId as ParentchainAccountId, Balance as ParentchainBalance,

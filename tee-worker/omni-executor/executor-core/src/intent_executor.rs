@@ -17,19 +17,19 @@
 use async_trait::async_trait;
 use tokio::sync::mpsc;
 
-use crate::primitives::Intention;
+use crate::primitives::Intent;
 
-/// Used to perform intention on destination chain
+/// Used to perform intent on destination chain
 #[async_trait]
-pub trait IntentionExecutor: Send {
-	async fn execute(&self, intention: Intention) -> Result<(), ()>;
+pub trait IntentExecutor: Send {
+	async fn execute(&self, intent: Intent) -> Result<(), ()>;
 }
 
-pub struct MockedIntentionExecutor {
+pub struct MockedIntentExecutor {
 	sender: mpsc::UnboundedSender<()>,
 }
 
-impl MockedIntentionExecutor {
+impl MockedIntentExecutor {
 	pub fn new() -> (Self, mpsc::UnboundedReceiver<()>) {
 		let (sender, receiver) = mpsc::unbounded_channel();
 		(Self { sender }, receiver)
@@ -37,8 +37,8 @@ impl MockedIntentionExecutor {
 }
 
 #[async_trait]
-impl IntentionExecutor for MockedIntentionExecutor {
-	async fn execute(&self, _intention: Intention) -> Result<(), ()> {
+impl IntentExecutor for MockedIntentExecutor {
+	async fn execute(&self, _intent: Intent) -> Result<(), ()> {
 		self.sender.send(()).map_err(|_| ())
 	}
 }

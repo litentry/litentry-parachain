@@ -21,7 +21,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use core_primitives::{Identity, Intention, MemberAccount, OmniAccountConverter};
+pub use core_primitives::{Identity, Intent, MemberAccount, OmniAccountConverter};
 pub use frame_system::{self as system, pallet_prelude::BlockNumberFor};
 pub use pallet::*;
 
@@ -55,6 +55,13 @@ pub enum RawOrigin<AccountId> {
 pub mod pallet {
 	use super::*;
 
+	#[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
+	pub enum IntentExecutionResult {
+		Success,
+		Failure,
+	}
+
+	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
@@ -97,6 +104,8 @@ pub mod pallet {
 
 		/// Convert an `Identity` to OmniAccount type
 		type OmniAccountConverter: OmniAccountConverter<OmniAccount = Self::AccountId>;
+
+		type SetOmniExecutorOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 	}
 
 	pub type MemberAccounts<T> = BoundedVec<MemberAccount, <T as Config>::MaxAccountStoreLength>;
@@ -115,6 +124,10 @@ pub mod pallet {
 	pub type MemberAccountHash<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = T::AccountId>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn omni_executor)]
+	pub type OmniExecutor<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -132,8 +145,12 @@ pub mod pallet {
 		DispatchedAsOmniAccount { who: T::AccountId, result: DispatchResult },
 		/// Some call is dispatched as signed origin
 		DispatchedAsSigned { who: T::AccountId, result: DispatchResult },
-		/// Intention is requested
-		IntentionRequested { who: T::AccountId, intention: Intention },
+		/// Intent is requested
+		IntentRequested { who: T::AccountId, intent: Intent },
+		/// Intent is executed
+		IntentExecuted { who: T::AccountId, intent: Intent, result: IntentExecutionResult },
+		/// Omni executor is set
+		OmniExecutorSet { omni_executor: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -145,6 +162,7 @@ pub mod pallet {
 		InvalidNonce,
 		UnknownAccountStore,
 		EmptyAccount,
+		RequireOmniExecutor,
 	}
 
 	#[pallet::call]
@@ -295,9 +313,9 @@ pub mod pallet {
 
 		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn request_intention(origin: OriginFor<T>, intention: Intention) -> DispatchResult {
+		pub fn request_intent(origin: OriginFor<T>, intent: Intent) -> DispatchResult {
 			let who = T::OmniAccountOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IntentionRequested { who, intention });
+			Self::deposit_event(Event::IntentRequested { who, intent });
 			Ok(())
 		}
 
@@ -330,6 +348,31 @@ pub mod pallet {
 
 			Ok(Pays::No.into())
 		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal,  Pays::No))]
+		pub fn intent_executed(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+			intent: Intent,
+			result: IntentExecutionResult,
+		) -> DispatchResult {
+			Self::ensure_omni_executor(origin)?;
+			Self::deposit_event(Event::IntentExecuted { who, intent, result });
+			Ok(())
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal,  Pays::No))]
+		pub fn set_omni_executor(
+			origin: OriginFor<T>,
+			new_omni_executor: T::AccountId,
+		) -> DispatchResult {
+			T::SetOmniExecutorOrigin::ensure_origin(origin)?;
+			OmniExecutor::<T>::put(new_omni_executor.clone());
+			Self::deposit_event(Event::OmniExecutorSet { omni_executor: new_omni_executor });
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -350,6 +393,14 @@ pub mod pallet {
 			Self::deposit_event(Event::AccountStoreCreated { who: omni_account });
 
 			Ok(member_accounts)
+		}
+
+		fn ensure_omni_executor(origin: OriginFor<T>) -> DispatchResult {
+			ensure!(
+				Some(ensure_signed(origin)?) == Self::omni_executor(),
+				Error::<T>::RequireOmniExecutor
+			);
+			Ok(())
 		}
 	}
 }

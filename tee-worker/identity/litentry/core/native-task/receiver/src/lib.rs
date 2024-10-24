@@ -54,7 +54,7 @@ use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperatio
 use itp_top_pool_author::traits::AuthorApi as AuthorApiTrait;
 use itp_types::{parentchain::ParentchainId, OpaqueCall};
 use lc_native_task_sender::init_native_task_sender;
-use litentry_primitives::{AesRequest, DecryptableRequest, Intention as Intent, ParentchainIndex};
+use litentry_primitives::{AesRequest, DecryptableRequest, Intent, ParentchainIndex};
 use sp_core::{blake2_256, H256};
 use std::{
 	borrow::ToOwned,

@@ -223,7 +223,7 @@ endif
 enclave:
 	@echo
 	@echo "Building the enclave"
-	$(MAKE) -C ./enclave-runtime/
+	$(MAKE) -C ./enclave-runtime/ RA_METHOD=$(RA_METHOD) WORKER_DEV=$(WORKER_DEV)
 
 .git/hooks/pre-commit: .githooks/pre-commit
 	@echo "Installing git hooks"

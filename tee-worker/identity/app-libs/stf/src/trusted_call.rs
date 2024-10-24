@@ -53,7 +53,7 @@ use itp_utils::stringify::account_id_to_string;
 use litentry_hex_utils::hex_encode;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, Intention, LitentryMultiSignature, ParentchainBlockNumber,
+	ErrorDetail, IMPError, Identity, Intent, LitentryMultiSignature, ParentchainBlockNumber,
 	RequestAesKey, VCMPError, ValidationData, Web3Network,
 };
 use log::*;
@@ -140,7 +140,7 @@ pub enum TrustedCall {
 	#[codec(index = 25)]
 	clean_id_graphs(Identity),
 	#[codec(index = 26)]
-	request_intent(Identity, Intention),
+	request_intent(Identity, Intent),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]

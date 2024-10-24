@@ -9,7 +9,7 @@ pub const CALL_ETHEREUM_INPUT_LEN: u32 = 10 * 1024;
 pub const MAX_REMARK_LEN: u32 = u32::max_value();
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum Intention {
+pub enum Intent {
     #[codec(index = 0)]
     TransferEthereum(TransferEthereum),
     #[codec(index = 1)]
