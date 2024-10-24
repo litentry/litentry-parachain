@@ -256,7 +256,7 @@ where
 		} else {
 			Ok(PoolProposalInfo {
 				exist: false,
-				proposer,
+				proposer: Default::default(),
 				info_hash: Default::default(),
 				max_pool_size: Default::default(),
 				pool_start_time: Default::default(),
@@ -318,7 +318,7 @@ where
 				} else {
 					PoolProposalInfo {
 						exist: false,
-						proposer,
+						proposer: Default::default(),
 						info_hash: Default::default(),
 						max_pool_size: Default::default(),
 						pool_start_time: Default::default(),
@@ -370,7 +370,7 @@ where
 					.map(|(_index, bond)| {
 						let owner: [u8; 32] = bond.owner.into();
 						let owner = owner.into();
-						StakingBond { pool_index: n, owner, amount: bond.amount.into() }
+						StakingBond { pool_index: n.into(), owner, amount: bond.amount.into() }
 					})
 					.collect();
 
@@ -409,7 +409,7 @@ where
 				.saturating_mul(length_usize),
 		)?;
 
-		let mut bond_result = Vec::<StakingBond>::new();
+		let mut bond_result = Vec::<QueuedStakingBond>::new();
 		for n in start_id..end_id {
 			if let Some(result) = pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(n) {
 				let bond_vec = result
@@ -420,6 +420,7 @@ where
 						let owner: [u8; 32] = bond.0.owner.into();
 						let owner = owner.into();
 						QueuedStakingBond {
+							pool_index: n.into(),
 							owner,
 							amount: bond.0.amount.into(),
 							queued_time: bond.1.into(),
