@@ -614,7 +614,7 @@ pub mod pallet {
 
 	/// Some sort of check on the origin is from proposer.
 	impl<T: Config> ProposerQuery<T::AccountId> for Pallet<T> {
-		fn is_proposer(account: AccountId, proposal_index: PoolProposalIndex) -> bool {
+		fn is_proposer(account: T::AccountId, proposal_index: PoolProposalIndex) -> bool {
 			if let Some(info) = Self::pool_proposal(proposal_index) {
 				info.proposer == account
 			} else {

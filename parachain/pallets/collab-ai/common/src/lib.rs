@@ -162,7 +162,7 @@ where
 	}
 }
 
-pub type EnsureRootOrVerifiedCurator<AccountId, EC: CuratorQuery<AccountId>> =
+pub type EnsureRootOrVerifiedCurator<AccountId, EC> =
 	EitherOfDiverse<EnsureRoot<AccountId>, EnsureSignedAndVerifiedCurator<AccountId, EC>>;
 
 pub const INVESTING_POOL_INDEX_SHIFTER: u128 = 1_000_000_000_000_000;
