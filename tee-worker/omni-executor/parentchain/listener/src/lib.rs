@@ -114,6 +114,25 @@ pub async fn create_listener<EthereumIntentExecutorT: IntentExecutor + Send + Sy
 
 	info!("Substrate signer address: {}", AccountId32::from(signer.public_key()));
 
+
+	#[cfg(feature = "gramine-quote")]
+	{
+		use std::fs::File;
+		use std::fs;
+		use std::io::Write;
+		let mut f = File::create("/dev/attestation/user_report_data").unwrap();
+		let content = signer.public_key().0;
+		f.write_all(&content).unwrap();
+
+		let quote = fs::read("/dev/attestation/quote").unwrap();
+		info!("Attestation quote {:?}", quote);
+	}
+	#[cfg(not(feature = "gramine-quote"))]
+	{
+		let quote = vec![4u8; 32];
+	}
+
+
 	let intent_event_handler = IntentEventHandler::new(
 		metadata_provider,
 		ethereum_intent_executor,
