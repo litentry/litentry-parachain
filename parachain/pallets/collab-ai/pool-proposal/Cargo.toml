@@ -1,0 +1,43 @@
+[package]
+authors = ['Litentry Dev']
+description = 'Pallet for managing pool proposal'
+edition = '2021'
+homepage = 'https://litentry.com/'
+license = 'GPL-3.0'
+name = 'pallet-pool-proposal'
+repository = 'https://github.com/litentry/litentry-parachain'
+version = '0.1.0'
+
+[dependencies]
+bitflags = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+orml-utilities = { workspace = true }
+pallet-assets = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+pallet-collab-ai-common = { workspace = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+    "pallet-collab-ai-common/runtime-benchmarks",
+]
+std = [
+    "parity-scale-codec/std",
+    "scale-info/std",
+    "sp-std/std",
+    "sp-runtime/std",
+    "frame-support/std",
+    "frame-system/std",
+    "orml-utilities/std",
+    "pallet-assets/std",
+    "pallet-collab-ai-common/std",
+]
+try-runtime = ["frame-support/try-runtime"]
