@@ -143,8 +143,6 @@ where
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
 		handle.record_db_read::<Runtime>(93 * index.len())?;
 
-		let result = Vec::<CuratorQueryResult>::new();
-
 		let result = index
 			.iter()
 			.map(|i| {
