@@ -196,7 +196,7 @@ fn test_curator_index_to_info() {
 }
 
 #[test]
-fn test_curator_index_to_info() {
+fn test_batch_curator_index_to_info() {
 	new_test_ext().execute_with(|| {
 		let curator: H160 = H160::from_low_u64_be(1001);
 		let info_hash: H256 = H256::from([1u8; 32]);
@@ -215,7 +215,7 @@ fn test_curator_index_to_info() {
 		let curator_account: [u8; 32] = curator_account.into();
 		let curator_account: H256 = curator_account.into();
 
-		let tmp_index_vec = Vec::<U256>::new();
+		let mut tmp_index_vec = Vec::<U256>::new();
 		tmp_index_vec.push(0.into());
 		PrecompilesValue::get()
 			.prepare_test(

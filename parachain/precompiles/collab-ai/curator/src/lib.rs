@@ -147,7 +147,6 @@ where
 
 		let result = index
 			.into_iter()
-			.enumerate()
 			.map(|i| {
 				let i: u128 = i.try_into().map_err(|_| {
 					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
@@ -160,18 +159,17 @@ where
 					let curator: [u8; 32] = curator.into();
 					let curator: H256 = curator.into();
 
-					let status =
-						Self::candidate_status_to_u8(status).in_field("candidateStatus")?;
+					let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
 
-					CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
+					Ok(CuratorQueryResult { exist: true, info_hash, update_block, curator, status })
 				} else {
-					CuratorQueryResult {
+					Ok(CuratorQueryResult {
 						exist: false,
 						info_hash: Default::default(),
 						update_block: Default::default(),
 						curator: Default::default(),
 						status: Default::default(),
-					}
+					})
 				}
 			})
 			.collect();
