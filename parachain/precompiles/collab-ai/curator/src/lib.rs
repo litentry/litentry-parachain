@@ -145,22 +145,31 @@ where
 
 		let result = index
 			.iter()
-			.map(|i| {
-				let tmp_index: u128 = *i.try_into().map_err(|_| {
-					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
-				})?;
-				if let Some((info_hash, update_block, curator, status)) =
-					pallet_curator::Pallet::<Runtime>::curator_index_to_info(tmp_index)
-				{
-					let update_block: U256 = update_block.into();
+			.map(|&i| {
+				if let Ok(tmp_index) = i.try_into() {
+					if let Some((info_hash, update_block, curator, status)) =
+						pallet_curator::Pallet::<Runtime>::curator_index_to_info(tmp_index)
+					{
+						let update_block: U256 = update_block.into();
 
-					let curator: [u8; 32] = curator.into();
-					let curator: H256 = curator.into();
+						let curator: [u8; 32] = curator.into();
+						let curator: H256 = curator.into();
 
-					let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
+						let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
 
-					CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
+						CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
+					} else {
+						CuratorQueryResult {
+							exist: false,
+							info_hash: Default::default(),
+							update_block: Default::default(),
+							curator: Default::default(),
+							status: Default::default(),
+						}
+					}
 				} else {
+					// If value_is_too_large error from U256 to u128
+					// return default
 					CuratorQueryResult {
 						exist: false,
 						info_hash: Default::default(),
