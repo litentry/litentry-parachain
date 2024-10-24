@@ -60,8 +60,9 @@ fn create_account_store_works() {
 		let member_accounts: MemberAccounts<TestRuntime> =
 			vec![public_member_account(alice())].try_into().unwrap();
 
+		System::assert_has_event(Event::AccountStoreCreated { who: alice().omni_account }.into());
 		System::assert_last_event(
-			Event::AccountStoreCreated {
+			Event::AccountStoreUpdated {
 				who: alice().omni_account,
 				account_store: member_accounts,
 			}
@@ -120,6 +121,12 @@ fn add_account_works() {
 			Event::AccountAdded {
 				who: alice().omni_account.clone(),
 				member_account_hash: bob.hash(),
+			}
+			.into(),
+		);
+		System::assert_has_event(
+			Event::AccountStoreUpdated {
+				who: alice().omni_account.clone(),
 				account_store: expected_member_accounts.clone(),
 			}
 			.into(),
@@ -144,18 +151,12 @@ fn add_account_works() {
 			]);
 
 		System::assert_has_event(
-			Event::AccountAdded {
-				who: alice().omni_account,
-				member_account_hash: charlie.hash(),
-				account_store: expected_member_accounts.clone(),
-			}
-			.into(),
+			Event::AccountAdded { who: alice().omni_account, member_account_hash: charlie.hash() }
+				.into(),
 		);
-
 		System::assert_has_event(
-			Event::AccountAdded {
+			Event::AccountStoreUpdated {
 				who: alice().omni_account,
-				member_account_hash: charlie.hash(),
 				account_store: expected_member_accounts.clone(),
 			}
 			.into(),
@@ -348,8 +349,14 @@ fn remove_account_works() {
 
 		System::assert_has_event(
 			Event::AccountRemoved {
-				who: alice().omni_account.clone(),
+				who: alice().omni_account,
 				member_account_hashes: vec![bob.hash()],
+			}
+			.into(),
+		);
+		System::assert_has_event(
+			Event::AccountStoreUpdated {
+				who: alice().omni_account,
 				account_store: expected_member_accounts.clone(),
 			}
 			.into(),
@@ -457,8 +464,14 @@ fn publicize_account_works() {
 
 		System::assert_has_event(
 			Event::AccountMadePublic {
-				who: alice().omni_account.clone(),
+				who: alice().omni_account,
 				member_account_hash: bob().identity.hash(),
+			}
+			.into(),
+		);
+		System::assert_has_event(
+			Event::AccountStoreUpdated {
+				who: alice().omni_account,
 				account_store: expected_member_accounts.clone(),
 			}
 			.into(),
