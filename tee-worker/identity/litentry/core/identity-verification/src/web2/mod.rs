@@ -25,7 +25,6 @@ pub mod email;
 pub mod twitter;
 
 use crate::{ensure, Error, Result, VerificationCodeStore};
-use codec::Encode;
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
@@ -38,7 +37,6 @@ use litentry_primitives::{
 	TwitterValidationData, Web2ValidationData,
 };
 use log::*;
-use sp_core::blake2_256;
 use std::{string::ToString, vec::Vec};
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
@@ -211,8 +209,9 @@ pub fn verify(
 			let Some(account_id) = who.to_native_account() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
+			let email_identity = Identity::from_email(&email);
 			let stored_verification_code =
-				match VerificationCodeStore::get(&account_id, blake2_256(&email.encode()).into()) {
+				match VerificationCodeStore::get(&account_id, email_identity.hash()) {
 					Ok(data) => data.ok_or_else(|| {
 						Error::LinkIdentityFailed(ErrorDetail::StfError(
 							ErrorString::truncate_from(

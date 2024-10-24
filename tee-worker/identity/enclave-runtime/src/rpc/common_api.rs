@@ -466,6 +466,7 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 		}
 	});
 
+	// TODO: deprecate
 	io_handler.add_sync_method("identity_requestEmailVerification", move |params: Params| {
 		match params.parse::<(String, String)>() {
 			Ok((did, email)) => {
@@ -487,9 +488,11 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 				);
 				let verification_code = generate_verification_code();
 
+				let email_identity = Identity::from_email(&email);
+
 				match VerificationCodeStore::insert(
 					account_id,
-					blake2_256(&email.encode()).into(),
+					email_identity.hash(),
 					verification_code.clone(),
 				) {
 					Ok(_) => {
@@ -513,8 +516,9 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 		}
 	});
 
-	io_handler.add_sync_method("omni_account_requestVerificationCode", move |params: Params| {
-		match params.parse::<(String, String)>() {
+	io_handler.add_sync_method(
+		"omni_account_requestEmailVerificationCode",
+		move |params: Params| match params.parse::<(String, String)>() {
 			Ok((encoded_omni_account, encoded_identity)) => {
 				let omni_account = match AccountId::from_hex(encoded_omni_account.as_str()) {
 					Ok(account_id) => account_id,
@@ -551,8 +555,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 				}
 			},
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
-		}
-	});
+		},
+	);
 }
 
 #[deprecated(note = "`state_executeAesGetter` should be preferred")]
