@@ -203,6 +203,57 @@ where
 		}
 	}
 
+	#[precompile::public("batchGuardianIndexToInfo(uint256,uint256)")]
+	#[precompile::view]
+	fn batch_guardian_index_to_info(
+		handle: &mut impl PrecompileHandle,
+		start_id: U256,
+		end_id: U256,
+	) -> EvmResult<Vec<CuratorQueryResult>> {
+		let start_id: u128 = start_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		let end_id: u128 = end_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+
+		let length: u128 = end_id.checked_sub(start_id).ok_or(Into::<PrecompileFailure>::into(
+			RevertReason::value_is_too_large("id overflow"),
+		))?;
+		// Storage item: GuardianIndex u128:
+		// Twox64Concat(8) + GuardianIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
+		let length_usize: usize = length.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		handle.record_db_read::<Runtime>(93 * length_usize)?;
+
+		let result = (start_id..end_id)
+			.map(|i| {
+				if let Some((info_hash, update_block, curator, status)) =
+					pallet_guardian::Pallet::<Runtime>::guardian_index_to_info(i)
+				{
+					let update_block: U256 = update_block.into();
+
+					let guardian: [u8; 32] = guardian.into();
+					let guardian: H256 = guardian.into();
+
+					let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
+
+					GuardianQueryResult { exist: true, info_hash, update_block, guardian, status }
+				} else {
+					GuardianQueryResult {
+						exist: false,
+						info_hash: Default::default(),
+						update_block: Default::default(),
+						guardian: Default::default(),
+						status: Default::default(),
+					}
+				}
+			})
+			.collect();
+		Ok(result)
+	}
+
 	#[precompile::public("guardianVotes(bytes32,uint256)")]
 	#[precompile::view]
 	fn guardian_votes(

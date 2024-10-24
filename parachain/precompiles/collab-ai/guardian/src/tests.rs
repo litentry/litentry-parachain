@@ -340,3 +340,43 @@ fn test_guardian_votes() {
 			.execute_returns((1u8, U256::from(0))); // Aye vote
 	});
 }
+
+#[test]
+fn test_batch_guardian_index_to_info() {
+	new_test_ext().execute_with(|| {
+		let guardian: H160 = H160::from_low_u64_be(1001);
+		let info_hash: H256 = H256::from([1u8; 32]);
+
+		// Register the guardian
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::regist_guardian { info_hash },
+			)
+			.execute_returns(());
+
+		// Query the guardian info by index
+
+		let guardian_account = TruncatedAddressMapping::into_account_id(guardian);
+		let guardian_account: [u8; 32] = guardian_account.into();
+		let guardian_account: H256 = guardian_account.into();
+
+		PrecompilesValue::get()
+			.prepare_test(
+				guardian,
+				H160::from_low_u64_be(1000),
+				PCall::<Test>::batch_guardian_index_to_info {
+					start_id: 0.into(),
+					end_id: 1.into(),
+				},
+			)
+			.execute_returns(vec![crate::GuardianQueryResult {
+				exist: true,
+				info_hash,
+				update_block: U256::from(1),
+				guardian: guardian_account,
+				status: 0u8,
+			}]);
+	});
+}
