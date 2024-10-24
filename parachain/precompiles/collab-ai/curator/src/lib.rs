@@ -146,7 +146,7 @@ where
 		let result = Vec::<CuratorQueryResult>::new();
 
 		let result = index
-			.into_iter()
+			.iter()
 			.map(|i| {
 				let i: u128 = i.try_into().map_err(|_| {
 					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
