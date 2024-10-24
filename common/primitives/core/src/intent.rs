@@ -6,7 +6,7 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 pub const CALL_ETHEREUM_INPUT_LEN: u32 = 10 * 1024;
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum Intention {
+pub enum Intent {
     #[codec(index = 0)]
     TransferEthereum(TransferEthereum),
     #[codec(index = 1)]

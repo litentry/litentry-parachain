@@ -38,8 +38,8 @@ fn publicize_account_call(id: Identity) -> Box<RuntimeCall> {
 	Box::new(call)
 }
 
-fn request_intention_call(intention: Intention) -> Box<RuntimeCall> {
-	RuntimeCall::OmniAccount(crate::Call::request_intention { intention }).into()
+fn request_intent_call(intent: Intent) -> Box<RuntimeCall> {
+	RuntimeCall::OmniAccount(crate::Call::request_intent { intent }).into()
 }
 
 fn make_balance_transfer_call(dest: AccountId, value: Balance) -> Box<RuntimeCall> {
@@ -498,7 +498,7 @@ fn publicize_account_identity_not_found_works() {
 }
 
 #[test]
-fn request_intention_works() {
+fn request_intent_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 		let bob = private_member_account(bob());
@@ -515,12 +515,10 @@ fn request_intention_works() {
 			call
 		));
 
-		let intention = Intention::CallEthereum(CallEthereum {
-			address: H160::zero(),
-			input: BoundedVec::new(),
-		});
+		let intent =
+			Intent::CallEthereum(CallEthereum { address: H160::zero(), input: BoundedVec::new() });
 
-		let call = request_intention_call(intention.clone());
+		let call = request_intent_call(intent.clone());
 		assert_ok!(OmniAccount::dispatch_as_omni_account(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			alice().identity.hash(),
@@ -536,7 +534,7 @@ fn request_intention_works() {
 		);
 
 		System::assert_has_event(
-			Event::IntentionRequested { who: alice().omni_account, intention }.into(),
+			Event::IntentRequested { who: alice().omni_account, intent }.into(),
 		);
 	});
 }
