@@ -18,7 +18,7 @@ use codec::{Decode, Encode};
 use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCallSigned};
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning as StfEnclaveSigningTrait;
@@ -42,8 +42,7 @@ pub struct NativeTaskContext<
 	OCallApi:
 		EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
 	ExtrinsicFactory: CreateExtrinsics + Send + Sync + 'static,
-	NodeMetadataRepo: AccessNodeMetadata + Send + Sync + 'static,
-	NodeMetadataRepo::MetadataType: NodeMetadataTrait,
+	NodeMetadataRepo: AccessNodeMetadata<MetadataType = NodeMetadata> + Send + Sync + 'static,
 {
 	pub shielding_key: Arc<ShieldingKeyRepository>,
 	pub author_api: Arc<AuthorApi>,
@@ -78,8 +77,7 @@ impl<
 	OCallApi:
 		EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
 	ExtrinsicFactory: CreateExtrinsics + Send + Sync + 'static,
-	NodeMetadataRepo: AccessNodeMetadata + Send + Sync + 'static,
-	NodeMetadataRepo::MetadataType: NodeMetadataTrait,
+	NodeMetadataRepo: AccessNodeMetadata<MetadataType = NodeMetadata> + Send + Sync + 'static,
 {
 	#[allow(clippy::too_many_arguments)]
 	pub fn new(
@@ -124,6 +122,7 @@ pub enum NativeTaskError {
 	CallSendingFailed(String),
 	ExtrinsicConstructionFailed(String), // Stringified itp_extrinsics_factory::Error
 	ExtrinsicSendingFailed(String),      // Stringified sgx_status_t
+	InvalidRequest,
 }
 
 pub enum NativeRequest {
