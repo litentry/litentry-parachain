@@ -148,7 +148,7 @@ where
 		let result = index
 			.iter()
 			.map(|i| {
-				let i: u128 = i.try_into().map_err(|_| {
+				let i: u128 = i.clone().try_into().map_err(|_| {
 					Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 				})?;
 				if let Some((info_hash, update_block, curator, status)) =
@@ -161,15 +161,15 @@ where
 
 					let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
 
-					Ok(CuratorQueryResult { exist: true, info_hash, update_block, curator, status })
+					CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
 				} else {
-					Ok(CuratorQueryResult {
+					CuratorQueryResult {
 						exist: false,
 						info_hash: Default::default(),
 						update_block: Default::default(),
 						curator: Default::default(),
 						status: Default::default(),
-					})
+					}
 				}
 			})
 			.collect();
