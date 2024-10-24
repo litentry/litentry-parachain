@@ -229,7 +229,7 @@ where
 
 		let result = (start_id..end_id)
 			.map(|i| {
-				if let Some((info_hash, update_block, curator, status)) =
+				if let Some((info_hash, update_block, guardian, status)) =
 					pallet_guardian::Pallet::<Runtime>::guardian_index_to_info(i)
 				{
 					let update_block: U256 = update_block.into();

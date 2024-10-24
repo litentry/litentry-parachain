@@ -128,14 +128,14 @@ interface IPoolProposal {
 	/// 				 batchPoolProposal(uint256,uint256)
     function batchPoolProposal(uint256 start_id, uint256 end_id) external view returns (PoolProposalInfo[] memory proposal_info);
 
-    /// @notice Query a single pool proposal and its existing included pre staking
+    /// @notice Batch query pool proposals and their existing included pre stakings
         /// @param start_id: Proposal index start_id, included
     /// @param end_id: Proposal index end id, excluded
     /// @custom:selector 0x49dc251a
 	/// 				 poolPreInvestings(uint256,uint256)
     function poolPreInvestings(uint256 start_id, uint256 end_id) external view returns (StakingBond[] memory pre_investing_bond);
 
-    /// @notice Query a single pool proposal and its queued pre staking
+    /// @notice Batch query pool proposals and their queued pre stakings
         /// @param start_id: Proposal index start_id, included
     /// @param end_id: Proposal index end id, excluded
     /// @custom:selector 0x201be573
