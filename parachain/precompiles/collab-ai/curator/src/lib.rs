@@ -152,36 +152,22 @@ where
 		))?;
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
-		handle.record_db_read::<Runtime>(93 * length)?;
+		handle.record_db_read::<Runtime>(93 * length.into())?;
 
-		let result = vec![start_id..end_id]
-			.iter()
-			.map(|&i| {
-				if let Ok(tmp_index) = <U256 as TryInto<u128>>::try_into(i) {
-					if let Some((info_hash, update_block, curator, status)) =
-						pallet_curator::Pallet::<Runtime>::curator_index_to_info(tmp_index)
-					{
-						let update_block: U256 = update_block.into();
+		let result = (start_id..end_id)
+			.map(|i| {
+				if let Some((info_hash, update_block, curator, status)) =
+					pallet_curator::Pallet::<Runtime>::curator_index_to_info(i)
+				{
+					let update_block: U256 = update_block.into();
 
-						let curator: [u8; 32] = curator.into();
-						let curator: H256 = curator.into();
+					let curator: [u8; 32] = curator.into();
+					let curator: H256 = curator.into();
 
-						let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
+					let status: u8 = Self::candidate_status_to_u8(status).unwrap_or_default();
 
-						CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
-					} else {
-						CuratorQueryResult {
-							exist: false,
-							info_hash: Default::default(),
-							update_block: Default::default(),
-							curator: Default::default(),
-							status: Default::default(),
-						}
-					}
+					CuratorQueryResult { exist: true, info_hash, update_block, curator, status }
 				} else {
-					// Impossible here, but
-					// If value_is_too_large error from U256 to u128
-					// return default
 					CuratorQueryResult {
 						exist: false,
 						info_hash: Default::default(),
