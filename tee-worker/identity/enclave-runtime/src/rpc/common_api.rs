@@ -24,12 +24,18 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
+use itp_types::{
+	parentchain::AccountId, DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256,
+};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_rpc_handler::direct_top_pool_api::add_top_pool_direct_rpc_methods;
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
-use lc_identity_verification::web2::{email, twitter};
+use lc_identity_verification::{
+	generate_verification_code,
+	web2::{email, twitter},
+	VerificationCodeStore,
+};
 use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
 use log::debug;
@@ -424,8 +430,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
 
 		match params.parse::<(String, String)>() {
-			Ok((encoded_did, redirect_url)) => {
-				let account_id = match Identity::from_did(encoded_did.as_str()) {
+			Ok((did, redirect_url)) => {
+				let account_id = match Identity::from_did(did.as_str()) {
 					Ok(identity) =>
 						if let Some(account_id) = identity.to_native_account() {
 							account_id
@@ -460,10 +466,11 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 		}
 	});
 
+	// TODO: deprecate
 	io_handler.add_sync_method("identity_requestEmailVerification", move |params: Params| {
 		match params.parse::<(String, String)>() {
-			Ok((encoded_did, email)) => {
-				let account_id = match Identity::from_did(encoded_did.as_str()) {
+			Ok((did, email)) => {
+				let account_id = match Identity::from_did(did.as_str()) {
 					Ok(identity) =>
 						if let Some(account_id) = identity.to_native_account() {
 							account_id
@@ -479,11 +486,13 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 					data_provider_config.sendgrid_api_key.clone(),
 					data_provider_config.sendgrid_from_email.clone(),
 				);
-				let verification_code = email::generate_verification_code();
+				let verification_code = generate_verification_code();
 
-				match email::VerificationCodeStore::insert(
+				let email_identity = Identity::from_email(&email);
+
+				match VerificationCodeStore::insert(
 					account_id,
-					email.clone(),
+					email_identity.hash(),
 					verification_code.clone(),
 				) {
 					Ok(_) => {
@@ -506,6 +515,48 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
 		}
 	});
+
+	io_handler.add_sync_method(
+		"omni_account_requestEmailVerificationCode",
+		move |params: Params| match params.parse::<(String, String)>() {
+			Ok((encoded_omni_account, encoded_identity)) => {
+				let omni_account = match AccountId::from_hex(encoded_omni_account.as_str()) {
+					Ok(account_id) => account_id,
+					Err(_) =>
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not parse omni account"
+						))),
+				};
+				let member_identity = match Identity::from_hex(encoded_identity.as_str()) {
+					Ok(identity) => identity,
+					Err(_) =>
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not parse member identity"
+						))),
+				};
+				let verification_code = generate_verification_code();
+
+				match VerificationCodeStore::insert(
+					omni_account,
+					member_identity.hash(),
+					verification_code.clone(),
+				) {
+					Ok(_) => {
+						let json_value = RpcReturnValue::new(
+							verification_code.encode(),
+							false,
+							DirectRequestStatus::Ok,
+						);
+						Ok(json!(json_value.to_hex()))
+					},
+					Err(_) => Ok(json!(compute_hex_encoded_return_error(
+						"Could not save verification code"
+					))),
+				}
+			},
+			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
+		},
+	);
 }
 
 #[deprecated(note = "`state_executeAesGetter` should be preferred")]
