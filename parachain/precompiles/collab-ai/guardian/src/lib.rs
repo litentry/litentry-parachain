@@ -225,7 +225,7 @@ where
 		let length_usize: usize = length.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
 		})?;
-		handle.record_db_read::<Runtime>(93.saturating_mul(length_usize))?;
+		handle.record_db_read::<Runtime>(length_usize.saturating_mul(93_usize))?;
 
 		let result = (start_id..end_id)
 			.map(|i| {
