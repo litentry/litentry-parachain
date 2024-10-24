@@ -8,6 +8,15 @@ interface IGuardian {
 	    Verified,
 	    Banned
     }
+
+    /// @dev A structure for Guardian query result
+    struct GuardianQueryResult {
+        bool exist;
+        bytes32 info_hash;
+        uint256 update_block;
+        bytes32 guardian;
+        CandidateStatus status;
+    }
     
     /// @dev Defines GuardianVote type
     enum GuardianVote {
@@ -59,6 +68,13 @@ interface IGuardian {
     /// @custom:selector 0x59c95743
 	/// 				 guardianIndexToInfo(address)
     function guardianIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 guardian, CandidateStatus status);
+
+    /// @notice Guardian index to guardian info, bool represents if such info exists
+    /// @param start_id: Guardian index start_id, included
+    /// @param end_id: Guardian index end id, excluded
+    /// @custom:selector 0x92bd7975
+	/// 				 batchGuardianIndexToInfo(uint256,uint256)
+    function batchGuardianIndexToInfo(uint256 start_id, uint256 end_id) external view returns (GuardianQueryResult[] memory result);
     
     /// @notice Query voter's vote of one specific guardian given its guardian index, substrate
     /// @param voter: voter address, substrate

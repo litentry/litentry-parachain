@@ -228,3 +228,12 @@ where
 		Ok(result)
 	}
 }
+
+#[derive(Default, Debug, solidity::Codec)]
+struct GuardianQueryResult {
+	exist: bool,
+	info_hash: H256,
+	update_block: U256,
+	guardian: H256,
+	status: u8,
+}

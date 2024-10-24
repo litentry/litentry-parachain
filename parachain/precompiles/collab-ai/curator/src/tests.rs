@@ -215,13 +215,11 @@ fn test_batch_curator_index_to_info() {
 		let curator_account: [u8; 32] = curator_account.into();
 		let curator_account: H256 = curator_account.into();
 
-		let mut tmp_index_vec = Vec::<U256>::new();
-		tmp_index_vec.push(0.into());
 		PrecompilesValue::get()
 			.prepare_test(
 				curator,
 				H160::from_low_u64_be(1000),
-				PCall::<Test>::batch_curator_index_to_info { index: tmp_index_vec },
+				PCall::<Test>::batch_curator_index_to_info { start_id: 0.into(), end_id: 1.into() },
 			)
 			.execute_returns(vec![crate::CuratorQueryResult {
 				exist: true,

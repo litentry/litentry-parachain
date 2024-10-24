@@ -133,17 +133,28 @@ where
 		}
 	}
 
-	#[precompile::public("batchCuratorIndexToInfo(uint256[])")]
+	#[precompile::public("batchCuratorIndexToInfo(uint256,uint256)")]
 	#[precompile::view]
 	fn batch_curator_index_to_info(
 		handle: &mut impl PrecompileHandle,
-		index: Vec<U256>,
+		start_id: U256,
+		end_id: U256,
 	) -> EvmResult<Vec<CuratorQueryResult>> {
+		let start_id: u128 = start_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+		let end_id: u128 = end_id.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("index type"))
+		})?;
+
+		let length: u128 = end_id.checked_sub(start_id).ok_or(Into::<PrecompileFailure>::into(
+			RevertReason::value_is_too_large("id overflow"),
+		))?;
 		// Storage item: CuratorIndex u128:
 		// Twox64Concat(8) + CuratorIndex(16) + InfoHash(32) + BlockNumber(4) + T::AccountId(32) + CandidateStatus(1)
-		handle.record_db_read::<Runtime>(93 * index.len())?;
+		handle.record_db_read::<Runtime>(93 * length)?;
 
-		let result = index
+		let result = vec![start_id..end_id]
 			.iter()
 			.map(|&i| {
 				if let Ok(tmp_index) = <U256 as TryInto<u128>>::try_into(i) {
@@ -168,6 +179,7 @@ where
 						}
 					}
 				} else {
+					// Impossible here, but
 					// If value_is_too_large error from U256 to u128
 					// return default
 					CuratorQueryResult {

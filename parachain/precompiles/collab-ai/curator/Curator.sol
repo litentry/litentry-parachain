@@ -53,9 +53,10 @@ interface ICurator {
     function curatorIndexToInfo(uint256 index) external view returns (bool exist, bytes32 info_hash, uint256 update_block, bytes32 curator, CandidateStatus status);
 
     /// @notice Curator index to curator info, bool represents if such info exists
-    /// @param index: Curator index
-    /// @custom:selector 0xa84c8d74
-	/// 				 batchCuratorIndexToInfo(uint256[])
-    function batchCuratorIndexToInfo(uint256[] calldata index) external view returns (CuratorQueryResult[] memory result);
+    /// @param start_id: Guardian index start_id, included
+    /// @param end_id: Guardian index end id, excluded
+    /// @custom:selector 0xf2e508c7
+	/// 				 batchCuratorIndexToInfo(uint256,uint256)
+    function batchCuratorIndexToInfo(uint256 start_id, uint256 end_id) external view returns (CuratorQueryResult[] memory result);
 
 }
