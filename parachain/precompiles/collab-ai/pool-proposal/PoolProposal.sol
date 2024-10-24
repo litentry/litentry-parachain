@@ -67,8 +67,6 @@ interface IPoolProposal {
 	    uint8 proposalStatusFlags;
     }
 
-    struct GuardianQueryResult
-
 	/// @notice Propose an investing pool proposal
     /// @param max_pool_size: At most this amount of raised money curator/investing pool willing to take
     /// @param proposal_last_time: How does the proposal lasts for voting/preinvesting.

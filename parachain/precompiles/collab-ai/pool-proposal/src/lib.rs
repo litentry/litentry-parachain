@@ -363,7 +363,7 @@ where
 		let mut bond_result = Vec::<StakingBond>::new();
 		for n in start_id..end_id {
 			if let Some(result) = pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(n) {
-				let bond_vec = result
+				let bond_vec: Vec<StakingBond> = result
 					.pre_investings
 					.into_iter()
 					.enumerate()
@@ -412,7 +412,7 @@ where
 		let mut bond_result = Vec::<QueuedStakingBond>::new();
 		for n in start_id..end_id {
 			if let Some(result) = pallet_pool_proposal::Pallet::<Runtime>::pool_pre_investings(n) {
-				let bond_vec = result
+				let bond_vec: Vec<QueuedStakingBond> = result
 					.queued_pre_investings
 					.into_iter()
 					.enumerate()
