@@ -146,7 +146,7 @@ where
 		let result = index
 			.iter()
 			.map(|&i| {
-				if let Ok(tmp_index) = i.try_into() {
+				if let Ok(tmp_index) = <U256 as TryInto<u128>>::try_into(i) {
 					if let Some((info_hash, update_block, curator, status)) =
 						pallet_curator::Pallet::<Runtime>::curator_index_to_info(tmp_index)
 					{
